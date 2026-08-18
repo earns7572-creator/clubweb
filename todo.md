@@ -67,3 +67,7 @@
 - [x] 連続するoff-white Canvasと精密な単色Speaker模型を主役に再構成する。
 - [x] Inspector、曲選択、選択状態、タイポグラフィをborderlessで控えめな操作面にする。
 - [x] 既存の再生・配置・Height・HRTF操作を維持してdesktop/mobileで検証し保存する。
+- [x] ローカル音源の追加からAudioContext開始、Speaker接続、再生までの処理を確認する。
+- [x] ローカル音源の再生同期とAudioContext resumeを修正する。
+- [x] 非対応音声ファイルや再生失敗をユーザーが分かる形で表示する。
+- [x] 型検査、production build、実行時ログでローカル音源経路を検証し保存する。
