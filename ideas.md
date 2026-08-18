@@ -231,6 +231,12 @@ SUBとWOOFERは前面の全面baffleを持たず、horn mouthの先にflare、�
 
 activity用PointLightは各Speakerのfrontに一つだけ残す。hornとwoofer内部の追加PointLight、停止時のidle fill PointLightは使わず、activity haze、共有light、既存materialの面差で読みやすさを保つ。FULLのselection / idle edgeだけはmodelと同じ後方傾斜を適用し、HIGHはcabinet offsetを除いてshell / edge / actual modelの基準座標を統一する。
 
+### Effect Removal and Lightweight Activity Rule
+
+Club Craftは照明シミュレーターではない。TOPではtransparent cone、stacked additive circle、giant translucent haze plane、spot light、複数directional light、空間を横切るsignal beamを使わない。TOPはambient / hemisphere / one directional light、Floor、Grid、Stage、Speaker silhouetteだけで停止時の可視性を作る。POVもshadow mapを使わず、ambient、one directional light、fog、materialだけで暗いclubを作る。SIDEの大きいblurred pseudo-elementは削除し、local cabinet glowだけに留める。
+
+Speaker activityはPointLightや空間へ広がるflat haze circleではなく、woofer cone、horn throat、cabinet front edgeに限定した小さなtransparent material overlayで表現する。`showHaze` APIは互換性のため保持するが、描画効果は出さない。activity stateは差分が一定値を超えた時だけReact stateを更新し、停止時や微小な変化で親画面が継続的に再renderされることを避ける。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

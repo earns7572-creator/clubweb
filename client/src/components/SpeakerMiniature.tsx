@@ -35,7 +35,6 @@ const fastenerHead = new THREE.CylinderGeometry(.042, .042, .018, 12);
 const compressionNeck = new THREE.CylinderGeometry(.085, .085, .18, 16);
 const compressionDriver = new THREE.CylinderGeometry(.18, .15, .34, 18);
 const compressionMagnet = new THREE.CylinderGeometry(.22, .22, .13, 18);
-const hazeCircle = new THREE.CircleGeometry(1, 20);
 
 function makeChamferCabinet(width: number, height: number, depth: number, taper = 0) {
   const top = width * (1 - taper); const shape = new THREE.Shape();
@@ -78,17 +77,18 @@ function CornerFasteners({ width, height, frontZ, inset = .08 }: { width: number
   return <>{[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, y], index) => <mesh key={index} geometry={fastenerHead} rotation={[Math.PI / 2, 0, 0]} position={[x * (width / 2 - inset), y * (height / 2 - inset), frontZ]} material={metalMaterial} />)}</>;
 }
 
-function WooferAssembly({ size, y, frontZ, fasteners = true }: { size: number; y: number; frontZ: number; fasteners?: boolean }) {
+function WooferAssembly({ size, y, frontZ, activity, color, fasteners = true }: { size: number; y: number; frontZ: number; activity: number; color: string; fasteners?: boolean }) {
   return <group position={[0, y, frontZ]}>
     <mesh geometry={wooferMount} rotation={[Math.PI / 2, 0, 0]} scale={[size * 1.16, size * 1.16, 1]} material={baffleMaterial} />
     <mesh geometry={wooferSurround} position={[0, 0, .032]} scale={[size, size, 1]} material={wooferSurroundMaterial} />
     <mesh geometry={wooferCone} position={[0, 0, .045]} rotation={[Math.PI / 2, 0, 0]} scale={[size * .81, size * .81, 1]} material={wooferConeMaterial} />
     <mesh geometry={dustCap} position={[0, 0, .082]} scale={[size * .26, size * .26, size * .085]} material={dustCapMaterial} />
+    <mesh geometry={wooferMount} visible={activity > .012} position={[0, 0, .094]} rotation={[Math.PI / 2, 0, 0]} scale={[size * .73, size * .73, 1]}><meshBasicMaterial color={color} transparent opacity={activity * .14} depthWrite={false} /></mesh>
     {fasteners && [[-.72, -.72], [.72, -.72], [-.72, .72], [.72, .72]].map(([x, yOffset], index) => <mesh key={index} geometry={fastenerHead} rotation={[Math.PI / 2, 0, 0]} position={[x * size, yOffset * size, .07]} material={metalMaterial} />)}
   </group>;
 }
 
-function HornFlare({ geometry, x = 0, y, frontZ, mouthWidth, mouthHeight, throatWidth, throatHeight, depth, folded = false, openThroat = false }: HornProps) {
+function HornFlare({ geometry, x = 0, y, frontZ, mouthWidth, mouthHeight, throatWidth, throatHeight, depth, folded = false, openThroat = false, activity = 0, color = "#ffffff" }: HornProps & { activity?: number; color?: string }) {
   return <group position={[x, y, frontZ]}>
     <mesh geometry={geometry} material={hornExteriorMaterial} />
     <mesh geometry={unitBox} position={[0, mouthHeight / 2, .014]} scale={[mouthWidth, .038, .055]} material={hornFrameMaterial} />
@@ -96,6 +96,7 @@ function HornFlare({ geometry, x = 0, y, frontZ, mouthWidth, mouthHeight, throat
     <mesh geometry={unitBox} position={[-mouthWidth / 2, 0, .014]} scale={[.038, mouthHeight, .055]} material={hornFrameMaterial} />
     <mesh geometry={unitBox} position={[mouthWidth / 2, 0, .014]} scale={[.038, mouthHeight, .055]} material={hornFrameMaterial} />
     {!openThroat && <mesh geometry={unitBox} position={[0, 0, -depth + .014]} scale={[throatWidth, throatHeight, .028]} material={hornInteriorMaterial} />}
+    <mesh geometry={unitBox} visible={activity > .012} position={[0, 0, -depth + .02]} scale={[throatWidth * .74, throatHeight * .74, .012]}><meshBasicMaterial color={color} transparent opacity={activity * .18} depthWrite={false} /></mesh>
     {folded && <><mesh geometry={unitBox} position={[-mouthWidth * .17, 0, -depth * .17]} rotation={[0, 0, -.43]} scale={[.072, mouthHeight * .78, .055]} material={hornFrameMaterial} /><mesh geometry={unitBox} position={[mouthWidth * .17, 0, -depth * .17]} rotation={[0, 0, .43]} scale={[.072, mouthHeight * .78, .055]} material={hornFrameMaterial} /><mesh geometry={unitBox} position={[0, 0, -depth * .08]} scale={[.038, mouthHeight * .76, .055]} material={detailMaterial} /></>}
   </group>;
 }
@@ -153,8 +154,8 @@ function FullModel({ blueprint, activity, color }: { blueprint: Blueprint; activ
   return <group rotation={[-.055, 0, 0]}>
     <mesh geometry={blueprint.cabinet} material={cabinetMaterial} />
     <BafflePlate width={width * .82} height={height * .84} frontZ={depth / 2 + .025} />
-    <HornFlare geometry={fullHorn} y={.55} frontZ={frontZ} mouthWidth={.74} mouthHeight={.42} throatWidth={.18} throatHeight={.11} depth={.36} />
-    <WooferAssembly size={.34} y={-.42} frontZ={depth / 2 + .075} />
+    <HornFlare geometry={fullHorn} y={.55} frontZ={frontZ} mouthWidth={.74} mouthHeight={.42} throatWidth={.18} throatHeight={.11} depth={.36} activity={activity} color={color} />
+    <WooferAssembly size={.34} y={-.42} frontZ={depth / 2 + .075} activity={activity} color={color} />
     <mesh geometry={unitBox} position={[0, .08, frontZ + .025]} scale={[width * .71, .035, .06]} material={metalMaterial} />
     {[-.26, .26].map((x, index) => <mesh key={index} geometry={unitBox} position={[x, -height * .39, frontZ + .035]} scale={[.16, .065, .065]} material={hornInteriorMaterial} />)}
     <SideHandles width={width} depth={depth} y={-.02} />
@@ -168,8 +169,8 @@ function MidModel({ blueprint, activity, color }: { blueprint: Blueprint; activi
   return <>
     <mesh geometry={blueprint.cabinet} material={cabinetMaterial} />
     <BafflePlate width={width * .82} height={height * .72} frontZ={depth / 2 + .022} />
-    <HornFlare geometry={midHorn} y={.16} frontZ={frontZ} mouthWidth={.62} mouthHeight={.22} throatWidth={.14} throatHeight={.08} depth={.23} />
-    <WooferAssembly size={.27} y={-.17} frontZ={depth / 2 + .065} />
+    <HornFlare geometry={midHorn} y={.16} frontZ={frontZ} mouthWidth={.62} mouthHeight={.22} throatWidth={.14} throatHeight={.08} depth={.23} activity={activity} color={color} />
+    <WooferAssembly size={.27} y={-.17} frontZ={depth / 2 + .065} activity={activity} color={color} />
     <mesh geometry={unitBox} position={[0, -height * .35, frontZ + .025]} scale={[width * .53, .07, .05]} material={hornInteriorMaterial} />
     <CornerFasteners width={width * .84} height={height * .76} frontZ={frontZ + .045} inset={.055} />
   </>;
@@ -178,7 +179,7 @@ function MidModel({ blueprint, activity, color }: { blueprint: Blueprint; activi
 function HighModel({ blueprint, activity, color }: { blueprint: Blueprint; activity: number; color: string }) {
   const [width, height, depth] = blueprint.body; const frontZ = depth / 2 + .075;
   return <>
-    <HornFlare geometry={highHorn} y={.02} frontZ={frontZ} mouthWidth={1.02} mouthHeight={.42} throatWidth={.16} throatHeight={.1} depth={.42} />
+    <HornFlare geometry={highHorn} y={.02} frontZ={frontZ} mouthWidth={1.02} mouthHeight={.42} throatWidth={.16} throatHeight={.1} depth={.42} activity={activity} color={color} />
     <mesh geometry={compressionNeck} rotation={[Math.PI / 2, 0, 0]} position={[0, .02, frontZ - .53]} material={detailMaterial} />
     <mesh geometry={compressionDriver} rotation={[Math.PI / 2, 0, 0]} position={[0, .02, frontZ - .78]} material={metalMaterial} />
     <mesh geometry={compressionMagnet} rotation={[Math.PI / 2, 0, 0]} position={[0, .02, frontZ - 1.01]} material={hornInteriorMaterial} />
@@ -190,11 +191,11 @@ function HighModel({ blueprint, activity, color }: { blueprint: Blueprint; activ
 }
 
 export function SpeakerMiniature({ kind, activity, selected = false, showHaze = true, idleVisible = false }: Props) {
-  const blueprint = blueprints[kind]; const [width, height, depth] = blueprint.body; const visibleActivity = Math.max(0, Math.min(1, activity * blueprint.profile.attack)); const color = activityColor[kind];
+  const blueprint = blueprints[kind]; const [width, height, depth] = blueprint.body; const visibleActivity = Math.max(0, Math.min(1, activity * blueprint.profile.attack)); const color = activityColor[kind]; const useCabinetEdgeGlow = kind === "sub" || kind === "woofer";
   return <group>
     {idleVisible && <lineSegments geometry={blueprint.edges} material={idleEdgeMaterial} rotation={kind === "full" ? [-.055, 0, 0] : undefined} />}
-    <pointLight color={color} intensity={visibleActivity * (2.1 + blueprint.profile.spread * .9)} distance={1.7 + blueprint.profile.spread * 1.7} decay={2} position={[0, 0, depth / 2 + .52]} />
-    {showHaze && visibleActivity > .018 && <group position={[0, 0, depth / 2 + .17]}>{[0, 1].map((layer) => <mesh key={layer} geometry={hazeCircle} position={[0, 0, layer * .035]} rotation={[Math.PI / 2 + layer * .13, layer * .3, 0]} scale={[Math.max(width, height) * (.34 + blueprint.profile.spread * .14 + layer * .1), Math.max(width, height) * (.34 + blueprint.profile.spread * .14 + layer * .1), 1]}><meshBasicMaterial color={color} transparent opacity={visibleActivity * (.055 + blueprint.profile.spread * .022)} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} /></mesh>)}</group>}
+    {void showHaze}
+    {useCabinetEdgeGlow && <mesh geometry={unitBox} visible={visibleActivity > .012} position={[0, height * .43, depth / 2 + .055]} scale={[width * .78, .026, .012]}><meshBasicMaterial color={color} transparent opacity={visibleActivity * (.1 + blueprint.profile.rim * .14)} depthWrite={false} /></mesh>}
     {kind === "sub" && <SubModel blueprint={blueprint} activity={visibleActivity} color={color} />}
     {kind === "woofer" && <WooferModel blueprint={blueprint} activity={visibleActivity} color={color} />}
     {kind === "full" && <FullModel blueprint={blueprint} activity={visibleActivity} color={color} />}

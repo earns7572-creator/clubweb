@@ -129,3 +129,8 @@
 - [x] Speaker renderingだけを限定修正し、1 SpeakerあたりのPointLightを最大1個へ削減する。
 - [x] Model Validation、TOP / SIDE / POV、activity、outline位置、最大16台前提を検証する。
 - [x] 型検査・production build・GitHub main同期を完了する。
+- [x] TOP・POV・SIDE・Speakerのlight、haze、shadow、DPR、activity更新経路を確認する。
+- [x] 光の面・帯・円盤とSpeaker PointLightを外す軽量描画方針を設計する。
+- [x] Speaker geometry・Audio・3視点操作を変えず、TOP・POV・SIDE・Speaker activityを軽量化する。
+- [x] 16 Speaker、TOP / SIDE / POV、activity、型検査、production buildで確認する。
+- [ ] GitHub mainへ軽量化更新と検証資料をpushする。

@@ -51,7 +51,7 @@ function makeLocalVoice(context: AudioContext, source: ClubSource, onError: (mes
 }
 
 export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, sources: ClubSource[], activeSourceId: string) {
-  const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const visualEnvelopeRef = useRef<Record<string, number>>({}); const topologyRef = useRef("");
+  const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const visualEnvelopeRef = useRef<Record<string, number>>({}); const activitySnapshotRef = useRef<Record<string, number>>({}); const topologyRef = useRef("");
   const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null); const [activityBySpeaker, setActivityBySpeaker] = useState<Record<string, number>>({});
   const ensureContext = useCallback(() => { if (contextRef.current) return contextRef.current; const context = new AudioContext(); const master = context.createGain(); const compressor = context.createDynamicsCompressor(); master.gain.value = .82; compressor.threshold.value = -18; compressor.ratio.value = 5; master.connect(compressor); compressor.connect(context.destination); contextRef.current = context; masterRef.current = master; return context; }, []);
 
@@ -86,7 +86,8 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
           const previous = visualEnvelopeRef.current[id] ?? 0; const rate = target > previous ? envelope.attack : envelope.release; const smoothed = previous + (target - previous) * rate;
           visualEnvelopeRef.current[id] = smoothed; next[id] = smoothed;
         });
-        setActivityBySpeaker(next);
+        const previousSnapshot = activitySnapshotRef.current; const changed = Object.keys(next).length !== Object.keys(previousSnapshot).length || Object.keys(next).some((id) => Math.abs((previousSnapshot[id] ?? 0) - next[id]) > .012);
+        if (changed) { activitySnapshotRef.current = next; setActivityBySpeaker(next); }
       }
       frame = requestAnimationFrame(paint);
     };
