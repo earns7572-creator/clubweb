@@ -99,3 +99,7 @@
 - [x] TOPの停止時照明、Floor、Speaker silhouette、Listener、Stageの現在の可視性を確認する。
 - [x] TOP専用のbase illuminationと、再生時activityがより明確に見える階層を実装する。
 - [x] 停止中・再生時TOP、SIDE・POV不変、型検査、production buildを検証して保存する。
+- [x] TOP停止時の可視性不足と現在のSpeaker activity光の接続を確認する。
+- [x] TOP専用idle paletteと低域赤・中域黄・高域緑の帯域色・光量階層を定義する。
+- [x] TOPのbase visibilityと帯域色activity illuminationを実装する。
+- [x] 停止中TOP、再生時帯域色、SIDE/POV、型検査、production buildを検証して保存する。

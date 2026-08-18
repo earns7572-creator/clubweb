@@ -195,6 +195,12 @@ Hazeは少数の半透明planeだけを用い、個別particle、fog wall、beam
 
 本番のdark renderingに触れず、検証専用routeでneutral lightの5種横並びとFULLのfront / 3/4 / sideを撮る。ラベルを隠しても形で読めること、最大16 instanceでresource共有が保たれることを確認してから本番へ残す。
 
+## TOP Editing Visibility and Frequency Color
+
+TOPは三視点の中で唯一、停止中でも配置編集に必要な可視性を優先する。Speakerごとに小さなneutral base fillを置き、dark charcoal cabinet、Listener、Stage、Floor gridを音声activityなしでも読める状態にする。このfillはSIDEとPOVへ送らない。音声activityが始まると、base fillの上に強い帯域色のdriver / rim / local hazeが重なる。
+
+帯域色はSpeaker TypeのDSP意図を短時間の活動光として可視化する。SUBはdeep red、WOOFERはred-orange、FULL RANGEはwarm yellow、MIDはyellow-green、HIGHはgreenとする。これは常時のcabinet色ではなく、実音声activityがある間だけ出る連続的なvisual gradientである。光の強さはbase fillより明確に高く、音の帯域を見た瞬間に把握できるが、laser、HUD、永続neonにはしない。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |
