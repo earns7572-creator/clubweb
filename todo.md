@@ -123,4 +123,4 @@
 - [x] 共有geometry / materialと、SUB・WOOFER・FULL・MID・HIGHの専用PA構造を設計する。
 - [x] Audio・HRTF・TOP / SIDE / POV・UIを変更せず、5種のSpeaker modelだけを差し替える。
 - [x] 明るい検証Scene、TOP / SIDE / POV、activity、型検査、production buildで検証する。
-- [ ] GitHubのmainへSpeaker model更新と検証資料をpushする。
+- [x] GitHubのmainへSpeaker model更新と検証資料をpushする。
