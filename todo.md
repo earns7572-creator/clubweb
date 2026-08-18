@@ -162,4 +162,4 @@
 - [x] 部位別emissive mappingとSpeaker単位material instance・invalidate方針を設計する。
 - [x] 外部glow / strip / discを撤去し、Speaker本体のemissive materialへ限定置換する。
 - [x] TOP / POVのactivity更新、idle復帰、16 Speaker、material数、型検査、production buildを検証する。
-- [ ] emissive activity visual更新をGitHub mainへpushする。
+- [x] emissive activity visual更新をGitHub mainへpushする。
