@@ -86,3 +86,8 @@
 - [x] ロゴと重ならないInspector、選択Speaker上のRemove、Type別追加アイコンの方針を定義する。
 - [x] Inspector位置調整、選択Speaker右上のRemove、Type別ワンタップ追加を実装する。
 - [x] 停止中TOPの環境光と3視点の操作面を検証して保存する。
+- [x] Type別3Dモデル、activity解析、haze、残りの受入基準を確認する。
+- [x] Type別PAモデル、activity character、haze illumination、暗所視認性の方針を定義する。
+- [x] SUB / WOOFER / FULL / MID / HIGHの軽量な共有PAモデルを実装する。
+- [x] 実音声activityのattack/releaseとType別driver・rim・haze反応を実装する。
+- [x] TOP / SIDE / POV、最大16 Speaker、既存操作とproduction buildを検証して保存する。

@@ -19,6 +19,13 @@ const filterForKind: Record<SpeakerKind, { type: BiquadFilterType; frequency: nu
 };
 const toneForOfficialSound: Record<string, number> = { pulse: 55, rain: 196, bronze: 146 };
 export const initialHeightForKind: Record<SpeakerKind, number> = { sub: 0, woofer: .22, full: .5, mid: .66, high: .78 };
+const visualEnvelopeForKind: Record<SpeakerKind, { attack: number; release: number; gain: number }> = {
+  sub: { attack: .13, release: .055, gain: 6.1 },
+  woofer: { attack: .22, release: .11, gain: 5.8 },
+  full: { attack: .28, release: .14, gain: 5.5 },
+  mid: { attack: .42, release: .2, gain: 5.1 },
+  high: { attack: .56, release: .28, gain: 4.8 },
+};
 export function sceneToAudioPosition(position: Position3D) { return { x: (position.x - .5) * 9, y: (position.z - .5) * 4.8, z: (position.y - .5) * 9 }; }
 
 function smoothParam(param: AudioParam | undefined, value: number, now: number) { param?.setTargetAtTime(value, now, .035); }
@@ -44,7 +51,7 @@ function makeLocalVoice(context: AudioContext, source: ClubSource, onError: (mes
 }
 
 export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, sources: ClubSource[], activeSourceId: string) {
-  const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const topologyRef = useRef("");
+  const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const visualEnvelopeRef = useRef<Record<string, number>>({}); const topologyRef = useRef("");
   const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null); const [activityBySpeaker, setActivityBySpeaker] = useState<Record<string, number>>({});
   const ensureContext = useCallback(() => { if (contextRef.current) return contextRef.current; const context = new AudioContext(); const master = context.createGain(); const compressor = context.createDynamicsCompressor(); master.gain.value = .82; compressor.threshold.value = -18; compressor.ratio.value = 5; master.connect(compressor); compressor.connect(context.destination); contextRef.current = context; masterRef.current = master; return context; }, []);
 
@@ -73,17 +80,18 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
         lastPaint = time;
         const next: Record<string, number> = {};
         speakerNodesRef.current.forEach((node, id) => {
-          if (!isPlaying) { next[id] = 0; return; }
-          node.analyser.getByteTimeDomainData(node.analyserData);
-          let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128;
-          next[id] = Math.min(1, (energy / node.analyserData.length) * 5.4);
+          const kind = speakers.find((speaker) => speaker.id === id)?.kind ?? "full"; const envelope = visualEnvelopeForKind[kind];
+          let target = 0;
+          if (isPlaying) { node.analyser.getByteTimeDomainData(node.analyserData); let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128; target = Math.min(1, (energy / node.analyserData.length) * envelope.gain); }
+          const previous = visualEnvelopeRef.current[id] ?? 0; const rate = target > previous ? envelope.attack : envelope.release; const smoothed = previous + (target - previous) * rate;
+          visualEnvelopeRef.current[id] = smoothed; next[id] = smoothed;
         });
         setActivityBySpeaker(next);
       }
       frame = requestAnimationFrame(paint);
     };
     frame = requestAnimationFrame(paint); return () => cancelAnimationFrame(frame);
-  }, [isPlaying]);
+  }, [isPlaying, speakers]);
   const togglePlayback = useCallback(async () => {
     const context = ensureContext(); sync();
     if (isPlaying) { await context.suspend(); voicesRef.current.forEach((voice) => voice.media?.pause()); setIsPlaying(false); return; }

@@ -179,6 +179,14 @@ Speaker追加はselect inputや文章ではなく、SUB / WOOFER / FULL / MID / 
 
 停止中のTOPには、音の活動光とは別に、ごく弱いambient fillを残す。これはSpeakerを白く照らすためではなく、cabinet silhouette、Floor、stageを指で選べる最低限の状態にするための光である。再生中には実音声activityによる暖色illuminationが、このbase visibilityの上にのみ加わる。
 
+## PA Miniature and Emergent Activity
+
+Speakerは色ではなく形で読む軽量なClub Craft PA miniatureにする。SUBはwide / low cabinet、WOOFERは厚みのあるlow-mid cabinet、FULLはlower wooferとupper hornを持つtall PA silhouette、MIDは浅くcompact、HIGHは小さくdirectionalなhorn enclosureとする。共通のprimitive geometryと共有materialを使用し、同Typeを複数置いてもtexture、GLB、個別の複雑なmeshを増やさない。各cabinetには小さなbevel、recessed baffle、dark grille、woofer cone / horn throat、feetまたはmount indicationだけを持たせる。
+
+実音声activityはSpeaker Filter後のAnalyser値を使用し、visual updateではType別attack / releaseを適用する。SUBは遅いattackと長いreleaseでfloor付近を広く反応させ、WOOFERは広いfront-face、FULLはbalancedなcabinet rim、MIDは小さく速いfocused response、HIGHは短く狭いhorn周辺の反応にする。Typeの差は色ではなく、時定数・emissive area・local light半径・hazeの広がりで作る。
+
+Hazeは少数の半透明planeだけを用い、個別particle、fog wall、beamを禁止する。活動Speakerの近傍には、音量に連動した極低opacityのhaze haloを短時間出す。TOPではほぼ見せず配置情報を優先し、SIDEでは高さの薄い層として見せ、POVでは遠い物体を暗闇へ沈めながらactive Speaker周辺の空気だけがわずかに読めるようにする。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

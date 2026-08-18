@@ -7,6 +7,7 @@ import { ContactShadows, Grid, Html, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useRef } from "react";
 import type { ClubListener, ClubSpeaker, Position3D, SpeakerKind } from "@/hooks/useClubAudio";
+import { SpeakerMiniature, speakerBlueprints } from "@/components/SpeakerMiniature";
 
 type Point = { x: number; y: number };
 type DragTarget = { type: "speaker"; id: string } | { type: "listener" } | null;
@@ -26,18 +27,12 @@ function Driver({ x, y, depth, size, horn, activity }: { x: number; y: number; d
 function PrintedLayers({ width, height, depth }: { width: number; height: number; depth: number }) { return <group position={[0, 0, depth / 2 + .01]}>{Array.from({ length: Math.max(3, Math.floor(height / .16)) }, (_, index) => <mesh key={index} position={[0, -height / 2 + .11 + index * .16, 0]}><boxGeometry args={[width * .92, .012, .014]} /><meshStandardMaterial color="#726d63" transparent opacity={.06} /></mesh>)}</group>; }
 
 function SpeakerObject({ speaker, selected, canRemove, onRemove, onSelect, onDragStart, onDragMove, onDragEnd }: { speaker: ClubSpeaker; selected: boolean; canRemove: boolean; onRemove: () => void; onSelect: () => void; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: () => void }) {
-  const style = typeStyles[speaker.kind]; const [width, height, depth] = style.body; const [x, , z] = toWorld(speaker.position); const lift = speaker.position.z * .68; const activity = speaker.activity; const driverSize = speaker.kind === "sub" ? .37 : speaker.kind === "woofer" ? .21 : speaker.kind === "high" ? .2 : .18;
+  const style = speakerBlueprints[speaker.kind]; const [width, height, depth] = style.body; const [x, , z] = toWorld(speaker.position); const lift = speaker.position.z * .68;
   return <group position={[x, height / 2 + lift, z]} onPointerDown={(event) => { event.stopPropagation(); onSelect(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(); }}>
     {lift > .02 && <mesh position={[0, -height / 2 - lift / 2, 0]}><boxGeometry args={[.022, lift, .022]} /><meshStandardMaterial color="#242520" roughness={.9} /></mesh>}
     {selected && <mesh position={[0, -height / 2 - lift + .012, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[Math.max(width, depth) * .7, Math.max(width, depth) * .715, 40]} /><meshBasicMaterial color="#c6c3b8" transparent opacity={.15} side={THREE.DoubleSide} /></mesh>}
     {selected && canRemove && <Html position={[width / 2 + .12, height / 2 + .14, depth / 2]} center transform sprite><button className="cabinet-remove" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onRemove(); }} aria-label={`Remove ${speaker.kind} speaker`}>×</button></Html>}
-    <pointLight color="#e4c6a5" intensity={activity * 1.7} distance={2.5} decay={2} position={[0, .05, depth / 2 + .4]} />
-    {activity > .02 && <mesh position={[0, 0, depth / 2 + .09]} rotation={[Math.PI / 2, 0, 0]}><coneGeometry args={[Math.max(width, height) * (.32 + activity * .35), .6 + activity * .75, 28, 1, true]} /><meshBasicMaterial color="#ddc3a4" transparent opacity={activity * .045} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} /></mesh>}
-    <RoundedBox args={[width, height, depth]} radius={.055} smoothness={2} castShadow receiveShadow><meshStandardMaterial color="#121310" roughness={.74} metalness={.05} emissive="#c5a98c" emissiveIntensity={activity * .18} /></RoundedBox>
-    <RoundedBox args={[width * .86, height * .82, .035]} position={[0, 0, depth / 2 + .021]} radius={.026} smoothness={2} castShadow><meshStandardMaterial color="#050604" roughness={.83} /></RoundedBox>
-    <PrintedLayers width={width} height={height} depth={depth} />
-    {style.drivers.map(([driverX, driverY]) => <Driver key={`${driverX}-${driverY}`} x={driverX} y={driverY} depth={depth} size={driverSize} horn={style.horn} activity={activity} />)}
-    <mesh position={[0, -height / 2 - .045, 0]} castShadow><boxGeometry args={[width * 1.08, .09, depth * 1.08]} /><meshStandardMaterial color="#0a0b09" roughness={.78} /></mesh>
+    <SpeakerMiniature kind={speaker.kind} activity={speaker.activity} selected={selected} />
   </group>;
 }
 
