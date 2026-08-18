@@ -1,0 +1,76 @@
+/*
+ * Spatial Installation — Club Craft's invisible contemporary interface.
+ * The continuous off-white room and precise monochrome speaker miniatures lead; controls recede into borderless, editorial surfaces.
+ * No hardware faceplates, boxed cards, CAD labels, decorative legends, retro technical type, or persistent accent treatment.
+ */
+
+:root { --gallery-paper: #f6f5f1; --gallery-fog: #edede8; --gallery-ink: #30312e; --gallery-muted: #8a8b84; --gallery-sound: #d64b35; }
+
+.instrument-app.spatial-installation { min-height: 100vh; padding: 16px 22px 8px; background: var(--gallery-paper); color: var(--gallery-ink); }
+.spatial-installation .instrument-header { height: 42px; max-width: none; margin: 0; border: 0; grid-template-columns: 1fr auto 1fr; }
+.spatial-brand { display: inline-flex; align-items: center; gap: 8px; }
+.spatial-brand img { width: 27px; height: 27px; opacity: .82; filter: grayscale(1) contrast(.98); }
+.spatial-word { display: inline-flex; gap: 3px; color: #3b3c37; font: 500 14px/1 "Space Grotesk", "Noto Sans JP", sans-serif; letter-spacing: .04em; }
+.spatial-word b { font-weight: 600; }.spatial-word em { color: #6c6d66; font-style: normal; font-weight: 400; }
+.spatial-brand small { padding-left: 8px; border-left: 1px solid rgba(48,49,46,.13); color: #9a9b94; font: 400 8px/1 "Noto Sans JP", sans-serif; }
+.spatial-installation .source-trigger { min-width: 0; padding: 8px 11px; color: #595a54; font: 400 12px/1 "Noto Sans JP", system-ui, sans-serif; }
+.spatial-installation .source-trigger i { width: 5px; height: 5px; background: #777871 !important; opacity: .7; }
+.spatial-installation .source-trigger:hover { background: rgba(45,46,42,.035); }
+.spatial-installation .source-popover { top: calc(100% + 10px); width: 268px; padding: 8px; border: 0; border-radius: 10px; background: rgba(250,249,246,.96); box-shadow: 0 18px 45px rgba(35,36,32,.10); backdrop-filter: blur(20px); }
+.spatial-installation .source-popover-label { margin: 7px 8px; color: #93948d; font: 500 10px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
+.spatial-installation .source-choice { grid-template-columns: 6px 1fr auto; gap: 8px; padding: 9px 8px; border-left: 0; border-radius: 6px; }
+.spatial-installation .source-choice.active { background: rgba(45,46,42,.055); }
+.spatial-installation .source-choice strong { font: 400 12px/1.2 "Noto Sans JP", sans-serif; }
+.spatial-installation .source-choice small, .spatial-installation .source-choice svg { display: none; }
+.spatial-installation .source-upload { margin: 6px 0 0; border: 0; border-radius: 6px; padding: 10px 8px; background: rgba(45,46,42,.035); font: 400 11px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
+.spatial-installation .source-private { margin: 10px 5px 4px; font: 400 10px/1 "Noto Sans JP", sans-serif; }
+.spatial-installation .instrument-actions { gap: 8px; }
+.spatial-installation .headphone-note { margin-right: 2px; color: #989991; font: 400 10px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
+.spatial-installation .instrument-help { display: none; }
+.spatial-installation .instrument-play { min-width: auto; height: 30px; padding: 0 10px; border-radius: 6px; color: #fff; background: var(--gallery-ink); font: 500 10px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
+.spatial-installation .instrument-play.is-playing { background: var(--gallery-sound); }
+
+.spatial-installation .instrument-stage { max-width: none; height: calc(100vh - 64px); min-height: 590px; margin: 0; }
+.spatial-installation .instrument-title, .spatial-installation .instrument-subtitle { display: none; }
+.spatial-installation .club-floor-3d { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; background: var(--gallery-paper); box-shadow: none; }
+.spatial-installation .club-floor-3d canvas { outline: none; }
+.spatial-installation .three-room-label, .spatial-installation .three-map-rule, .spatial-installation .three-room-hint { display: none; }
+.spatial-stage-anchor { position: absolute; top: 13%; left: 50%; display: flex; align-items: center; gap: 6px; transform: translateX(-50%); color: rgba(49,50,46,.28); font: 400 9px/1 "Noto Sans JP", sans-serif; letter-spacing: .01em; pointer-events: none; }
+.spatial-stage-anchor i { width: 34px; height: 1px; background: rgba(49,50,46,.20); }
+.spatial-scale-anchor { position: absolute; left: 50%; bottom: 24px; display: flex; align-items: center; gap: 8px; transform: translateX(-50%); color: rgba(49,50,46,.23); font: 400 8px/1 "Noto Sans JP", sans-serif; letter-spacing: .04em; pointer-events: none; }
+.spatial-scale-anchor i { width: 54px; height: 1px; background: rgba(49,50,46,.18); }
+
+.speaker-composer { position: absolute; z-index: 8; left: 28px; bottom: 28px; display: flex; align-items: center; gap: 7px; }
+.speaker-composer select { appearance: none; min-width: 116px; border: 0; padding: 8px 22px 8px 0; color: #555650; background: transparent; font: 400 12px/1 "Noto Sans JP", sans-serif; }
+.speaker-composer button { display: inline-flex; align-items: center; gap: 5px; border: 0; padding: 8px 0; color: #555650; background: transparent; font: 400 12px/1 "Noto Sans JP", sans-serif; }
+.speaker-composer button:hover { color: #1e201d; }
+
+.spatial-inspector { position: absolute; z-index: 9; right: 30px; bottom: 28px; width: 194px; padding: 4px 0; background: rgba(246,245,241,.48); backdrop-filter: blur(14px); }
+.spatial-inspector h2 { margin: 0 0 12px; color: #3d3e39; font: 400 15px/1.2 "Noto Sans JP", sans-serif; letter-spacing: -.02em; }
+.spatial-control { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 8px; margin: 9px 0; }
+.spatial-control > span { color: #8e8f88; font: 400 10px/1 "Noto Sans JP", sans-serif; }
+.spatial-control select { width: 100%; appearance: none; border: 0; padding: 2px 0; color: #555650; background: transparent; font: 400 11px/1 "Noto Sans JP", sans-serif; }
+.spatial-control input { width: 100%; accent-color: #575850; }
+.height-control { margin-top: 13px; }
+.height-control .height-stops { grid-column: 2; display: flex; justify-content: space-between; margin: -2px 0 0; color: #acada6; font: 400 7px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
+.spatial-inspector .inspector-actions { display: flex; gap: 14px; margin-top: 16px; }
+.spatial-inspector .inspector-actions button { min-height: auto; display: inline-flex; justify-content: flex-start; gap: 4px; border: 0; padding: 0; color: #686962; background: transparent; font: 400 11px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
+.spatial-inspector .inspector-actions .muted { color: var(--gallery-sound); background: transparent; }
+.spatial-inspector .inspector-actions .remove { width: auto; color: #8d8e87; }
+.spatial-inspector .inspector-actions .remove:disabled { opacity: .25; }
+
+.spatial-installation .instrument-footer { display: none; }
+.spatial-installation .help-sheet { border: 0; border-radius: 14px; background: rgba(250,249,246,.98); box-shadow: 0 18px 48px rgba(35,36,32,.13); }
+
+@media (max-width: 760px) {
+  .instrument-app.spatial-installation { padding: 8px; }
+  .spatial-installation .instrument-header { height: 39px; }
+  .spatial-brand span { font-size: 13px; }
+  .spatial-brand small { display: none; }
+  .spatial-brand img { width: 23px; height: 23px; }
+  .spatial-installation .headphone-note { display: none; }
+  .spatial-installation .instrument-stage { height: calc(100vh - 47px); min-height: 570px; }
+  .speaker-composer { left: 18px; bottom: 18px; }
+  .spatial-inspector { right: 17px; bottom: 66px; width: 184px; }
+  .spatial-stage-anchor { top: 14%; }.spatial-scale-anchor { bottom: 16px; }
+}

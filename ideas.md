@@ -137,6 +137,22 @@ Audio Graphは **Source → Speaker Type Filter → Speaker Gain → HRTF Panner
 
 Floating Inspectorには`FLOOR / LOW / EAR / HIGH / OVERHEAD`の連続Height sliderを置く。数値や角度は常時表示しない。Top ViewのSpeakerはHeightに応じて低いstem、浮き、影のずれでだけ高さを示し、Perspective Editorへ変えない。ヘッドホン利用の案内はPlay周辺に小さく表示する。
 
+## Spatial Installation Direction
+
+以後、Teenage EngineeringやBraunを視覚参照から外す。Club Craftは「美しい物理デバイスのUI」ではなく、**静かな現代的空間オーディオ・インスタレーション**として扱う。UIはできる限り消え、単色のSpeaker模型とその配置だけが視覚的なidentityになる。
+
+main viewportは枠内の灰色Floorではなく、ほぼoff-whiteの連続Canvasにする。Floor grid、stage reference、縮尺、軸、操作ヒントは必要最小限の淡い空間的手掛かりに抑え、CAD・Room Simulator・レベルエディタの印象を避ける。線は淡いneutral gray、影はsoft black、accentは再生・選択・音の活動時だけ使う。
+
+Speakerは単色の精密な建築模型として、丸み、cabinetの比率、woofer、horn、grille、やわらかな接地影でTypeを説明する。色・略称・UI iconに依存しない。選択状態は1px程度のoutlineと少し強い影だけで示し、大きな赤いringは使わない。
+
+Inspectorはborderlessな半透明control surfaceとし、Full Range、Type、Level、Height、Mute、Removeだけを自然な大小の文字で置く。Typeの略称ボタン、機器faceplateのようなtop rail、decorative technical label、bottom speaker legendは撤去する。Typographyはneutral contemporary sans-serifを使用し、uppercaseやmonospaceの演出を避ける。
+
+### Style Decisions
+
+- CanvasにはStageと縮尺を示す淡いspatial anchorを一つだけ残す。操作設定のためのtechnical labelではなく、置かれた音の空間を読むための基準点として扱う。
+- Signal Vermilion `#D64B35`は、再生中のSource、短いSignal thread、Play状態だけに現す。待機時のUI装飾や大きな選択ringには使わない。
+- Headerのbrand lockupは開いた同心円markと、ゆるやかなspacingを持つClub Craft wordmarkを不可分の組として扱う。控えめだが、default app labelにはしない。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

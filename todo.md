@@ -62,3 +62,8 @@
 - [x] SpeakerごとのFilter→Gain→HRTF PannerNode経路と20〜50msの平滑な位置更新を実装する。
 - [x] modern AudioParam APIとlegacy setterのfallbackでListenerとSpeakerの3D位置を同期する。
 - [x] 最大16 Speaker、既存ドラッグ、Height、音色、HRTF Previewを検証して保存・報告する。
+- [x] 既存のハードウェア風border、panel、legend、略称、選択リングを取り除く対象として整理する。
+- [x] 静かな現代的空間オーディオ・インスタレーションのDesign Systemを定義する。
+- [x] 連続するoff-white Canvasと精密な単色Speaker模型を主役に再構成する。
+- [x] Inspector、曲選択、選択状態、タイポグラフィをborderlessで控えめな操作面にする。
+- [x] 既存の再生・配置・Height・HRTF操作を維持してdesktop/mobileで検証し保存する。
