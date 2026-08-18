@@ -142,3 +142,8 @@
 - [x] Speaker入力にexplicit stereo→mono downmix nodeを追加し、接続・解除を更新する。
 - [x] 1台mono point source、HRTF stereo、2台独立branch、型検査、production buildを確認する。
 - [x] mono downmix routing修正をGitHub mainへpushする。
+- [x] 現行TOPのdrag plane、grab offset、Grid、Scene座標更新を確認する。
+- [x] Soft Grid、alignment、equal spacing、Listener同距離の候補・hysteresis・guide表示を設計する。
+- [x] TOP限定でcontinuous drag、soft snap、Smart Guides、Shift / Alt modifierを実装する。
+- [x] 16台、desktop / touch、drag開始、snap解除、guide表示、型検査、production buildを検証する。
+- [ ] placement UX更新をGitHub mainへpushする。

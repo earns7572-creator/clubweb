@@ -23,7 +23,6 @@ const initialListener: ClubListener = { position: { x: .5, y: .72, z: .5 }, orie
 const clubTracks: ClubSource[] = [{ id: "pulse", name: "Deep Pulse", category: "official", color: "#e65b4a" }, { id: "rain", name: "Rain Room", category: "official", color: "#d6aa43" }, { id: "bronze", name: "Bronze Air", category: "official", color: "#4bbd92" }];
 const gridSpawnPoints = [{ x: .5, y: .5 }, { x: .4167, y: .5 }, { x: .5833, y: .5 }, { x: .5, y: .5833 }, { x: .5, y: .4167 }];
 const clamp = (value: number) => Math.max(.07, Math.min(.93, value));
-const snapToGrid = (value: number) => clamp(Math.round(value * 12) / 12);
 const clampPitch = (value: number) => Math.max(-1.12, Math.min(1.12, value));
 const initialViewFromUrl = (): SceneView => { const requested = new URLSearchParams(window.location.search).get("view"); return requested === "side" || requested === "pov" ? requested : "top"; };
 
@@ -31,7 +30,7 @@ export default function Home() {
   const [speakers, setSpeakers] = useState<ClubSpeaker[]>(initialSpeakers); const [listener, setListener] = useState<ClubListener>(initialListener); const [sources, setSources] = useState<ClubSource[]>(clubTracks); const [selectedSourceId, setSelectedSourceId] = useState("pulse"); const [selectedSpeakerId, setSelectedSpeakerId] = useState("full-1"); const [view, setView] = useState<SceneView>(initialViewFromUrl); const [showSourcePicker, setShowSourcePicker] = useState(false); const fileInputRef = useRef<HTMLInputElement>(null);
   const { isPlaying, activityBySpeaker, togglePlayback, playbackError, clearPlaybackError } = useClubAudio(speakers, listener, sources, selectedSourceId);
   const selectedSource = sources.find((source) => source.id === selectedSourceId) ?? sources[0]; const selectedSpeaker = speakers.find((speaker) => speaker.id === selectedSpeakerId) ?? speakers[0];
-  const moveSpeakerTop = (id: string, position: { x: number; y: number }) => setSpeakers((now) => now.map((speaker) => speaker.id === id ? { ...speaker, position: { ...speaker.position, x: snapToGrid(position.x), y: snapToGrid(position.y) } } : speaker));
+  const moveSpeakerTop = (id: string, position: { x: number; y: number }) => setSpeakers((now) => now.map((speaker) => speaker.id === id ? { ...speaker, position: { ...speaker.position, x: clamp(position.x), y: clamp(position.y) } } : speaker));
   const moveSpeakerSide = (id: string, position: { y: number; z: number }) => setSpeakers((now) => now.map((speaker) => speaker.id === id ? { ...speaker, position: { ...speaker.position, y: clamp(position.y), z: clamp(position.z) } } : speaker));
   const addSpeaker = (kind: SpeakerKind) => { if (speakers.length >= 16) return; const id = `${kind}-${Date.now()}`; setSpeakers((now) => { const point = gridSpawnPoints[now.length % gridSpawnPoints.length]; return [...now, makeSpeaker(id, kind, point.x, point.y, .68)]; }); setSelectedSpeakerId(id); };
   const addLocalSound = (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const id = `local-${Date.now()}`; clearPlaybackError(); setSources((now) => [...now, { id, name: file.name.replace(/\.[^/.]+$/, ""), category: "local", color: "#797a73", localUrl: URL.createObjectURL(file) }]); setSelectedSourceId(id); setShowSourcePicker(false); event.target.value = ""; };

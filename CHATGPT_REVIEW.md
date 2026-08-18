@@ -14,7 +14,7 @@ Club Craft Webは、端末内の音声ファイルまたはアプリ内の音源
 | Speaker | SUB / WOOFER / FULL RANGE / MID / HIGH、最大16台 | 種別ごとに3D silhouetteとWeb Audio filterが異なる。すべてmodule-level shared geometry / materialを使う。 |
 | 空間音響 | explicit mono downmix → Type filter → Gain → Analyser → HRTF Panner → stereo Master | 各Speakerはmono acoustic point source、Panner後のHRTF headphone outputはstereoのまま |
 | View | TOP / SIDE / POV | 3視点は同一ClubSceneを別の投影で編集・確認する |
-| TOP操作 | X/Yグリッドへのスナップ配置、Speaker / Listenerのドラッグ | 停止時も編集できる明るさを維持し、shadow mapは使わない |
+| TOP操作 | continuous X/Y drag、Soft Grid、Smart Guides、Speaker / Listenerのドラッグ | Gridは視覚補助であり、free placementを強制snapしない。shadow mapは使わない。 |
 | SIDE操作 | Y/Zの高さ編集 | TOPと同じPosition3Dを更新する |
 | POV | Listener位置からの一人称確認、yaw / pitch | 見る向きもAudioListener orientationへ同期する |
 | 表現 | 暗い地下クラブ、低密度haze、再生時の周波数色 | 停止時TOPは読みやすく、SIDE / POVは没入感を優先する |
@@ -41,7 +41,7 @@ SpeakerとListenerはともに`Position3D`を保持し、TOP / SIDE / POVは別�
 
 ### 3. TOPは軽量な編集面
 
-TOP Viewは操作性を優先します。停止時の可視性はambient / hemisphere / 非shadow directional lighting、Floor、Grid、Stage、Speaker edgeで確保します。**shadow map、ContactShadows、castShadow、receiveShadow、volumetric beam、flat additive haze circleは使いません。**
+TOP Viewは操作性を優先します。停止時の可視性はambient / hemisphere / 非shadow directional lighting、Floor、Grid、Stage、Speaker edgeで確保します。**shadow map、ContactShadows、castShadow、receiveShadow、volumetric beam、flat additive haze circleは使いません。** Speaker dragは固定水平planeへのray intersection、grab offset、1 frame最大1回のrAF更新を使います。Gridは0.5m minor / 1.0m majorの視覚補助で、近接時だけscreen-space閾値とhysteresisを持つsoft snapを適用します。
 
 ### 4. Speakerの形で種類を認識できる
 
@@ -53,7 +53,8 @@ TOP Viewは操作性を優先します。停止時の可視性はambient / hemis
 | --- | --- |
 | `client/src/pages/Home.tsx` | 共有ClubScene、View切替、曲選択、Speaker追加、Inspector |
 | `client/src/hooks/useClubAudio.ts` | Web Audio graph、HRTF、ローカルファイル再生、activity値 |
-| `client/src/components/ClubFloor3D.tsx` | TOP ViewのR3F Scene、グリッドスナップ、軽量lighting |
+| `client/src/components/ClubFloor3D.tsx` | TOP ViewのR3F Scene、fixed-plane drag、Soft Grid、temporary Smart Guides、軽量lighting |
+| `client/src/lib/smartPlacement.ts` | alignment、equal spacing、Listener同距離、major / minor gridのpriority・hysteresis・modifierを持つ純粋placement helper |
 | `client/src/components/SideScene.tsx` | SIDE ViewのY/Z編集 |
 | `client/src/components/PovPreview.tsx` | POVのCamera / yaw / pitchとListener orientation |
 | `client/src/components/SpeakerMiniature.tsx` | 5種のmodule-level shared PA geometry、horn flare、woofer assembly、activity光、idle edge |
@@ -74,7 +75,7 @@ pnpm dev
 ブラウザで表示後、次の順に手動確認してください。
 
 1. `TOP`でSpeakerとListenerが停止中でも見えること、Speakerがグリッドにスナップすることを確認します。
-2. Speakerを追加・選択・ドラッグ・削除し、Floating InspectorでType、Level、Mute、Heightを操作します。
+2. Speakerを追加・選択・ドラッグ・削除し、Floating InspectorでType、Level、Mute、Heightを操作します。通常dragは連続移動、近接時だけsoft snapです。`Shift`は強いprecision snap、`Alt` / `Option`はsnapを一時停止します。alignment、equal spacing、Listener同距離guideはdrag中だけ表示されます。
 3. 端末の音声ファイルを選び、Playを押します。ヘッドホンでSpeakerを左右・遠近に動かした際の変化を確認します。
 4. `SIDE`でSpeakerのY/Zを動かし、TOPへ戻って共有Sceneが維持されることを確認します。
 5. `POV`でListener位置と視線を変え、HRTF previewが維持されることを確認します。
@@ -87,7 +88,7 @@ pnpm dev
 | --- | --- | --- |
 | 高 | audio graph | node接続、cleanup、再生切替、local file、HRTF更新にリークや二重接続がないか |
 | 高 | 共有Scene | TOP / SIDE / POVでPosition3Dが一貫し、View切替で状態が失われないか |
-| 高 | TOP操作性 | pointer drag、grid snap、停止時可視性、最大16台で不要な高負荷処理がないか |
+| 高 | TOP操作性 | fixed-plane pointer drag、grab offset、soft snap hysteresis、Alt解除、Shift精密配置、temporary guide、停止時可視性、最大16台で不要な高負荷処理がないか |
 | 高 | R3F安全性 | JSX属性がThree.js objectへ不正に渡らないか、horn / woofer / cabinet geometryとmaterialがmodule-levelで共有されるか |
 | 中 | performance | TOP / POVにshadow mapが復活していないか、render中のgeometry allocationがなく、SpeakerにPointLight・flat haze circle・volumetric beamがないか、TOP / POVのDPR上限が1.25か |
 | 中 | UX | 一般利用者が30秒以内に「曲を選ぶ・Speakerを置く・動かして聴く」を理解できるか |

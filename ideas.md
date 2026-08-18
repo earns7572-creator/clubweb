@@ -241,6 +241,10 @@ Speaker activityはPointLightや空間へ広がるflat haze circleではなく�
 
 各virtual Speakerは**mono acoustic point source**である。sourceがstereoの場合も、各Speaker branchの入口に置く`GainNode`を`channelCount = 1`、`channelCountMode = "explicit"`、`channelInterpretation = "speakers"`へ設定し、Web Audio standard speaker downmixでstereoを0.5 × (L + R)のmonoへ正規化する。その後にType Filter、Gain、Analyser、HRTF Panner、stereo Masterを通す。Panner後のHRTF headphone outputはstereoのまま保ち、Speakerの位置・距離モデル・filter特性は変えない。
 
+### Soft Placement Assistance
+
+TOPのGridは**目を導くためのもの**であり、移動を支配しない。Speakerの通常dragは固定水平plane上で連続的に動き、掴んだ地点のoffsetを保つ。0.5m minor / 1.0m major Grid、同一X/Y alignment、equal spacing、Listener同距離は、drag中の近接時だけscreen-space閾値とenter / release hysteresisで静かに補助する。priorityはalignment、equal spacing、Listener同距離、major grid、minor gridの順とする。Shiftはsnapの有効範囲を強め、Alt / Optionはsnapを一時無効化する。guideは暖色の細線・小さな距離ラベル・短時間のarcに限り、常設rulerやCAD的なgizmoにはしない。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |
