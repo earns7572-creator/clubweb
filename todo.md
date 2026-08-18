@@ -167,4 +167,4 @@
 - [x] LOW赤→MID黄→HIGH緑の連続周波数profile、部位別material、局所soft haloを設計する。
 - [x] Speaker geometry・Audio・Mixerを変えず、frequency emissiveと低負荷haloを実装する。
 - [x] TOP / SIDE / POV、idle復帰、16 Speaker、demand rendering、型検査、production buildを検証する。
-- [ ] 周波数visual更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] 周波数visual更新をGitHub mainと公開チェックポイントへ保存する。
