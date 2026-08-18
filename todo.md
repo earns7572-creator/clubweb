@@ -172,4 +172,4 @@
 - [x] SUB・WOOFER・FULL RANGE・MIDのdriver発光と開口部漏光の部位・強度を設計する。
 - [x] エンクロージャー発光を撤去し、driver／開口部限定の周波数色・漏光へ修正する。
 - [x] 暗所TOP／POV、各type、idle復帰、demand rendering、型検査、production buildを検証する。
-- [ ] 漏光visual修正をGitHub mainと公開チェックポイントへ保存する。
+- [x] 漏光visual修正をGitHub mainと公開チェックポイントへ保存する。
