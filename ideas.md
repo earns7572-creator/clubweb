@@ -79,6 +79,14 @@ Floor上のSpeakerはドラッグ中に1.02倍へごく小さく持ち上がり�
 - グレーを全体の基調にし、信号機カラーは状態の意味を持つ操作色に限定する。赤はLIVE・再生・接続、黄はROUTE準備・注意、緑はREADY・正常状態。Speaker種別のMIDは黄、HIGHは緑で物理的なオブジェクトにも控えめに反映する。
 - 実機写真の参照を受け、背景は明るい紙面ではなく、黒に近い機材面へ発展させる。光は大きな面塗りではなく、赤・黄・緑・白の小さな拡散LEDとして使う。表面にはガラス、樹脂、金属、ケーブルのような密度を、細いハイライト、内側の影、柔らかな光だまりで再現する。
 - ChatGPTモックアップを参照し、次段階ではSOURCE一覧・Top / Side切替・立体的な部屋・Speaker tray・System Balanceを導入する。ただしWeb版は初学者向けのプレイグラウンドであり、RTA、物理出力、複雑なバス設定、プロ向けの多数メーターは加えない。3DはWebGLではなくCSSの遠近感とcabinetオブジェクトで軽く表現し、操作は「音を選ぶ・Speakerを足す・Speaker/Youを動かす」に保つ。
+- **現在のWeb 0.3方針**：上記の専門コンソール要素をさらに減らし、Top / Side、System Balance、Routing Matrix、RTAを主画面から外す。一画面のSound System Playgroundとして、中央Floorを最重要にする。選択曲はすべてのSpeakerへ流れ、Type別filter、level、mute、位置、Listenerとの相対距離が音の変化を作る。一般ユーザーに見せる操作は「曲を選ぶ・PLAY・Speakerを足す・SpeakerとYOUを動かす」に絞る。
+
+## Style Decisions
+
+- Signal Vermilionのthreadは、選択曲から選択Speakerへ常時表示する。Routing設定ではなく「音が空間へ置かれている」ことを一目で伝える、Club Craft固有の記号として扱う。
+- Floorは中立的なグリッドではなく、距離リング、軸、縮尺、Stage原点をもつ建築的なオーディオ地図として扱う。
+- Side panelと小さな操作は、graphite、薄いブラッシュ感、内側の影、小さな発光点を使い、SaaSカードではなく物理的な楽器の操作面として見せる。
+- 主要copyは設定語ではなく、身体動作と結果で書く。`choose / place / move / stand / listen / change`を優先する。
 
 ### 音源入力
 

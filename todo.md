@@ -16,3 +16,10 @@
 - [x] 既存のWeb Audio、Routing、Listener操作を新しい3D Club UIへ統合する。
 - [x] desktop / mobile確認とChatGPT評価資料更新を行う。
 - [ ] モックアップ参照を反映した完成版を保存する。
+- [x] 既存のFloor、Speaker drag、Listener drag、Web Audio再生をPlayground用に再利用する。
+- [x] 1画面で「曲を選ぶ・Speakerを追加する・置く・聴く」が分かる導線へ整理する。
+- [x] InspectorをType、Volume、Mute、Removeだけへ絞る。
+- [x] Routing Matrix、RTA、専門的なSystem Balanceを表示から外す。
+- [x] Speaker Type別のfilter、level、mute、距離・左右定位を一般ユーザー向け操作で検証する。
+- [x] 30秒導線、desktop / mobile、ChatGPTレビュー資料を更新する。
+- [ ] Sound System Playground完成版を保存する。

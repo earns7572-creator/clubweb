@@ -1,0 +1,74 @@
+/* Sound System Playground refinement: routes read as physical signal threads on an architectural audio map. */
+.playground-floor {
+  background-image: linear-gradient(145deg, rgba(255, 255, 255, .7), transparent 35%), repeating-linear-gradient(0deg, rgba(74, 75, 70, .018) 0 1px, transparent 1px 4px), linear-gradient(145deg, #eeece5, #d8d6cf);
+}
+
+.floor-annotation {
+  position: absolute;
+  z-index: 3;
+  color: #82847d;
+  font: 600 8px "Space Grotesk";
+  letter-spacing: .13em;
+  pointer-events: none;
+}
+
+.floor-annotation.north { top: 18px; left: 25px; }
+.floor-annotation.scale { right: 22px; bottom: 18px; }
+
+.playground-signal {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgba(214, 83, 66, .36));
+}
+
+.playground-signal line {
+  stroke: #d65342;
+  stroke-width: .68;
+  stroke-dasharray: 1.35 .75;
+  vector-effect: non-scaling-stroke;
+}
+
+.playground-signal circle { fill: #d65342; stroke: #fffaf3; stroke-width: .28; }
+
+.sound-picker,
+.speaker-inspector {
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, .32), transparent 20%), repeating-linear-gradient(0deg, rgba(63, 64, 59, .025) 0 1px, transparent 1px 4px);
+}
+
+.track-card,
+.speaker-add-row button,
+.mute-button { position: relative; overflow: hidden; }
+
+.track-card::after,
+.speaker-add-row button::after,
+.mute-button::after {
+  content: "";
+  position: absolute;
+  inset: 1px auto 1px 1px;
+  width: 2px;
+  background: rgba(255, 255, 255, .8);
+  opacity: .7;
+}
+
+.type-pills button,
+.mute-button,
+.remove-button,
+.speaker-add-row button {
+  border-radius: 2px;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .86), inset 0 -1px rgba(44, 45, 41, .1), 0 1px rgba(255, 255, 255, .45);
+}
+
+.volume-control input {
+  background: linear-gradient(90deg, #d65342 0 70%, #d4d2ca 70% 100%);
+  border-radius: 999px;
+}
+
+@media (max-width: 760px) {
+  .floor-annotation.north { top: 13px; left: 16px; }
+  .floor-annotation.scale { right: 15px; bottom: 14px; }
+}
