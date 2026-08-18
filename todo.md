@@ -152,4 +152,4 @@
 - [x] Audio sync分割、AudioParam cache、activity局所化、idle RAF、demand renderingを安全に実装する。
 - [x] drag / POV / SIDE coalescing、geometry共有、model-lab lazy load、Object URL cleanupを実装する。
 - [x] 16台・3視点・再生・操作の差分を測定し、型検査・production buildを通す。
-- [ ] 性能最適化をGitHub mainへpushし、測定済み・未測定の結果を報告する。
+- [x] 性能最適化をGitHub mainへpushし、測定済み・未測定の結果を報告する。
