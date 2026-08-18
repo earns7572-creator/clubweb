@@ -119,3 +119,8 @@
 - [x] ローカルGit状態、指定GitHubリポジトリ、branch、既存履歴を確認する。
 - [x] ChatGPTレビュー用の実装概要・確認手順・論点を追加する。
 - [x] 既存履歴を保ちながらcommitし、指定GitHubリポジトリへpushする。
+- [x] 参考画像・現在のSpeakerMiniature・検証Scene・最大16台の性能制約を照合する。
+- [x] 共有geometry / materialと、SUB・WOOFER・FULL・MID・HIGHの専用PA構造を設計する。
+- [x] Audio・HRTF・TOP / SIDE / POV・UIを変更せず、5種のSpeaker modelだけを差し替える。
+- [x] 明るい検証Scene、TOP / SIDE / POV、activity、型検査、production buildで検証する。
+- [ ] GitHubのmainへSpeaker model更新と検証資料をpushする。

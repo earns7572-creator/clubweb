@@ -205,6 +205,26 @@ TOPは三視点の中で唯一、停止中でも配置編集に必要な可視�
 
 FULL RANGEは、一般的な縦長2-way PAの構造原理だけを参考にする。Club Craftのオリジナルモデルは、わずかに後方へ傾くtall cabinet、厚い丸角のfront bezel、上部の横長deep horn cavity、下部の大径woofer、前面を覆うindependent perforated grille plane、四隅の小さいfastener detail、控えめなtop mounting recessで構成する。固有のブランド名、logo、具体的な表面意匠は使用しない。frontではhornとwooferの明確な2-way構造、3/4ではcabinet depthとbezel、sideでは縦長の後方傾斜が読めることを合格条件とする。
 
+## Folded-Horn PA Miniature Update
+
+参考画像は既製品のコピーではなく、折り畳みhorn・compression horn・2-way PAという**構造原理と比率**だけを示す。Club Craftの5種は、共通primitiveとmodule-level shared geometry / materialを使う独自のミニチュアとして再構成する。Cabinet、horn exterior、horn interior、woofer surround / cone / dust cap、grille、metal hardwareをroughnessとlight responseで分ける。色は黒に近い単色を保ち、音が鳴るときだけ既存のactivity色をdriver / hornの近傍へ重ねる。
+
+| Type | 固有構造 | 見分けるための最優先要素 |
+| --- | --- | --- |
+| SUB | 横長で低いdual folded-horn enclosure。2つのhorn mouth、中央の厚いdivider、斜めflare panel、深いthroat、足を持つ。 | 正面にwooferを露出しない、二連hornの開口。 |
+| WOOFER | SUBより細く背が高いvertical horn-loaded low-mid cabinet。upper chamberとlower folded mouthを前面で分ける。 | 上下2つのhorn chamberと深い縦長silhouette。 |
+| FULL RANGE | わずかにtaperした後方傾斜の2-way PA。upper deep horn、recessed large woofer、下部port、side handleを持つ。 | hornとwooferが独立したprofessional 2-way構成。 |
+| MID | FULLより浅く狭いcompact cabinet。比較的大きいdriver、小さなupper horn、2つのlower reflex portを持つ。 | compactな縦型比率とdriverの大きさ。 |
+| HIGH | wide rectangular horn mouth、深いflare、狭いthroat、後方のcompression-driver-like bodyを持つhorn専用筐体。 | 側面から読めるhorn mouth → throat → rear body。 |
+
+TOPは操作性を優先するため、Speaker modelの更新後もshadow map、ContactShadows、castShadow、receiveShadowを追加しない。最大16 Speakerではgeometryとmaterialをrender中に生成せず、各Typeが共有するmodule-level objectだけを参照する。
+
+### Validation Finding — Neutral Light
+
+明るい検証routeの初回確認では、FULL RANGEのfront / sideでhorn frame、woofer surround、handleは読める一方、黒いcabinet・horn interiorの階調が暗すぎ、deep hornとmaterial差を評価しにくかった。productionの暗いclub表現は変えず、**validation routeだけ**に前方のneutral key / fillを追加し、exposureを上げて、キャビネットの輪郭・horn flare・woofer recessが中間調でも読める状態にする。
+
+補正後の確認では、FULL RANGEの正面でhorn frame、throat、recessed woofer、lower portが読め、3/4ではcabinet depthとside handleが見える。SUBは二つのhorn mouthと中央dividerを識別できるため、次の調整では斜めflare panelを前寄りの中間色materialでさらに明確にする。HIGHはhorn mouthとrear bodyを確認できるが、小型のため単体validationではcameraを近づける。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

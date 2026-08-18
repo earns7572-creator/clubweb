@@ -11,7 +11,7 @@ Club Craft Webは、端末内の音声ファイルまたはアプリ内の音源
 | 領域 | 実装済みの内容 | レビュー上の重要点 |
 | --- | --- | --- |
 | 音源 | アプリ内音源とブラウザ内のローカル音声ファイル | ファイルは外部へ送信せず、ブラウザ内で再生する |
-| Speaker | SUB / WOOFER / FULL RANGE / MID / HIGH、最大16台 | 種別ごとに3D silhouetteとWeb Audio filterが異なる |
+| Speaker | SUB / WOOFER / FULL RANGE / MID / HIGH、最大16台 | 種別ごとに3D silhouetteとWeb Audio filterが異なる。すべてmodule-level shared geometry / materialを使う。 |
 | 空間音響 | Type filter → Gain → Analyser → HRTF Panner → Master | SpeakerとListenerのPosition3Dが共有Sceneから同期される |
 | View | TOP / SIDE / POV | 3視点は同一ClubSceneを別の投影で編集・確認する |
 | TOP操作 | X/Yグリッドへのスナップ配置、Speaker / Listenerのドラッグ | 停止時も編集できる明るさを維持し、shadow mapは使わない |
@@ -45,7 +45,7 @@ TOP Viewは操作性を優先します。停止時の可視性はambient / hemis
 
 ### 4. Speakerの形で種類を認識できる
 
-色だけに依存せず、SUBは低く重い箱、WOOFERは中型、FULL RANGEは上部hornと下部wooferを持つ背の高い2-way PA、MIDはコンパクト、HIGHはhornを含む小型top cabinetとして作っています。
+色だけに依存せず、すべてThree.jsの手続き型sub-meshで組み立てます。SUBは正面wooferを見せないwide dual folded-horn、WOOFERはupper chamberとlower folded mouthを持つvertical horn-loaded cabinet、FULL RANGEはupper deep hornとrecessed large wooferを持つtall 2-way PA、MIDはcompact horn＋driver＋reflex ports、HIGHはwide horn mouthからnarrow throatを経てrear compression-driver-like bodyへつながる専用enclosureです。固有の製品名、logo、固有意匠は使いません。
 
 ## 主なコード案内
 
@@ -56,8 +56,8 @@ TOP Viewは操作性を優先します。停止時の可視性はambient / hemis
 | `client/src/components/ClubFloor3D.tsx` | TOP ViewのR3F Scene、グリッドスナップ、軽量lighting |
 | `client/src/components/SideScene.tsx` | SIDE ViewのY/Z編集 |
 | `client/src/components/PovPreview.tsx` | POVのCamera / yaw / pitchとListener orientation |
-| `client/src/components/SpeakerMiniature.tsx` | 5種の共有PA geometry、activity光、idle edge |
-| `client/src/components/SpeakerModelValidation.tsx` | 3D Speaker形状を個別に確認する検証用route |
+| `client/src/components/SpeakerMiniature.tsx` | 5種のmodule-level shared PA geometry、horn flare、woofer assembly、activity光、idle edge |
+| `client/src/components/SpeakerModelValidation.tsx` | 3D Speaker形状を中立光で確認する検証用route。Typeとcamera angleをqueryで指定可能。 |
 | `client/src/dark-club.css` | 暗いクラブの操作面と浮遊UI |
 | `client/src/spatial-installation.css` | 画面全体の構成とFloor中心の配置 |
 | `client/src/three-views.css` | TOP / SIDE / POVの切替と各Viewの表示規則 |
@@ -79,6 +79,7 @@ pnpm dev
 4. `SIDE`でSpeakerのY/Zを動かし、TOPへ戻って共有Sceneが維持されることを確認します。
 5. `POV`でListener位置と視線を変え、HRTF previewが維持されることを確認します。
 6. `/?model-lab=1`で5種のSpeakerの形を確認します。`/?model-lab=1&active=1`ではactivity色も確認できます。
+7. 単体確認は、たとえば`/?model-lab=1&kind=sub&angle=three-quarter`、`/?model-lab=1&kind=high&angle=three-quarter`、`/?model-lab=1&kind=full&angle=front`を使います。`kind`は`sub`、`woofer`、`full`、`mid`、`high`、`angle`は`front`、`three-quarter`、`side`です。
 
 ## レビューしてほしい観点
 
@@ -87,8 +88,8 @@ pnpm dev
 | 高 | audio graph | node接続、cleanup、再生切替、local file、HRTF更新にリークや二重接続がないか |
 | 高 | 共有Scene | TOP / SIDE / POVでPosition3Dが一貫し、View切替で状態が失われないか |
 | 高 | TOP操作性 | pointer drag、grid snap、停止時可視性、最大16台で不要な高負荷処理がないか |
-| 高 | R3F安全性 | JSX属性がThree.js objectへ不正に渡らないか、geometry / materialの共有が妥当か |
-| 中 | performance | TOPにshadow mapやContactShadowsが復活していないか、per-frame allocationが過剰でないか |
+| 高 | R3F安全性 | JSX属性がThree.js objectへ不正に渡らないか、horn / woofer / cabinet geometryとmaterialがmodule-levelで共有されるか |
+| 中 | performance | TOPにshadow mapやContactShadowsが復活していないか、render中のgeometry allocationがなく、最大16台でpoint lightとhazeの量が妥当か |
 | 中 | UX | 一般利用者が30秒以内に「曲を選ぶ・Speakerを置く・動かして聴く」を理解できるか |
 | 低 | visual | 暗いクラブの雰囲気を保ちつつ、TOPだけは配置編集に十分な明度を持つか |
 
