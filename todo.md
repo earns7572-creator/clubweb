@@ -42,3 +42,7 @@
 - [x] Speaker Typeの変更と追加で正しい3DモデルがFloorへ表示されるようにする。
 - [x] Type別3Dモデルの仕様とChatGPT Web 0.6資料を更新する。
 - [ ] 実3D Speakerモデルを含む完成版を保存する。
+- [x] React Three Fiberのdata-loc属性クラッシュの注入経路を特定する。
+- [x] 開発用属性が3D Canvas内部のThree.jsオブジェクトへ渡らないよう修正する。
+- [x] 型検査、production build、表示確認で3D Floorの回復を検証する。
+- [ ] クラッシュ修正を保存して原因と結果を記録する。
