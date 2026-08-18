@@ -134,3 +134,7 @@
 - [x] Speaker geometry・Audio・3視点操作を変えず、TOP・POV・SIDE・Speaker activityを軽量化する。
 - [x] 16 Speaker、TOP / SIDE / POV、activity、型検査、production buildで確認する。
 - [x] GitHub mainへ軽量化更新と検証資料をpushする。
+- [x] TOPのSpeaker / Listenerドラッグ開始、選択、remove control、座標変換を確認する。
+- [x] Pointerイベント競合または座標計算を最小修正し、ドラッグ開始を安定化する。
+- [x] TOPのSpeaker / Listener、Gridスナップ、SIDE / POV、Audio不変、型検査、production buildを確認する。
+- [ ] ドラッグ修正をGitHub mainへpushする。
