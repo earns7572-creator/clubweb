@@ -12,7 +12,7 @@ Club Craft Webは、端末内の音声ファイルまたはアプリ内の音源
 | --- | --- | --- |
 | 音源 | アプリ内音源とブラウザ内のローカル音声ファイル | ファイルは外部へ送信せず、ブラウザ内で再生する |
 | Speaker | SUB / WOOFER / FULL RANGE / MID / HIGH、最大16台 | 種別ごとに3D silhouetteとWeb Audio filterが異なる。すべてmodule-level shared geometry / materialを使う。 |
-| 空間音響 | Type filter → Gain → Analyser → HRTF Panner → Master | SpeakerとListenerのPosition3Dが共有Sceneから同期される |
+| 空間音響 | explicit mono downmix → Type filter → Gain → Analyser → HRTF Panner → stereo Master | 各Speakerはmono acoustic point source、Panner後のHRTF headphone outputはstereoのまま |
 | View | TOP / SIDE / POV | 3視点は同一ClubSceneを別の投影で編集・確認する |
 | TOP操作 | X/Yグリッドへのスナップ配置、Speaker / Listenerのドラッグ | 停止時も編集できる明るさを維持し、shadow mapは使わない |
 | SIDE操作 | Y/Zの高さ編集 | TOPと同じPosition3Dを更新する |
@@ -37,11 +37,11 @@ SpeakerとListenerはともに`Position3D`を保持し、TOP / SIDE / POVは別�
 
 ### 2. 音響処理はSpeakerごとに独立
 
-各Speakerは、音源から種別filter、level、activity測定用Analyser、HRTF Panner、masterへつながります。activity値は視覚表現専用であり、音響経路を壊さないことが必要です。
+各Speakerは、音源をstandard speaker downmixで明示的にmono化してから、種別filter、level、activity測定用Analyser、HRTF Panner、stereo masterへつなぎます。したがって、一つのvirtual Speakerは一つのphysical mono point sourceです。activity値は視覚表現専用であり、音響経路を壊さないことが必要です。
 
 ### 3. TOPは軽量な編集面
 
-TOP Viewは操作性を優先します。停止時の可視性はambient / hemisphere / 非shadow directional lighting、Floor、Grid、Stage、Speaker edgeで確保します。**shadow map、ContactShadows、castShadow、receiveShadowはTOPで使いません。** 中央spotlightと薄いhazeは見た目の奥行きのために残していますが、影のモデリングには利用していません。
+TOP Viewは操作性を優先します。停止時の可視性はambient / hemisphere / 非shadow directional lighting、Floor、Grid、Stage、Speaker edgeで確保します。**shadow map、ContactShadows、castShadow、receiveShadow、volumetric beam、flat additive haze circleは使いません。**
 
 ### 4. Speakerの形で種類を認識できる
 
@@ -89,7 +89,7 @@ pnpm dev
 | 高 | 共有Scene | TOP / SIDE / POVでPosition3Dが一貫し、View切替で状態が失われないか |
 | 高 | TOP操作性 | pointer drag、grid snap、停止時可視性、最大16台で不要な高負荷処理がないか |
 | 高 | R3F安全性 | JSX属性がThree.js objectへ不正に渡らないか、horn / woofer / cabinet geometryとmaterialがmodule-levelで共有されるか |
-| 中 | performance | TOPにshadow mapやContactShadowsが復活していないか、render中のgeometry allocationがなく、最大16台で各SpeakerのPointLightが1個だけか、hazeが共有geometryを使うか |
+| 中 | performance | TOP / POVにshadow mapが復活していないか、render中のgeometry allocationがなく、SpeakerにPointLight・flat haze circle・volumetric beamがないか、TOP / POVのDPR上限が1.25か |
 | 中 | UX | 一般利用者が30秒以内に「曲を選ぶ・Speakerを置く・動かして聴く」を理解できるか |
 | 低 | visual | 暗いクラブの雰囲気を保ちつつ、TOPだけは配置編集に十分な明度を持つか |
 

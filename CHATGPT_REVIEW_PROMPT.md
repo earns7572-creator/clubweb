@@ -12,7 +12,7 @@ GitHubリポジトリ `https://github.com/earns7572-creator/clubweb` の最新 `
 
 特に次を厳密に確認してください。
 
-1. `useClubAudio.ts` のWeb Audio graph、HRTF、ローカル音声ファイル再生、cleanupに二重接続・nodeリーク・再生切替の不整合がないか。
+1. `useClubAudio.ts` のWeb Audio graph、explicit stereo→mono downmix、HRTF、ローカル音声ファイル再生、cleanupに二重接続・nodeリーク・再生切替の不整合がないか。Speaker branch入口だけがmonoで、HRTF Panner後のmaster出力がstereoのままかも確認してください。
 2. `Home.tsx`、`ClubFloor3D.tsx`、`SideScene.tsx`、`PovPreview.tsx` のTOP / SIDE / POVが、同じ`Position3D`を正しく共有しているか。
 3. TOP Viewが最大16 Speakerの操作用画面として軽量か。特にshadow map、ContactShadows、castShadow、receiveShadowが使われていないか。
 4. React Three Fiberで不正なJSX属性がThree.js objectへ渡る可能性、pointer drag、grid snap、geometry / material共有に問題がないか。

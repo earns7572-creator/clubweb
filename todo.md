@@ -138,3 +138,7 @@
 - [x] Pointerイベント競合または座標計算を最小修正し、ドラッグ開始を安定化する。
 - [x] TOPのSpeaker / Listener、Gridスナップ、SIDE / POV、Audio不変、型検査、production buildを確認する。
 - [x] ドラッグ修正をGitHub mainへpushする。
+- [x] 現在のSpeakerNode、voice接続、node解除、channel設定を確認する。
+- [x] Speaker入力にexplicit stereo→mono downmix nodeを追加し、接続・解除を更新する。
+- [x] 1台mono point source、HRTF stereo、2台独立branch、型検査、production buildを確認する。
+- [ ] mono downmix routing修正をGitHub mainへpushする。

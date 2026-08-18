@@ -237,6 +237,10 @@ Club Craftは照明シミュレーターではない。TOPではtransparent cone
 
 Speaker activityはPointLightや空間へ広がるflat haze circleではなく、woofer cone、horn throat、cabinet front edgeに限定した小さなtransparent material overlayで表現する。`showHaze` APIは互換性のため保持するが、描画効果は出さない。activity stateは差分が一定値を超えた時だけReact stateを更新し、停止時や微小な変化で親画面が継続的に再renderされることを避ける。
 
+### Acoustic Point-Source Rule
+
+各virtual Speakerは**mono acoustic point source**である。sourceがstereoの場合も、各Speaker branchの入口に置く`GainNode`を`channelCount = 1`、`channelCountMode = "explicit"`、`channelInterpretation = "speakers"`へ設定し、Web Audio standard speaker downmixでstereoを0.5 × (L + R)のmonoへ正規化する。その後にType Filter、Gain、Analyser、HRTF Panner、stereo Masterを通す。Panner後のHRTF headphone outputはstereoのまま保ち、Speakerの位置・距離モデル・filter特性は変えない。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

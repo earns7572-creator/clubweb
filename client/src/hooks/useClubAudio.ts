@@ -1,5 +1,5 @@
 /**
- * Club Craft 3D headphone preview: Source → Type Filter → Gain → HRTF Panner → Master.
+ * Club Craft 3D headphone preview: Source → explicit mono downmix → Type Filter → Gain → HRTF Panner → stereo Master.
  * Local files remain in the browser. Their media element is resumed only after an explicit Play action and always enters the existing speaker graph.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -11,7 +11,7 @@ export type ClubSpeaker = { id: string; kind: SpeakerKind; label: string; positi
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
 type Voice = { output: GainNode; stop?: () => void; media?: HTMLAudioElement; dispose?: () => void };
-type SpeakerNode = { filter: BiquadFilterNode; gain: GainNode; analyser: AnalyserNode; analyserData: Uint8Array; panner: PannerNode };
+type SpeakerNode = { input: GainNode; filter: BiquadFilterNode; gain: GainNode; analyser: AnalyserNode; analyserData: Uint8Array; panner: PannerNode };
 type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam };
 
 const filterForKind: Record<SpeakerKind, { type: BiquadFilterType; frequency: number; q: number }> = {
@@ -58,10 +58,10 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   const sync = useCallback(() => {
     const context = contextRef.current; const master = masterRef.current; if (!context || !master) return;
     const now = context.currentTime; const speakerNodes = speakerNodesRef.current;
-    for (const [id, node] of Array.from(speakerNodes.entries())) if (!speakers.some((speaker) => speaker.id === id)) { node.filter.disconnect(); node.gain.disconnect(); node.analyser.disconnect(); node.panner.disconnect(); speakerNodes.delete(id); topologyRef.current = ""; }
+    for (const [id, node] of Array.from(speakerNodes.entries())) if (!speakers.some((speaker) => speaker.id === id)) { node.input.disconnect(); node.filter.disconnect(); node.gain.disconnect(); node.analyser.disconnect(); node.panner.disconnect(); speakerNodes.delete(id); topologyRef.current = ""; }
     speakers.forEach((speaker) => {
       let node = speakerNodes.get(speaker.id);
-      if (!node) { const filter = context.createBiquadFilter(); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner(); analyser.fftSize = 64; analyser.smoothingTimeConstant = .78; panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 360; filter.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master); node = { filter, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), panner }; speakerNodes.set(speaker.id, node); topologyRef.current = ""; }
+      if (!node) { const input = context.createGain(); const filter = context.createBiquadFilter(); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner(); input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 64; analyser.smoothingTimeConstant = .78; panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 360; input.connect(filter); filter.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master); node = { input, filter, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), panner }; speakerNodes.set(speaker.id, node); topologyRef.current = ""; }
       const config = filterForKind[speaker.kind]; node.filter.type = config.type; smoothParam(node.filter.frequency, config.frequency, now); smoothParam(node.filter.Q, config.q, now); smoothParam(node.gain.gain, speaker.muted ? 0 : Math.max(.02, speaker.level), now); setSpatialPosition(node.panner as unknown as LegacySpatialNode, sceneToAudioPosition(speaker.position), now);
     });
     setSpatialPosition(context.listener as unknown as LegacySpatialNode, sceneToAudioPosition(listener.position), now); setListenerOrientation(context.listener as unknown as LegacySpatialNode, listener.orientation, now);
@@ -69,7 +69,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     for (const [id, voice] of Array.from(voices.entries())) if (id !== activeSourceId || !desiredSource) { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); voices.delete(id); topologyRef.current = ""; }
     if (desiredSource && !voices.has(desiredSource.id)) { const nextVoice = desiredSource.category === "local" && desiredSource.localUrl ? makeLocalVoice(context, desiredSource, setPlaybackError) : makeOfficialVoice(context, desiredSource); voices.set(desiredSource.id, nextVoice); if (isPlaying && nextVoice.media) void nextVoice.media.play().catch(() => { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }); topologyRef.current = ""; }
     const topology = `${activeSourceId}:${speakers.map((speaker) => speaker.id).sort().join("|")}`;
-    if (topologyRef.current !== topology) { voices.forEach((voice) => { voice.output.disconnect(); speakers.forEach((speaker) => { const destination = speakerNodes.get(speaker.id); if (destination) voice.output.connect(destination.filter); }); }); topologyRef.current = topology; }
+    if (topologyRef.current !== topology) { voices.forEach((voice) => { voice.output.disconnect(); speakers.forEach((speaker) => { const destination = speakerNodes.get(speaker.id); if (destination) voice.output.connect(destination.input); }); }); topologyRef.current = topology; }
   }, [activeSourceId, isPlaying, listener, sources, speakers]);
 
   useEffect(() => { sync(); }, [sync]);
