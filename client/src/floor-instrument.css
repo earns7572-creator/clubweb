@@ -93,6 +93,7 @@
 .source-private { display: flex; align-items: center; gap: 5px; margin: 8px 2px 2px; color: #81827a; font-size: 9px; }
 
 .instrument-actions { justify-self: end; display: flex; align-items: center; gap: 5px; }
+.headphone-note { display: inline-flex; align-items: center; gap: 5px; margin-right: 4px; color: #71726b; font: 500 8px/1 "Space Grotesk", sans-serif; letter-spacing: .04em; }
 .instrument-help, .instrument-play {
   display: inline-flex;
   align-items: center;
@@ -191,7 +192,11 @@
 .type-selector button.active { border-color: #393a35; color: #f6f5ef; background: #393a35; }
 .volume-row { display: flex; justify-content: space-between; color: #62635c; font: 600 8px/1 "Space Grotesk", sans-serif; letter-spacing: .08em; }
 .volume-row b { color: var(--instrument-red); }
-.volume-input { width: 100%; margin: 6px 0 9px; accent-color: var(--instrument-red); }
+.height-row { display: flex; justify-content: space-between; color: #62635c; }
+.height-row b { color: var(--instrument-red); }
+.height-input, .volume-input { width: 100%; margin: 6px 0 5px; accent-color: var(--instrument-red); }
+.height-stops { display: flex; justify-content: space-between; margin-bottom: 10px; color: #85867e; font: 600 6px/1 "Space Grotesk", sans-serif; letter-spacing: .03em; }
+.volume-input { margin-bottom: 9px; }
 .inspector-actions { display: grid; grid-template-columns: 1fr auto; gap: 5px; }
 .inspector-actions button { min-height: 31px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid #9d9e95; color: #464741; background: transparent; font: 600 8px/1 "Space Grotesk", sans-serif; letter-spacing: .06em; }
 .inspector-actions .muted { border-color: var(--instrument-red); color: #fffdf8; background: var(--instrument-red); }
@@ -214,6 +219,7 @@
   .source-trigger { min-width: 0; padding: 8px; font-size: 10px; }
   .source-trigger svg { width: 13px; }
   .instrument-help { display: none; }
+  .headphone-note { display: none; }
   .instrument-play { min-width: 58px; height: 29px; font-size: 8px; }
   .instrument-stage { height: calc(100vh - 94px); min-height: 565px; }
   .instrument-title { top: 11px; left: 13px; font-size: 15px; }

@@ -127,6 +127,16 @@ Roomは3面の壁ではなく、薄いfloor surfaceと小さなStageだけで示
 - 床図にはgrid、軸、縮尺、Stage referenceを残すが、すべて薄い鉛筆線として扱う。最初に設定を読ませるための技術UIには発展させない。
 - Floating InspectorとSpeaker trayは、細いgraphiteのtop rail、控えめな内側のハイライト、刻印のようなlabelを備える、小さな機器の操作プレートとして扱う。
 
+## Height & Headphone Preview
+
+Web版のScene座標は、Top Viewの`x`（左右）、`y`（前後）に`z`（高さ）を加えた正規化3D座標として保持する。Speakerは`{ x, y, z }`、Listenerは将来のorientationを含む`{ position: { x, y, z }, orientation }`として扱う。初期Listenerは`z: 0.5`（耳の高さに相当）へ固定する。Speakerの初期HeightはSUB=FLOOR、WOOFER=LOW、FULL=EAR、MID=HIGH、HIGH=HIGHとするが、Typeによる制約は設けない。
+
+Scene座標をAudio座標へ変換する関数をAudio Hookにだけ置く。Sceneの`x`はAudioの左右`x`、Sceneの`z`はAudioの上下`y`、Sceneの前後`y`はAudioの奥行き`z`へ対応させる。UIの`y`とWeb Audioの`positionY`を直接混ぜない。
+
+Audio Graphは **Source → Speaker Type Filter → Speaker Gain → HRTF PannerNode → Master → Stereo Output** とする。各SpeakerのFilter、Gain、Pannerは追加時に一度だけ生成し、位置・Height・Levelの変更は20〜50msの`AudioParam.setTargetAtTime`で既存Nodeを更新する。modern AudioParamがない実装では、legacy `setPosition` / `setOrientation`へfallbackする。
+
+Floating Inspectorには`FLOOR / LOW / EAR / HIGH / OVERHEAD`の連続Height sliderを置く。数値や角度は常時表示しない。Top ViewのSpeakerはHeightに応じて低いstem、浮き、影のずれでだけ高さを示し、Perspective Editorへ変えない。ヘッドホン利用の案内はPlay周辺に小さく表示する。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

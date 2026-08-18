@@ -55,4 +55,10 @@
 - [x] 上部の現在曲名から開く曲選択Popoverと端末音源追加を実装する。
 - [x] 選択Speakerに寄り添う最小限のFloating Inspectorへ既存調整を移す。
 - [x] orthographicなFloor、Speaker cabinet、Listener、条件付きSignal threadへ3D表現を更新する。
-- [ ] 既存の再生・配置・Listener操作を検証し、Floor中心UIを保存する。
+- [x] 既存の再生・配置・Listener操作を検証し、Floor中心UIを保存する。
+- [x] SpeakerとListenerのPosition3D、初期Height、Scene-to-Audio座標変換を定義する。
+- [x] Floating InspectorにFLOOR〜OVERHEADの直感的なHeight操作を追加する。
+- [x] Top ViewでHeightを控えめに伝えるSpeakerの浮き・stem・shadow表現を追加する。
+- [x] SpeakerごとのFilter→Gain→HRTF PannerNode経路と20〜50msの平滑な位置更新を実装する。
+- [x] modern AudioParam APIとlegacy setterのfallbackでListenerとSpeakerの3D位置を同期する。
+- [x] 最大16 Speaker、既存ドラッグ、Height、音色、HRTF Previewを検証して保存・報告する。

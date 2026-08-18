@@ -6,14 +6,14 @@ import { Canvas, type ThreeEvent, useThree } from "@react-three/fiber";
 import { ContactShadows, Grid, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import { useEffect, useRef } from "react";
-import type { ClubSpeaker, SpeakerKind } from "@/hooks/useClubAudio";
+import type { ClubListener, ClubSpeaker, Position3D, SpeakerKind } from "@/hooks/useClubAudio";
 
 type Point = { x: number; y: number };
 type DragTarget = { type: "speaker"; id: string } | { type: "listener" } | null;
 
 type Props = {
   speakers: ClubSpeaker[];
-  listener: Point;
+  listener: ClubListener;
   selectedSpeakerId: string;
   sourceColor?: string;
   signalActive?: boolean;
@@ -24,7 +24,7 @@ type Props = {
 
 const roomWidth = 13;
 const roomDepth = 8;
-const toWorld = (point: Point): [number, number, number] => [(point.x - .5) * roomWidth, 0, (point.y - .5) * roomDepth];
+const toWorld = (point: Pick<Position3D, "x" | "y">): [number, number, number] => [(point.x - .5) * roomWidth, 0, (point.y - .5) * roomDepth];
 const toPoint = (position: THREE.Vector3): Point => ({ x: Math.max(.07, Math.min(.93, position.x / roomWidth + .5)), y: Math.max(.07, Math.min(.93, position.z / roomDepth + .5)) });
 
 const typeStyles: Record<SpeakerKind, { color: string; baffle: string; body: [number, number, number]; drivers: Array<[number, number]>; label: string; horn?: boolean }> = {
@@ -47,10 +47,12 @@ function PrintedLayers({ width, height, depth }: { width: number; height: number
 function SpeakerObject({ speaker, selected, onSelect, onDragStart, onDragMove, onDragEnd }: { speaker: ClubSpeaker; selected: boolean; onSelect: () => void; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: () => void }) {
   const style = typeStyles[speaker.kind];
   const [width, height, depth] = style.body;
-  const [x, , z] = toWorld(speaker);
+  const [x, , z] = toWorld(speaker.position);
   const driverSize = speaker.kind === "sub" ? .37 : speaker.kind === "woofer" ? .21 : speaker.kind === "high" ? .2 : .18;
-  return <group position={[x, height / 2, z]} onPointerDown={(event) => { event.stopPropagation(); onSelect(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(); }}>
-    {selected && <mesh position={[0, -height / 2 + .012, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[Math.max(width, depth) * .76, Math.max(width, depth) * .92, 40]} /><meshBasicMaterial color="#d65342" transparent opacity={.65} side={THREE.DoubleSide} /></mesh>}
+  const lift = speaker.position.z * .68;
+  return <group position={[x, height / 2 + lift, z]} onPointerDown={(event) => { event.stopPropagation(); onSelect(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(); }}>
+    {lift > .02 && <mesh position={[0, -height / 2 - lift / 2, 0]}><boxGeometry args={[.022, lift, .022]} /><meshStandardMaterial color="#696a63" roughness={.9} /></mesh>}
+    {selected && <mesh position={[0, -height / 2 - lift + .012, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[Math.max(width, depth) * .76, Math.max(width, depth) * .92, 40]} /><meshBasicMaterial color="#d65342" transparent opacity={.65} side={THREE.DoubleSide} /></mesh>}
     <RoundedBox args={[width, height, depth]} radius={.055} smoothness={2} castShadow receiveShadow><meshStandardMaterial color={style.color} roughness={.74} metalness={.05} /></RoundedBox>
     <RoundedBox args={[width * .86, height * .82, .035]} position={[0, 0, depth / 2 + .021]} radius={.026} smoothness={2} castShadow><meshStandardMaterial color={style.baffle} roughness={.83} metalness={.04} /></RoundedBox>
     <PrintedLayers width={width} height={height} depth={depth} />
@@ -60,8 +62,8 @@ function SpeakerObject({ speaker, selected, onSelect, onDragStart, onDragMove, o
   </group>;
 }
 
-function ListenerObject({ listener, onDragStart, onDragMove, onDragEnd }: { listener: Point; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: () => void }) {
-  const [x, , z] = toWorld(listener);
+function ListenerObject({ listener, onDragStart, onDragMove, onDragEnd }: { listener: ClubListener; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: () => void }) {
+  const [x, , z] = toWorld(listener.position);
   return <group position={[x, .14, z]} onPointerDown={(event) => { event.stopPropagation(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(); }}>
     <mesh position={[0, -.126, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.68, .695, 48]} /><meshBasicMaterial color="#777870" transparent opacity={.18} side={THREE.DoubleSide} /></mesh>
     <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.28, .34, 32]} /><meshBasicMaterial color="#d65342" transparent opacity={.72} side={THREE.DoubleSide} /></mesh>
@@ -92,8 +94,8 @@ function RoomScene(props: Props) {
   };
   const stopDrag = () => { drag.current = null; };
   const selected = props.speakers.find((speaker) => speaker.id === props.selectedSpeakerId);
-  const signalEnd = selected ? toWorld(selected) : [0, 0, 0];
-  const listenerWorld = toWorld(props.listener);
+  const signalEnd = selected ? toWorld(selected.position) : [0, 0, 0];
+  const listenerWorld = toWorld(props.listener.position);
   const sourcePoint = new THREE.Vector3(0, .06, -.7);
   const speakerPoint = new THREE.Vector3(signalEnd[0], .06, signalEnd[2]);
   const listenerPoint = new THREE.Vector3(listenerWorld[0], .06, listenerWorld[2]);
