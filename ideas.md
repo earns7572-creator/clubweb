@@ -1,0 +1,128 @@
+# Club Craft Web 0.1 — デザインと体験の方針
+
+## 3つの方向性
+
+| Theme Name | Very Brief Intro | Probability |
+|---|---|---:|
+| Acoustic Topography | 建築の平面図と上質なオーディオ機器を重ねた、明るく触感的なクラブ空間。音を「置く」感覚を最優先にする。 | 0.037 |
+| Velvet Listening Room | 深いワイン色とやわらかな布の質感で、夜のリスニングバーを表現する。静かな没入感を中心に据える。 | 0.082 |
+| Signal Garden | 草地のような明るい背景に、音のオブジェクトが育つ遊び心ある体験。初心者が試行錯誤しやすい。 | 0.018 |
+
+## 採用する方向性：Acoustic Topography
+
+### Design Movement
+
+**建築プレゼンテーションの平面図**と、1970年代から現代までの**プレミアム・オーディオ機器のインダストリアルデザイン**を組み合わせる。ゲームのような派手さではなく、紙・アルミ・フェルトの触感と、空間を読み解く線を使う。
+
+### Core Principles
+
+1. **音は物体として扱う。** 音源カード、Speaker、Listenerが床の上の明確なオブジェクトとして見える。
+2. **最初の3操作で音が変わる。** 音を選ぶ、Speakerを動かす、自分を動かす。この3つ以外を最初に要求しない。
+3. **専門用語を表面から隠す。** Routingはドラッグ操作として提示し、gainやmuteは選択後の詳細に置く。
+4. **空白は迷いを減らす。** Floor Viewを主役にし、補助情報を周縁へ配置する。
+
+### Color Philosophy
+
+背景は温かい石灰岩のような**暖灰色**。床は少し濃い鉛筆灰。Speakerはオフホワイト、黒鉛、ブラッシュドアルミの中間色で構成する。唯一の署名色は、再生・接続・選択を示す**Signal Vermilion（朱赤）**。赤は警告ではなく、「いま音が流れている」生々しさとして限定的に使う。
+
+### Layout Paradigm
+
+中央を巨大な**Floor View**にし、左端は音源棚、右端は選択中のSpeaker / Routeの薄いインスペクター、下端はtransport barにする。一般的なカードグリッドではなく、作業台の上に置いた「棚・床・操作台」という構造を採用する。
+
+### Signature Elements
+
+1. **等高線のような床のガイド線**：SpeakerとListenerの距離を視覚的に読むための薄い同心線。
+2. **物質感のあるSpeaker puck**：種別ごとに異なるリング・切り欠き・ラベルを持つ、置いて動かせる小さな物体。
+3. **Signal thread**：選択音源から接続Speakerまで伸びる細い朱赤のライン。
+
+### Interaction Philosophy
+
+すべての重要操作は「つかむ」「置く」「近づく」という物理的な比喩を持つ。ドラッグを終えたときだけ音が確定的に変わり、連続操作中は柔らかく追従する。詳細設定はいつでも閉じられ、初めての人が迷わないことを優先する。
+
+### Animation
+
+Floor上のSpeakerはドラッグ中に1.02倍へごく小さく持ち上がり、離すと180msの`cubic-bezier(0.23, 1, 0.32, 1)`で着地する。再生中のSpeakerは光らず、外周に静かな脈動リングを表示する。音源カードの接続線は120msで描画し、`prefers-reduced-motion`では瞬時に状態を切り替える。
+
+### Typography System
+
+英字の表示・数値には**Space Grotesk**、日本語と説明文には**Noto Sans JP**を使う。大見出しはSpace Grotesk 600、機能ラベルは同フォントの11px・letter spacing広め、本文はNoto Sans JP 400。Interは使用しない。
+
+### Brand Essence
+
+**「音源を床に置き、クラブの中を歩いて音楽を遊ぶためのWeb空間。」**
+
+性格は **tactile / calm / curious**。
+
+### Brand Voice
+
+見出しは短く、命令よりも発見を促す。CTAとマイクロコピーは操作の結果を先に伝える。
+
+> 「音を置く。空間が変わる。」
+
+> 「あなたの場所で、今のミックスを聴く。」
+
+### Wordmark & Logo
+
+ロゴは文字ではなく、**3つの異なる半径の同心円が一箇所だけ開いている印**。音が外へ広がり、Listenerが中へ入ることを示す。ヘッダーでは大きめのアイコンとして使い、faviconにも同じ記号を使う。
+
+### Signature Brand Color
+
+**Signal Vermilion — `#D64B35`**。接続、再生、現在選択中のオブジェクトだけに使う。
+
+## Web 0.1 の音源・Sceneモデル
+
+## Style Decisions
+
+- Floor Viewは常に建築平面図として読めることを優先し、同心等高線、原点マーク、計測線、方位・寸法注記を必須のブランド要素にする。
+- Signal Vermilion（`#D64B35`）は再生、選択、Route、Listener、接続Speakerだけに使い、メインの床には少なくとも1本の接続線を見せる。
+- copyは「置く、動かす、立つ、聴く、変わる」という身体的な因果関係を短文で示す。
+
+### 音源入力
+
+| 種別 | 表示 | 保存・公開 |
+|---|---|---|
+| 公式音源 | `OFFICIAL SOUNDS`の音源カード | 権利確認済みの開発者配信音源。初期デモではブラウザ生成音も利用できる。 |
+| ローカル音源 | `MY SOUNDS +`から選ぶ | ユーザーの端末で選択した音声ファイル。初期状態ではサーバーへ送らず、ブラウザの実行中だけ利用する。 |
+
+### 最小Sceneデータ
+
+```ts
+type SpeakerKind = 'sub' | 'woofer' | 'full' | 'mid' | 'high'
+
+type Speaker = {
+  id: string
+  kind: SpeakerKind
+  x: number
+  y: number
+  level: number
+}
+
+type SoundSource = {
+  id: string
+  name: string
+  category: 'official' | 'local'
+  color: string
+  enabled: boolean
+}
+
+type Route = {
+  sourceId: string
+  speakerId: string
+  gain: number
+  muted: boolean
+}
+
+type ClubScene = {
+  speakers: Speaker[]
+  listener: { x: number; y: number }
+  routes: Route[]
+}
+```
+
+## Web 0.1の非目標
+
+- 物理5.1 / 7.1 / 8ch出力
+- YouTubeやBandcampのURLからの音声取り込み
+- DAW、VST3、AUとの直接接続
+- RTA、精密EQ、制作向けメーター
+- 他人のローカル音源の自動アップロードや公開
