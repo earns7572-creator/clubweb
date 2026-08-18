@@ -116,6 +116,6 @@
 - [x] TOP View内のshadow・haze・light処理から、操作性を損なう負荷要素を確認する。
 - [x] 環境光由来のリアルタイム影を外し、軽量なbase visibilityへ置き換える。
 - [x] TOPの操作性と可視性、既存audio・SIDE/POV不変、型検査、production buildを検証して保存する。
-- [ ] ローカルGit状態、指定GitHubリポジトリ、branch、既存履歴を確認する。
-- [ ] ChatGPTレビュー用の実装概要・確認手順・論点を追加する。
-- [ ] 既存履歴を保ちながらcommitし、指定GitHubリポジトリへpushする。
+- [x] ローカルGit状態、指定GitHubリポジトリ、branch、既存履歴を確認する。
+- [x] ChatGPTレビュー用の実装概要・確認手順・論点を追加する。
+- [x] 既存履歴を保ちながらcommitし、指定GitHubリポジトリへpushする。
