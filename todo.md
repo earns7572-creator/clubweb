@@ -158,3 +158,8 @@
 - [x] MIX triggerとTOP / SIDE / POV共通のSpeaker Mixer・vertical fader bankを実装する。
 - [x] level / mute同期、selection、linked fader、double-click reset、activity局所更新、desktop / touchを検証する。
 - [x] Speaker Mixerを型検査・production build・GitHub main同期まで完了する。
+- [x] 現在のactivity overlay、shared material、TOP / POV demand invalidate、performance制約を確認する。
+- [x] 部位別emissive mappingとSpeaker単位material instance・invalidate方針を設計する。
+- [x] 外部glow / strip / discを撤去し、Speaker本体のemissive materialへ限定置換する。
+- [x] TOP / POVのactivity更新、idle復帰、16 Speaker、material数、型検査、production buildを検証する。
+- [ ] emissive activity visual更新をGitHub mainへpushする。
