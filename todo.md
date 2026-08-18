@@ -146,4 +146,4 @@
 - [x] Soft Grid、alignment、equal spacing、Listener同距離の候補・hysteresis・guide表示を設計する。
 - [x] TOP限定でcontinuous drag、soft snap、Smart Guides、Shift / Alt modifierを実装する。
 - [x] 16台、desktop / touch、drag開始、snap解除、guide表示、型検査、production buildを検証する。
-- [ ] placement UX更新をGitHub mainへpushする。
+- [x] placement UX更新をGitHub mainへpushする。
