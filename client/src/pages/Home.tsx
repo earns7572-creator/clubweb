@@ -1,311 +1,65 @@
 /**
- * Acoustic Topography page style: a warm architectural worktable where the
- * floor is the primary interface and technical controls stay at the perimeter.
+ * Club Hardware View: dark physical room, simple spatial play, no DAW complexity.
  */
 import { useMemo, useRef, useState } from "react";
-import {
-  ChevronDown,
-  CircleHelp,
-  Disc3,
-  Headphones,
-  LoaderCircle,
-  Music2,
-  Pause,
-  Play,
-  Plus,
-  RotateCcw,
-  Sparkles,
-  Volume2,
-  X,
-} from "lucide-react";
+import { Box, CircleHelp, Disc3, Headphones, Music2, Pause, Play, Plus, RotateCcw, SlidersHorizontal, Volume2, X } from "lucide-react";
 import { type ClubSource, type ClubSpeaker, type SpeakerKind, useClubAudio } from "@/hooks/useClubAudio";
 
-const floorHero = "/manus-storage/clubcraft-floor-hero_acb7ea15.jpg";
-const libraryImage = "/manus-storage/clubcraft-sound-library_edb92e67.jpg";
-const listeningRoom = "/manus-storage/clubcraft-listening-room_dc39f761.jpg";
 const logoMark = "/manus-storage/clubcraft-mark_066a01b1.png";
-
+const listeningRoom = "/manus-storage/clubcraft-listening-room_dc39f761.jpg";
 const speakerMeta: Record<SpeakerKind, { label: string; short: string; color: string }> = {
-  sub: { label: "SUB", short: "S", color: "#30302c" },
-  woofer: { label: "WOOFER", short: "W", color: "#77766f" },
-  full: { label: "FULL RANGE", short: "F", color: "#ece8de" },
-  mid: { label: "MID", short: "M", color: "#e5b329" },
-  high: { label: "HIGH", short: "H", color: "#379a5f" },
+  sub: { label: "SUB", short: "S", color: "#242725" }, woofer: { label: "WOOFER", short: "W", color: "#6f726d" },
+  full: { label: "FULL RANGE", short: "F", color: "#e8e9e1" }, mid: { label: "MID", short: "M", color: "#d6a837" }, high: { label: "HIGH", short: "H", color: "#4bffc1" },
 };
-
 const initialSpeakers: ClubSpeaker[] = [
-  { id: "sub-1", kind: "sub", label: "SUB", x: 0.2, y: 0.76, level: 0.82 },
-  { id: "full-1", kind: "full", label: "FULL", x: 0.34, y: 0.3, level: 0.74 },
-  { id: "full-2", kind: "full", label: "FULL", x: 0.68, y: 0.28, level: 0.74 },
-  { id: "high-1", kind: "high", label: "HIGH", x: 0.82, y: 0.7, level: 0.58 },
+  { id: "sub-1", kind: "sub", label: "SUB", x: .18, y: .72, level: .82 }, { id: "full-1", kind: "full", label: "FULL", x: .24, y: .28, level: .74 },
+  { id: "full-2", kind: "full", label: "FULL", x: .76, y: .28, level: .74 }, { id: "high-1", kind: "high", label: "HIGH", x: .83, y: .7, level: .58 },
 ];
-
 const officialSources: ClubSource[] = [
-  { id: "pulse", name: "Deep Pulse", category: "official", color: "#df3f43" },
-  { id: "rain", name: "Rain Room", category: "official", color: "#e0a51b" },
-  { id: "bronze", name: "Bronze Air", category: "official", color: "#379a5f" },
+  { id: "pulse", name: "Deep Pulse", category: "official", color: "#ff5b52" }, { id: "rain", name: "Rain Room", category: "official", color: "#ffd05d" }, { id: "bronze", name: "Bronze Air", category: "official", color: "#4bffc1" },
 ];
-
-const presetScenes = {
-  intimate: [
-    { id: "sub-1", x: 0.36, y: 0.68 }, { id: "full-1", x: 0.35, y: 0.36 },
-    { id: "full-2", x: 0.66, y: 0.36 }, { id: "high-1", x: 0.64, y: 0.67 },
-  ],
-  wide: [
-    { id: "sub-1", x: 0.14, y: 0.82 }, { id: "full-1", x: 0.14, y: 0.2 },
-    { id: "full-2", x: 0.84, y: 0.2 }, { id: "high-1", x: 0.86, y: 0.81 },
-  ],
-  front: [
-    { id: "sub-1", x: 0.47, y: 0.24 }, { id: "full-1", x: 0.28, y: 0.22 },
-    { id: "full-2", x: 0.72, y: 0.22 }, { id: "high-1", x: 0.84, y: 0.35 },
-  ],
-};
-
-function clamp(value: number) {
-  return Math.max(0.07, Math.min(0.93, value));
-}
+const sourcePositions: Record<string, { x: number; y: number }> = { pulse: { x: 50, y: 36 }, rain: { x: 38, y: 51 }, bronze: { x: 61, y: 52 } };
+const presets = { intimate: [[.35,.66],[.32,.31],[.68,.31],[.66,.67]], wide: [[.14,.82],[.14,.18],[.86,.18],[.86,.81]], front: [[.48,.25],[.28,.22],[.72,.22],[.84,.35]] };
+const clamp = (value: number) => Math.max(.07, Math.min(.93, value));
 
 export default function Home() {
   const [speakers, setSpeakers] = useState<ClubSpeaker[]>(initialSpeakers);
-  const [listener, setListener] = useState({ x: 0.5, y: 0.66 });
+  const [listener, setListener] = useState({ x: .5, y: .72 });
   const [sources, setSources] = useState<ClubSource[]>(officialSources);
   const [routes, setRoutes] = useState<string[]>(["pulse:sub-1", "pulse:full-1", "pulse:full-2", "rain:high-1"]);
   const [selectedSourceId, setSelectedSourceId] = useState("pulse");
   const [selectedSpeakerId, setSelectedSpeakerId] = useState("full-1");
+  const [view, setView] = useState<"top" | "side">("top");
   const [showHelp, setShowHelp] = useState(false);
-  const [activePreset, setActivePreset] = useState<keyof typeof presetScenes | null>(null);
-  const floorRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const floorRef = useRef<HTMLDivElement>(null); const fileInputRef = useRef<HTMLInputElement>(null);
   const dragRef = useRef<{ target: "speaker" | "listener"; id?: string } | null>(null);
   const { isPlaying, togglePlayback } = useClubAudio(speakers, listener, sources, routes);
-
-  const selectedSpeaker = speakers.find((speaker) => speaker.id === selectedSpeakerId) ?? speakers[0];
-  const selectedSource = sources.find((source) => source.id === selectedSourceId) ?? sources[0];
+  const selectedSpeaker = speakers.find((s) => s.id === selectedSpeakerId) ?? speakers[0];
+  const selectedSource = sources.find((s) => s.id === selectedSourceId) ?? sources[0];
   const selectedRouteActive = Boolean(selectedSource && selectedSpeaker && routes.includes(`${selectedSource.id}:${selectedSpeaker.id}`));
-  const routeCount = useMemo(() => routes.filter((route) => route.startsWith(`${selectedSourceId}:`)).length, [routes, selectedSourceId]);
+  const routeCount = useMemo(() => routes.filter((r) => r.startsWith(`${selectedSourceId}:`)).length, [routes, selectedSourceId]);
+  const selectedPoint = sourcePositions[selectedSourceId] ?? { x: 50, y: 50 };
 
-  const startDrag = (event: React.PointerEvent, target: "speaker" | "listener", id?: string) => {
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    dragRef.current = { target, id };
-    if (target === "speaker" && id) setSelectedSpeakerId(id);
-  };
+  const startDrag = (event: React.PointerEvent, target: "speaker" | "listener", id?: string) => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); dragRef.current = { target, id }; if (id) setSelectedSpeakerId(id); };
+  const moveOnFloor = (event: React.PointerEvent) => { const drag = dragRef.current; if (!drag || !floorRef.current) return; const rect = floorRef.current.getBoundingClientRect(); const x = clamp((event.clientX - rect.left) / rect.width); const y = clamp((event.clientY - rect.top) / rect.height); if (drag.target === "listener") setListener({ x, y }); else if (drag.id) setSpeakers((now) => now.map((s) => s.id === drag.id ? { ...s, x, y } : s)); };
+  const toggleRoute = () => { if (!selectedSource || !selectedSpeaker) return; const key = `${selectedSource.id}:${selectedSpeaker.id}`; setRoutes((now) => now.includes(key) ? now.filter((r) => r !== key) : [...now, key]); };
+  const addSpeaker = (kind: SpeakerKind = ["sub", "woofer", "full", "mid", "high"][speakers.length % 5] as SpeakerKind) => { const id = `${kind}-${Date.now()}`; setSpeakers((now) => [...now, { id, kind, label: speakerMeta[kind].label, x: .5, y: .5, level: .65 }]); setSelectedSpeakerId(id); };
+  const removeSpeaker = () => { if (!selectedSpeaker || speakers.length <= 1) return; setSpeakers((now) => now.filter((s) => s.id !== selectedSpeaker.id)); setRoutes((now) => now.filter((r) => !r.endsWith(`:${selectedSpeaker.id}`))); };
+  const addLocal = (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const id = `local-${Date.now()}`; setSources((now) => [...now, { id, name: file.name.replace(/\.[^/.]+$/, ""), category: "local", color: "#6bd3ff", localUrl: URL.createObjectURL(file) }]); setSelectedSourceId(id); event.target.value = ""; };
+  const applyPreset = (preset: keyof typeof presets) => setSpeakers((now) => now.map((speaker, index) => ({ ...speaker, x: presets[preset][index]?.[0] ?? speaker.x, y: presets[preset][index]?.[1] ?? speaker.y })));
+  const setKindLevel = (kind: SpeakerKind, level: number) => setSpeakers((now) => now.map((s) => s.kind === kind ? { ...s, level } : s));
 
-  const moveOnFloor = (event: React.PointerEvent) => {
-    if (!dragRef.current || !floorRef.current) return;
-    const rect = floorRef.current.getBoundingClientRect();
-    const x = clamp((event.clientX - rect.left) / rect.width);
-    const y = clamp((event.clientY - rect.top) / rect.height);
-    if (dragRef.current.target === "listener") setListener({ x, y });
-    else if (dragRef.current.id) {
-      const id = dragRef.current.id;
-      setSpeakers((current) => current.map((speaker) => speaker.id === id ? { ...speaker, x, y } : speaker));
-      setActivePreset(null);
-    }
-  };
-
-  const finishDrag = () => { dragRef.current = null; };
-
-  const toggleRoute = () => {
-    if (!selectedSource || !selectedSpeaker) return;
-    const key = `${selectedSource.id}:${selectedSpeaker.id}`;
-    setRoutes((current) => current.includes(key) ? current.filter((route) => route !== key) : [...current, key]);
-  };
-
-  const addSpeaker = () => {
-    const kind: SpeakerKind = ["sub", "woofer", "full", "mid", "high"][speakers.length % 5] as SpeakerKind;
-    const id = `${kind}-${Date.now()}`;
-    setSpeakers((current) => [...current, { id, kind, label: speakerMeta[kind].label, x: 0.5, y: 0.44, level: 0.65 }]);
-    setSelectedSpeakerId(id);
-    setActivePreset(null);
-  };
-
-  const removeSelectedSpeaker = () => {
-    if (speakers.length <= 1 || !selectedSpeaker) return;
-    setSpeakers((current) => current.filter((speaker) => speaker.id !== selectedSpeaker.id));
-    setRoutes((current) => current.filter((route) => !route.endsWith(`:${selectedSpeaker.id}`)));
-    setSelectedSpeakerId(speakers.find((speaker) => speaker.id !== selectedSpeaker.id)?.id ?? "");
-  };
-
-  const addLocalFile = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    const id = `local-${Date.now()}`;
-    setSources((current) => [...current, { id, name: file.name.replace(/\.[^/.]+$/, ""), category: "local", color: "#4f7073", localUrl: URL.createObjectURL(file) }]);
-    setSelectedSourceId(id);
-    event.target.value = "";
-  };
-
-  const applyPreset = (preset: keyof typeof presetScenes) => {
-    const positions = presetScenes[preset];
-    setSpeakers((current) => current.map((speaker) => {
-      const position = positions.find((item) => item.id === speaker.id);
-      return position ? { ...speaker, x: position.x, y: position.y } : speaker;
-    }));
-    setActivePreset(preset);
-  };
-
-  return (
-    <main className="club-app">
-      <header className="app-header">
-        <div className="brand-lockup">
-          <img className="brand-mark" src={logoMark} alt="Club Craft" />
-          <div>
-            <p className="eyebrow">SPATIAL PLAYGROUND</p>
-            <h1>CLUB CRAFT</h1>
-          </div>
-        </div>
-        <div className="header-actions">
-          <button className="plain-control" type="button" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> HOW IT WORKS</button>
-          <button className="play-control" type="button" onClick={() => void togglePlayback()}>
-            {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" />} {isPlaying ? "PAUSE ROOM" : "HEAR THE ROOM"}
-          </button>
-        </div>
-      </header>
-
-      <section className="workbench">
-        <aside className="sound-shelf" aria-label="Sound library">
-          <div className="shelf-hero" style={{ backgroundImage: `linear-gradient(90deg, rgba(37,37,33,.78), rgba(37,37,33,.2)), url(${libraryImage})` }}>
-            <p>START WITH A SOUND</p>
-            <span>Pick one, then place it.</span>
-          </div>
-          <div className="shelf-section-heading"><span>OFFICIAL SOUNDS</span><Sparkles size={14} /></div>
-          <div className="source-stack">
-            {sources.filter((source) => source.category === "official").map((source) => (
-              <button key={source.id} type="button" onClick={() => setSelectedSourceId(source.id)} className={`source-card ${source.id === selectedSourceId ? "is-selected" : ""}`}>
-                <span className="source-dot" style={{ backgroundColor: source.color }} />
-                <span><strong>{source.name}</strong><small>CLUB EDIT</small></span>
-                <Disc3 size={17} />
-              </button>
-            ))}
-          </div>
-          <div className="shelf-section-heading my-sounds"><span>MY SOUNDS</span><span className="private-tag">STAYS ON THIS DEVICE</span></div>
-          <div className="source-stack local-stack">
-            {sources.filter((source) => source.category === "local").map((source) => (
-              <button key={source.id} type="button" onClick={() => setSelectedSourceId(source.id)} className={`source-card local ${source.id === selectedSourceId ? "is-selected" : ""}`}>
-                <span className="source-dot" style={{ backgroundColor: source.color }} />
-                <span><strong>{source.name}</strong><small>LOCAL FILE</small></span>
-                <Music2 size={16} />
-              </button>
-            ))}
-            <button type="button" className="add-sound" onClick={() => fileInputRef.current?.click()}><Plus size={18} /> ADD YOUR SOUND</button>
-            <input ref={fileInputRef} className="hidden-input" type="file" accept="audio/*" onChange={addLocalFile} />
-          </div>
-          <div className="shelf-footnote"><Headphones size={15} /> Headphones recommended</div>
-        </aside>
-
-        <section className="club-stage" aria-label="Your virtual club">
-          <div className="stage-topline">
-            <div><p className="eyebrow">YOUR CLUB / PLAN 01</p><h2>Move a speaker. The room changes.</h2></div>
-            <div className="stage-status">
-              <span className="signal-bank" aria-hidden="true">
-                <i className={`signal-led red ${isPlaying ? "on" : ""}`} />
-                <i className={`signal-led amber ${routeCount > 0 ? "on" : ""}`} />
-                <i className={`signal-led green ${isPlaying ? "" : "on"}`} />
-              </span>
-              <span className={`live-indicator ${isPlaying ? "active" : "ready"}`} /> {isPlaying ? "ROOM IS LIVE" : "ROOM IS READY"}
-            </div>
-          </div>
-          <div
-            ref={floorRef}
-            className="floor-view"
-            style={{ backgroundImage: `linear-gradient(rgba(231,228,218,.91), rgba(231,228,218,.95)), url(${floorHero})` }}
-            onPointerMove={moveOnFloor}
-            onPointerUp={finishDrag}
-            onPointerCancel={finishDrag}
-          >
-            <div className="floor-grid" />
-            <div className="floor-ruler ruler-top"><span>0</span><span>3M</span><span>6M</span><span>9M</span></div>
-            <div className="floor-ruler ruler-left"><span>0</span><span>3M</span><span>6M</span></div>
-            <div className="axis-note axis-north">NORTH / ROOM AXIS</div>
-            <div className="axis-note axis-east">ACOUSTIC FIELD 06×06M</div>
-            <div className="stage-origin"><span className="stage-cross" /><span>STAGE</span><small>fixed source origin</small></div>
-            <svg className="route-lines" aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none">
-              {routes.filter((route) => route.startsWith(`${selectedSourceId}:`)).map((route) => {
-                const speaker = speakers.find((item) => item.id === route.split(":")[1]);
-                if (!speaker) return null;
-                return <g key={route}><line x1="50" y1="50" x2={speaker.x * 100} y2={speaker.y * 100} /><circle cx={speaker.x * 100} cy={speaker.y * 100} r="1.05" /></g>;
-              })}
-            </svg>
-            {speakers.map((speaker) => {
-              const meta = speakerMeta[speaker.kind];
-              const active = routes.includes(`${selectedSourceId}:${speaker.id}`);
-              return (
-                <button
-                  key={speaker.id}
-                  type="button"
-                  className={`speaker-puck ${speaker.kind} ${speaker.id === selectedSpeakerId ? "selected" : ""} ${active && isPlaying ? "speaking" : ""}`}
-                  style={{ left: `${speaker.x * 100}%`, top: `${speaker.y * 100}%`, "--speaker-color": meta.color } as React.CSSProperties}
-                  onPointerDown={(event) => startDrag(event, "speaker", speaker.id)}
-                  onClick={() => setSelectedSpeakerId(speaker.id)}
-                  aria-label={`${meta.label} speaker`}
-                >
-                  <span className="puck-ring" /><strong>{meta.short}</strong><small>{meta.label}</small>
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              className="listener-marker"
-              style={{ left: `${listener.x * 100}%`, top: `${listener.y * 100}%` }}
-              onPointerDown={(event) => startDrag(event, "listener")}
-              aria-label="Move your listening position"
-            ><span>◎</span><small>YOU</small></button>
-            <div className="floor-caption"><span>Drag a speaker</span><i /> <span>Move ◎ YOU</span></div>
-          </div>
-          <div className="scene-bar">
-            <span className="scene-label">MOOD</span>
-            {(["intimate", "wide", "front"] as const).map((preset) => (
-              <button key={preset} type="button" onClick={() => applyPreset(preset)} className={activePreset === preset ? "active" : ""}>{preset === "front" ? "FRONT HEAVY" : preset.toUpperCase()}</button>
-            ))}
-            <button type="button" className="reset-scene" onClick={() => { setSpeakers(initialSpeakers); setListener({ x: 0.5, y: 0.66 }); setActivePreset(null); }}><RotateCcw size={13} /> RESET</button>
-          </div>
-        </section>
-
-        <aside className="inspector" aria-label="Selected object details">
-          <div className="inspector-title"><span>SELECTED SPEAKER</span><ChevronDown size={16} /></div>
-          {selectedSpeaker && (
-            <>
-              <div className="selected-object">
-                <div className={`object-orb ${selectedSpeaker.kind}`}><span>{speakerMeta[selectedSpeaker.kind].short}</span></div>
-                <div><p>{speakerMeta[selectedSpeaker.kind].label}</p><small>virtual speaker</small></div>
-              </div>
-              <label className="control-label">SPEAKER TYPE
-                <select value={selectedSpeaker.kind} onChange={(event) => {
-                  const kind = event.target.value as SpeakerKind;
-                  setSpeakers((current) => current.map((speaker) => speaker.id === selectedSpeaker.id ? { ...speaker, kind, label: speakerMeta[kind].label } : speaker));
-                }}>
-                  {Object.entries(speakerMeta).map(([kind, meta]) => <option key={kind} value={kind}>{meta.label}</option>)}
-                </select>
-              </label>
-              <label className="control-label">LEVEL <span>{Math.round(selectedSpeaker.level * 100)}%</span>
-                <input type="range" min="0.12" max="1" step="0.01" value={selectedSpeaker.level} onChange={(event) => setSpeakers((current) => current.map((speaker) => speaker.id === selectedSpeaker.id ? { ...speaker, level: Number(event.target.value) } : speaker))} />
-              </label>
-              <div className="route-panel">
-                <p>ROUTE FROM</p>
-                <div className="route-source"><span className="source-dot" style={{ backgroundColor: selectedSource?.color }} />{selectedSource?.name ?? "Choose a sound"}</div>
-                <button type="button" className={`route-toggle ${selectedRouteActive ? "routed" : "armed"}`} onClick={toggleRoute}>
-                  <span>{selectedRouteActive ? "ROUTED" : "ARM ROUTE"}</span><Volume2 size={16} />
-                </button>
-                <small>{routeCount} speaker{routeCount === 1 ? "" : "s"} connected from this sound</small>
-              </div>
-              <button type="button" className="delete-speaker" onClick={removeSelectedSpeaker} disabled={speakers.length <= 1}><X size={14} /> REMOVE SPEAKER</button>
-            </>
-          )}
-          <button type="button" className="add-speaker" onClick={addSpeaker}><Plus size={16} /> ADD SPEAKER</button>
-          <div className="inspector-image" style={{ backgroundImage: `linear-gradient(0deg, rgba(37,37,33,.6), transparent), url(${listeningRoom})` }}><span>LISTEN FROM<br />WHERE YOU ARE.</span></div>
-        </aside>
+  return <main className="club-app club-app-v2">
+    <header className="console-header"><div className="brand-lockup"><img className="brand-mark" src={logoMark} alt="Club Craft" /><div><p className="eyebrow">VIRTUAL CLUB / WEB 0.2</p><h1>CLUB CRAFT</h1></div></div><nav className="console-tabs" aria-label="Workspace"><button className="active">CLUB</button><button>SOURCES</button><button>SPEAKERS</button><button>MIX / SYSTEM</button></nav><div className="header-actions"><button className="plain-control" onClick={() => setShowHelp(true)}><CircleHelp size={16} /> HELP</button><button className="play-control" onClick={() => void togglePlayback()}>{isPlaying ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" />}{isPlaying ? "PAUSE" : "HEAR THE ROOM"}</button></div></header>
+    <section className="club-console">
+      <aside className="source-rack"><div className="rack-heading"><span>SOURCES</span><Plus size={16} /></div><div className="source-filter"><span>SHOW IN CLUB</span><b>{sources.length} ACTIVE</b></div><div className="source-stack">{sources.map((source) => <button key={source.id} className={`source-card source-row ${source.id === selectedSourceId ? "is-selected" : ""}`} onClick={() => setSelectedSourceId(source.id)}><span className="source-dot" style={{ backgroundColor: source.color }} /><span><strong>{source.name}</strong><small>{source.category === "local" ? "YOUR FILE" : "CLUB SOUND"}</small></span><Disc3 size={16} /></button>)}</div><button className="add-sound" onClick={() => fileInputRef.current?.click()}><Plus size={16} /> ADD YOUR SOUND</button><input ref={fileInputRef} className="hidden-input" type="file" accept="audio/*" onChange={addLocal} /><div className="rack-foot"><Headphones size={14} /> Headphones recommended</div></aside>
+      <section className="club-view-panel"><div className="view-toolbar"><div><p className="eyebrow">UNDERGROUND SESSION</p><h2>Place sound inside the room.</h2></div><div className="view-switch"><button className={view === "top" ? "active" : ""} onClick={() => setView("top")}>TOP</button><button className={view === "side" ? "active" : ""} onClick={() => setView("side")}>SIDE</button></div></div>
+        <div ref={floorRef} className={`club-canvas ${view}-view`} onPointerMove={moveOnFloor} onPointerUp={() => { dragRef.current = null; }} onPointerCancel={() => { dragRef.current = null; }}><div className="room-shell" /><div className="floor-grid" /><div className="stage-origin"><span className="stage-cross" /><span>STAGE</span><small>fixed source origin</small></div><div className="room-label room-left">L</div><div className="room-label room-right">R</div><svg className="route-lines" aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none">{routes.filter((r) => r.startsWith(`${selectedSourceId}:`)).map((route) => { const speaker = speakers.find((s) => s.id === route.split(":")[1]); return speaker ? <g key={route}><line x1={selectedPoint.x} y1={selectedPoint.y} x2={speaker.x * 100} y2={speaker.y * 100} /><circle cx={speaker.x * 100} cy={speaker.y * 100} r="1.08" /></g> : null; })}</svg>{sources.map((source, index) => { const point = sourcePositions[source.id] ?? { x: 48 + (index % 3) * 7, y: 58 + (index % 2) * 10 }; return <button key={source.id} onClick={() => setSelectedSourceId(source.id)} className={`source-orb ${source.id === selectedSourceId ? "selected" : ""}`} style={{ left: `${point.x}%`, top: `${point.y}%`, "--source-color": source.color } as React.CSSProperties}><span>◉</span><small>{source.name}</small></button>; })}{speakers.map((speaker) => { const meta = speakerMeta[speaker.kind]; const active = routes.includes(`${selectedSourceId}:${speaker.id}`); return <button key={speaker.id} className={`speaker-puck cabinet ${speaker.kind} ${speaker.id === selectedSpeakerId ? "selected" : ""} ${active && isPlaying ? "speaking" : ""}`} style={{ left: `${speaker.x * 100}%`, top: `${speaker.y * 100}%`, "--speaker-color": meta.color } as React.CSSProperties} onPointerDown={(event) => startDrag(event, "speaker", speaker.id)} onClick={() => setSelectedSpeakerId(speaker.id)}><span className="cabinet-grille" /><strong>{meta.short}</strong><small>{meta.label}</small></button>; })}<button className="listener-marker listener-figure" style={{ left: `${listener.x * 100}%`, top: `${listener.y * 100}%` }} onPointerDown={(event) => startDrag(event, "listener")}><span>◎</span><small>YOU</small></button><div className="canvas-hint">DRAG SPEAKERS / MOVE YOU</div></div>
+        <div className="scene-strip"><span>CLUB PRESETS</span>{(["intimate", "wide", "front"] as const).map((preset) => <button key={preset} onClick={() => applyPreset(preset)}>{preset === "front" ? "FRONT HEAVY" : preset.toUpperCase()}</button>)}<button onClick={() => { setSpeakers(initialSpeakers); setListener({ x: .5, y: .72 }); }}><RotateCcw size={13} /> RESET</button></div>
+        <div className="speaker-tray"><div><p>ADD SPEAKER</p><small>Choose a cabinet, then place it.</small></div>{(Object.keys(speakerMeta) as SpeakerKind[]).map((kind) => <button key={kind} onClick={() => addSpeaker(kind)}><Box size={19} /><span>{speakerMeta[kind].label}</span></button>)}</div>
       </section>
-
-      {showHelp && <div className="help-backdrop" role="presentation" onClick={() => setShowHelp(false)}>
-        <section className="help-sheet" role="dialog" aria-modal="true" aria-label="How Club Craft works" onClick={(event) => event.stopPropagation()}>
-          <button type="button" className="close-help" onClick={() => setShowHelp(false)}><X size={18} /></button>
-          <img src={logoMark} alt="" />
-          <p className="eyebrow">THREE MOVES</p><h2>Put sound in a place.</h2>
-          <ol><li><b>1</b><span>Choose a sound from the left shelf.</span></li><li><b>2</b><span>Pick a Speaker, then press <em>Route here</em>.</span></li><li><b>3</b><span>Drag the Speaker or <em>◎ YOU</em> and listen.</span></li></ol>
-          <button className="play-control" type="button" onClick={() => { setShowHelp(false); void togglePlayback(); }}><Play size={16} fill="currentColor" /> HEAR THE ROOM</button>
-        </section>
-      </div>}
-    </main>
-  );
+      <aside className="system-rack"><div className="rack-heading"><span>SYSTEM BALANCE</span><SlidersHorizontal size={16} /></div>{(["sub", "full", "high"] as SpeakerKind[]).map((kind) => { const matching = speakers.filter((s) => s.kind === kind); const average = matching.length ? matching.reduce((total, item) => total + item.level, 0) / matching.length : .55; return <label key={kind} className={`balance-strip ${kind}`}><span><i /> {speakerMeta[kind].label}</span><input type="range" min=".1" max="1" step=".01" value={average} onChange={(event) => setKindLevel(kind, Number(event.target.value))} /><b>{Math.round(average * 100)}%</b></label>; })}<div className="selected-panel"><p>SELECTED SPEAKER</p>{selectedSpeaker && <><div className="selected-object"><div className={`object-orb ${selectedSpeaker.kind}`}><span>{speakerMeta[selectedSpeaker.kind].short}</span></div><div><strong>{speakerMeta[selectedSpeaker.kind].label}</strong><small>virtual cabinet</small></div></div><label className="control-label">LEVEL <span>{Math.round(selectedSpeaker.level * 100)}%</span><input type="range" min=".12" max="1" step=".01" value={selectedSpeaker.level} onChange={(event) => setSpeakers((now) => now.map((s) => s.id === selectedSpeaker.id ? { ...s, level: Number(event.target.value) } : s))} /></label><button className={`route-toggle ${selectedRouteActive ? "routed" : "armed"}`} onClick={toggleRoute}><span>{selectedRouteActive ? "ROUTED" : "ROUTE HERE"}</span><Volume2 size={16} /></button><small>{routeCount} route{routeCount === 1 ? "" : "s"} from {selectedSource?.name}</small><button className="delete-speaker" onClick={removeSpeaker} disabled={speakers.length <= 1}><X size={14} /> REMOVE SPEAKER</button></>}</div><div className="system-room-image" style={{ backgroundImage: `linear-gradient(0deg, rgba(0,0,0,.7), transparent), url(${listeningRoom})` }}>LISTEN FROM<br />WHERE YOU ARE.</div></aside>
+    </section>
+    {showHelp && <div className="help-backdrop" onClick={() => setShowHelp(false)}><section className="help-sheet" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}><button className="close-help" onClick={() => setShowHelp(false)}><X size={18} /></button><img src={logoMark} alt="" /><p className="eyebrow">THREE MOVES</p><h2>Put sound in a place.</h2><ol><li><b>1</b><span>Choose a source from the left rack.</span></li><li><b>2</b><span>Pick a cabinet and press <em>Route here</em>.</span></li><li><b>3</b><span>Drag a cabinet or <em>◎ YOU</em> and listen.</span></li></ol><button className="play-control" onClick={() => { setShowHelp(false); void togglePlayback(); }}><Play size={16} fill="currentColor" /> HEAR THE ROOM</button></section></div>}
+  </main>;
 }
