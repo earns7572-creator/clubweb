@@ -3,7 +3,9 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Home from "./pages/Home";
+import SpeakerModelValidation from "./components/SpeakerModelValidation";
 
 export default function App() {
-  return <ErrorBoundary><TooltipProvider><Toaster /><Home /></TooltipProvider></ErrorBoundary>;
+  const isModelValidation = new URLSearchParams(window.location.search).get("model-lab") === "1";
+  return <ErrorBoundary><TooltipProvider><Toaster />{isModelValidation ? <SpeakerModelValidation /> : <Home />}</TooltipProvider></ErrorBoundary>;
 }

@@ -187,6 +187,14 @@ Speakerは色ではなく形で読む軽量なClub Craft PA miniatureにする�
 
 Hazeは少数の半透明planeだけを用い、個別particle、fog wall、beamを禁止する。活動Speakerの近傍には、音量に連動した極低opacityのhaze haloを短時間出す。TOPではほぼ見せず配置情報を優先し、SIDEでは高さの薄い層として見せ、POVでは遠い物体を暗闇へ沈めながらactive Speaker周辺の空気だけがわずかに読めるようにする。
 
+## Dedicated PA Geometry Replacement
+
+`SpeakerMiniature`の単一Box bodyとflat driver表現は、Type固有のprocedural sub-meshへ置換する。FULLはtapered cabinet shell、recessed baffle well、3層woofer、rectangular horn mouth、depthを持つhorn flare、rear depth、feetで構成する。SUBはwide/deep shell、thick baffle、deep large woofer、bass-reflex slot、heavy feetでFULLとは別のvolumeにする。WOOFERはtall-but-stout deep enclosure、MIDはshallow compact wedge、HIGHはrear capsuleとwide mouth・narrow throatを持つ専用horn enclosureとする。
+
+角はすべてchamfer / bevelを持つが、丸い玩具にはしない。cabinet、baffle/grille、woofer surround / cone / dust-cap、horn exterior / interiorを別materialにする。Three.jsのmodule-level shared `RoundedBoxGeometry`、`CylinderGeometry`、`ConeGeometry`、`Shape + ExtrudeGeometry`をTypeごとに一度だけ作り、instanceではgeometry / materialを再生成しない。
+
+本番のdark renderingに触れず、検証専用routeでneutral lightの5種横並びとFULLのfront / 3/4 / sideを撮る。ラベルを隠しても形で読めること、最大16 instanceでresource共有が保たれることを確認してから本番へ残す。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

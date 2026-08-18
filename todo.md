@@ -91,3 +91,8 @@
 - [x] SUB / WOOFER / FULL / MID / HIGHの軽量な共有PAモデルを実装する。
 - [x] 実音声activityのattack/releaseとType別driver・rim・haze反応を実装する。
 - [x] TOP / SIDE / POV、最大16 Speaker、既存操作とproduction buildを検証して保存する。
+- [x] 現在のSpeakerMiniature、Three.js geometry、既存モデルの限界を確認する。
+- [x] SUB / WOOFER / FULL / MID / HIGHの専用PA sub-mesh構成と共有resource方針を定義する。
+- [x] SpeakerMiniatureを専用geometry・bevel・recess・woofer・horn・feet構成へ置き換える。
+- [x] 明るい検証Sceneで5種横並びとFULLのfront / 3/4 / sideを確認する。
+- [x] 本番のTOP / SIDE / POV、型検査、production buildを検証して保存する。
