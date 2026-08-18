@@ -11,7 +11,7 @@ export type ClubSpeaker = { id: string; kind: SpeakerKind; label: string; positi
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
 type Voice = { output: GainNode; stop?: () => void; media?: HTMLAudioElement; dispose?: () => void };
-type SpeakerNode = { filter: BiquadFilterNode; gain: GainNode; panner: PannerNode };
+type SpeakerNode = { filter: BiquadFilterNode; gain: GainNode; analyser: AnalyserNode; analyserData: Uint8Array; panner: PannerNode };
 type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam };
 
 const filterForKind: Record<SpeakerKind, { type: BiquadFilterType; frequency: number; q: number }> = {
@@ -45,16 +45,16 @@ function makeLocalVoice(context: AudioContext, source: ClubSource, onError: (mes
 
 export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, sources: ClubSource[], activeSourceId: string) {
   const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const topologyRef = useRef("");
-  const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null); const [activityBySpeaker, setActivityBySpeaker] = useState<Record<string, number>>({});
   const ensureContext = useCallback(() => { if (contextRef.current) return contextRef.current; const context = new AudioContext(); const master = context.createGain(); const compressor = context.createDynamicsCompressor(); master.gain.value = .82; compressor.threshold.value = -18; compressor.ratio.value = 5; master.connect(compressor); compressor.connect(context.destination); contextRef.current = context; masterRef.current = master; return context; }, []);
 
   const sync = useCallback(() => {
     const context = contextRef.current; const master = masterRef.current; if (!context || !master) return;
     const now = context.currentTime; const speakerNodes = speakerNodesRef.current;
-    for (const [id, node] of Array.from(speakerNodes.entries())) if (!speakers.some((speaker) => speaker.id === id)) { node.filter.disconnect(); node.gain.disconnect(); node.panner.disconnect(); speakerNodes.delete(id); topologyRef.current = ""; }
+    for (const [id, node] of Array.from(speakerNodes.entries())) if (!speakers.some((speaker) => speaker.id === id)) { node.filter.disconnect(); node.gain.disconnect(); node.analyser.disconnect(); node.panner.disconnect(); speakerNodes.delete(id); topologyRef.current = ""; }
     speakers.forEach((speaker) => {
       let node = speakerNodes.get(speaker.id);
-      if (!node) { const filter = context.createBiquadFilter(); const gain = context.createGain(); const panner = context.createPanner(); panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 360; filter.connect(gain); gain.connect(panner); panner.connect(master); node = { filter, gain, panner }; speakerNodes.set(speaker.id, node); topologyRef.current = ""; }
+      if (!node) { const filter = context.createBiquadFilter(); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner(); analyser.fftSize = 64; analyser.smoothingTimeConstant = .78; panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 360; filter.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master); node = { filter, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), panner }; speakerNodes.set(speaker.id, node); topologyRef.current = ""; }
       const config = filterForKind[speaker.kind]; node.filter.type = config.type; smoothParam(node.filter.frequency, config.frequency, now); smoothParam(node.filter.Q, config.q, now); smoothParam(node.gain.gain, speaker.muted ? 0 : Math.max(.02, speaker.level), now); setSpatialPosition(node.panner as unknown as LegacySpatialNode, sceneToAudioPosition(speaker.position), now);
     });
     setSpatialPosition(context.listener as unknown as LegacySpatialNode, sceneToAudioPosition(listener.position), now); setListenerOrientation(context.listener as unknown as LegacySpatialNode, listener.orientation, now);
@@ -66,6 +66,24 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   }, [activeSourceId, isPlaying, listener, sources, speakers]);
 
   useEffect(() => { sync(); }, [sync]);
+  useEffect(() => {
+    let frame = 0; let lastPaint = 0;
+    const paint = (time: number) => {
+      if (time - lastPaint > 48) {
+        lastPaint = time;
+        const next: Record<string, number> = {};
+        speakerNodesRef.current.forEach((node, id) => {
+          if (!isPlaying) { next[id] = 0; return; }
+          node.analyser.getByteTimeDomainData(node.analyserData);
+          let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128;
+          next[id] = Math.min(1, (energy / node.analyserData.length) * 5.4);
+        });
+        setActivityBySpeaker(next);
+      }
+      frame = requestAnimationFrame(paint);
+    };
+    frame = requestAnimationFrame(paint); return () => cancelAnimationFrame(frame);
+  }, [isPlaying]);
   const togglePlayback = useCallback(async () => {
     const context = ensureContext(); sync();
     if (isPlaying) { await context.suspend(); voicesRef.current.forEach((voice) => voice.media?.pause()); setIsPlaying(false); return; }
@@ -73,5 +91,5 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     catch { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }
   }, [ensureContext, isPlaying, sync]);
   useEffect(() => () => { voicesRef.current.forEach((voice) => { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); }); void contextRef.current?.close(); }, []);
-  return { isPlaying, togglePlayback, playbackError, clearPlaybackError: () => setPlaybackError(null) };
+  return { isPlaying, activityBySpeaker, togglePlayback, playbackError, clearPlaybackError: () => setPlaybackError(null) };
 }

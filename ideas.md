@@ -161,6 +161,16 @@ TOP、SIDE、POVは別Sceneではない。唯一の`ClubScene`が保持するSpe
 
 **POV**は編集面ではなくListening Previewである。CameraはListenerの`position`から開始し、pointer dragによるyaw/pitchだけを許可する。yaw/pitchはforward vectorに変換し、`AudioListener.forwardX / forwardY / forwardZ`へ同じ値を平滑に送る。TOP / SIDE / POVの小さな文字切替は、現在選択中のViewをweightと短い下線だけで示す。切替は200ms以下のopacity / projection transitionに留め、機能PanelやBlender風カメラにはしない。
 
+## Underground Emergence Direction
+
+Club Craftの暗色はUIテーマではなく、**音が置かれた地下クラブ空間そのもの**である。Floor、stage、grid、room boundaryは必要なときだけ黒に近い灰色で読める。常時目立つneon、HUD、彩色されたgaming effect、恒久的なoutlineは使わない。
+
+Speaker cabinetは黒に近い物理オブジェクトとして通常時にはほとんど闇に溶ける。音が通るときだけDriverのcone、cabinet edge、近くのhazeを、ごく弱いwarm ivory / muted amberの光で現す。活動光はactual audio levelを低速で追従し、瞬間的なflashや照明ショーにしない。Signal Vermilionは再生の短いthreadとPlay状態だけに残す。
+
+Smokeは粒子群ではなく、front/back/heightを読むための薄いsoft hazeである。TOPではfloorの微細な光量差、SIDEでは高さに沿った薄い層、POVでは遠いstageや活動Speakerの周辺でわずかに光を拾う奥行きとして扱う。すべてのViewで同じblack charcoal、smoke gray、soft warm lightを共有する。
+
+操作面はdark translucent glassに近い最小限のsurfaceに留める。文字はsoft gray、borderはほぼ見えない程度、InspectorはSpeakerの存在を邪魔しない。視覚的優先順位は**活動Speaker → 空間配置 → hazeの奥行き → UI**とする。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

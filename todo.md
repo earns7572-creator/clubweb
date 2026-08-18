@@ -77,3 +77,8 @@
 - [x] POVでListener位置・yaw・pitchを視覚とAudioListenerへ同期する。
 - [x] View切替でもAudio Graphを作り直さず、既存HRTF・ローカル音源を保つ。
 - [x] desktop/mobile、Top/Side/POV、音響同期を検証して保存・報告する。
+- [x] 既存TOP・SIDE・POVの描画とSpeaker活動データの接続点を確認する。
+- [x] 暗闇・haze・活動Speaker・控えめな暗色操作面のDesign Systemを定義する。
+- [x] TOP・SIDE・POVで共有する黒いクラブ空間と低密度のvolumetric-looking hazeを実装する。
+- [x] Speaker activityと再生状態に連動する控えめなcone illumination・rim lightを実装する。
+- [x] 既存の再生、HRTF、配置、3視点、desktop/mobileを検証して保存する。
