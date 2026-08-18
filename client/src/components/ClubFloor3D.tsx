@@ -2,10 +2,10 @@
  * Physical Sound System UI: a quiet off-white architectural model with printed speaker objects.
  * This file owns visual material only; all selection, snapping, dragging, and audio callbacks remain unchanged.
  */
-import { Canvas, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, Grid, OrbitControls, RoundedBox } from "@react-three/drei";
+import { Canvas, type ThreeEvent, useThree } from "@react-three/fiber";
+import { ContactShadows, Grid, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { ClubSpeaker, SpeakerKind } from "@/hooks/useClubAudio";
 
 type Point = { x: number; y: number };
@@ -16,27 +16,28 @@ type Props = {
   listener: Point;
   selectedSpeakerId: string;
   sourceColor?: string;
+  signalActive?: boolean;
   onSpeakerSelect: (id: string) => void;
   onSpeakerMove: (id: string, position: Point) => void;
   onListenerMove: (position: Point) => void;
 };
 
-const roomWidth = 10;
+const roomWidth = 13;
 const roomDepth = 8;
 const toWorld = (point: Point): [number, number, number] => [(point.x - .5) * roomWidth, 0, (point.y - .5) * roomDepth];
 const toPoint = (position: THREE.Vector3): Point => ({ x: Math.max(.07, Math.min(.93, position.x / roomWidth + .5)), y: Math.max(.07, Math.min(.93, position.z / roomDepth + .5)) });
 
-const typeStyles: Record<SpeakerKind, { color: string; baffle: string; body: [number, number, number]; drivers: number[]; label: string; horn?: boolean }> = {
-  sub: { color: "#343632", baffle: "#242622", body: [1.45, 1.02, 1.15], drivers: [0], label: "SUB" },
-  woofer: { color: "#83847d", baffle: "#343631", body: [1.58, .82, .78], drivers: [-.42, .42], label: "WOOFER" },
-  full: { color: "#e6e5dd", baffle: "#d7d6ce", body: [.72, 1.72, .72], drivers: [-.36, .36], label: "FULL" },
-  mid: { color: "#aaa9a1", baffle: "#77776f", body: [.62, 1.18, .62], drivers: [0], label: "MID" },
-  high: { color: "#c6c4bc", baffle: "#6b6c65", body: [.72, .7, .62], drivers: [0], label: "HIGH", horn: true },
+const typeStyles: Record<SpeakerKind, { color: string; baffle: string; body: [number, number, number]; drivers: Array<[number, number]>; label: string; horn?: boolean }> = {
+  sub: { color: "#343632", baffle: "#242622", body: [1.55, .86, 1.2], drivers: [[0, 0]], label: "SUB" },
+  woofer: { color: "#83847d", baffle: "#343631", body: [1.72, .72, .82], drivers: [[-.38, 0], [.38, 0]], label: "WOOFER" },
+  full: { color: "#e6e5dd", baffle: "#d7d6ce", body: [.7, 1.78, .74], drivers: [[0, -.37], [0, .38]], label: "FULL" },
+  mid: { color: "#aaa9a1", baffle: "#77776f", body: [.7, .74, .66], drivers: [[0, 0]], label: "MID" },
+  high: { color: "#c6c4bc", baffle: "#6b6c65", body: [.76, .52, .68], drivers: [[0, 0]], label: "HIGH", horn: true },
 };
 
-function Driver({ y, depth, size, horn }: { y: number; depth: number; size: number; horn?: boolean }) {
-  if (horn) return <group position={[0, y, depth / 2 + .07]} rotation={[Math.PI / 2, 0, 0]}><mesh><coneGeometry args={[size * 1.25, .26, 4]} /><meshStandardMaterial color="#292b27" roughness={.82} /></mesh><mesh position={[0, -.14, 0]}><cylinderGeometry args={[size * .25, size * .25, .02, 18]} /><meshStandardMaterial color="#090a08" /></mesh></group>;
-  return <group position={[0, y, depth / 2 + .05]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[size, size, .08, 24]} /><meshStandardMaterial color="#252823" roughness={.66} metalness={.08} /></mesh><mesh position={[0, 0, .046]}><cylinderGeometry args={[size * .68, size * .68, .014, 24]} /><meshStandardMaterial color="#080a08" roughness={.52} /></mesh><mesh position={[0, 0, .06]}><cylinderGeometry args={[size * .15, size * .15, .018, 20]} /><meshStandardMaterial color="#565950" roughness={.78} /></mesh></group>;
+function Driver({ x, y, depth, size, horn }: { x: number; y: number; depth: number; size: number; horn?: boolean }) {
+  if (horn) return <group position={[x, y, depth / 2 + .07]} rotation={[Math.PI / 2, 0, 0]}><mesh><coneGeometry args={[size * 1.35, .28, 4]} /><meshStandardMaterial color="#292b27" roughness={.82} /></mesh><mesh position={[0, -.15, 0]}><cylinderGeometry args={[size * .23, size * .23, .02, 18]} /><meshStandardMaterial color="#090a08" /></mesh></group>;
+  return <group position={[x, y, depth / 2 + .05]} rotation={[Math.PI / 2, 0, 0]}><mesh><cylinderGeometry args={[size, size, .08, 24]} /><meshStandardMaterial color="#252823" roughness={.66} metalness={.08} /></mesh><mesh position={[0, 0, .046]}><cylinderGeometry args={[size * .68, size * .68, .014, 24]} /><meshStandardMaterial color="#080a08" roughness={.52} /></mesh><mesh position={[0, 0, .06]}><cylinderGeometry args={[size * .15, size * .15, .018, 20]} /><meshStandardMaterial color="#565950" roughness={.78} /></mesh></group>;
 }
 
 function PrintedLayers({ width, height, depth }: { width: number; height: number; depth: number }) {
@@ -47,13 +48,13 @@ function SpeakerObject({ speaker, selected, onSelect, onDragStart, onDragMove, o
   const style = typeStyles[speaker.kind];
   const [width, height, depth] = style.body;
   const [x, , z] = toWorld(speaker);
-  const driverSize = speaker.kind === "sub" ? .36 : speaker.kind === "woofer" ? .22 : .18;
+  const driverSize = speaker.kind === "sub" ? .37 : speaker.kind === "woofer" ? .21 : speaker.kind === "high" ? .2 : .18;
   return <group position={[x, height / 2, z]} onPointerDown={(event) => { event.stopPropagation(); onSelect(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(); }}>
     {selected && <mesh position={[0, -height / 2 + .012, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[Math.max(width, depth) * .76, Math.max(width, depth) * .92, 40]} /><meshBasicMaterial color="#d65342" transparent opacity={.65} side={THREE.DoubleSide} /></mesh>}
     <RoundedBox args={[width, height, depth]} radius={.055} smoothness={2} castShadow receiveShadow><meshStandardMaterial color={style.color} roughness={.74} metalness={.05} /></RoundedBox>
     <RoundedBox args={[width * .86, height * .82, .035]} position={[0, 0, depth / 2 + .021]} radius={.026} smoothness={2} castShadow><meshStandardMaterial color={style.baffle} roughness={.83} metalness={.04} /></RoundedBox>
     <PrintedLayers width={width} height={height} depth={depth} />
-    {style.drivers.map((driverY) => <Driver key={driverY} y={driverY} depth={depth} size={driverSize} horn={style.horn} />)}
+    {style.drivers.map(([driverX, driverY]) => <Driver key={`${driverX}-${driverY}`} x={driverX} y={driverY} depth={depth} size={driverSize} horn={style.horn} />)}
     <mesh position={[0, -height / 2 - .045, 0]} castShadow><boxGeometry args={[width * 1.08, .09, depth * 1.08]} /><meshStandardMaterial color={style.color} roughness={.78} /></mesh>
     <sprite position={[0, -height / 2 + .13, depth / 2 + .095]} scale={[.45, .11, 1]}><spriteMaterial color="#232620" /></sprite>
   </group>;
@@ -62,11 +63,23 @@ function SpeakerObject({ speaker, selected, onSelect, onDragStart, onDragMove, o
 function ListenerObject({ listener, onDragStart, onDragMove, onDragEnd }: { listener: Point; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: () => void }) {
   const [x, , z] = toWorld(listener);
   return <group position={[x, .14, z]} onPointerDown={(event) => { event.stopPropagation(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(); }}>
-    {[.72, 1.45, 2.18].map((radius, index) => <mesh key={radius} position={[0, -.126, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[radius - .012, radius + .012, 48]} /><meshBasicMaterial color={index === 0 ? "#d65342" : "#74766d"} transparent opacity={index === 0 ? .32 : .22} side={THREE.DoubleSide} /></mesh>)}
-    <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.35, .42, 32]} /><meshBasicMaterial color="#d65342" transparent opacity={.8} side={THREE.DoubleSide} /></mesh>
-    <mesh castShadow><cylinderGeometry args={[.19, .25, .2, 20]} /><meshStandardMaterial color="#d65342" roughness={.52} /></mesh>
-    <mesh position={[0, .25, 0]} castShadow><sphereGeometry args={[.13, 18, 16]} /><meshStandardMaterial color="#f9f0e6" roughness={.68} /></mesh>
+    <mesh position={[0, -.126, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.68, .695, 48]} /><meshBasicMaterial color="#777870" transparent opacity={.18} side={THREE.DoubleSide} /></mesh>
+    <mesh rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.28, .34, 32]} /><meshBasicMaterial color="#d65342" transparent opacity={.72} side={THREE.DoubleSide} /></mesh>
+    <mesh castShadow><cylinderGeometry args={[.16, .22, .16, 20]} /><meshStandardMaterial color="#44453f" roughness={.64} /></mesh>
+    <mesh position={[0, .19, 0]} castShadow><sphereGeometry args={[.115, 18, 16]} /><meshStandardMaterial color="#f3f1e9" roughness={.72} /></mesh>
   </group>;
+}
+
+function ResponsiveFloorCamera() {
+  const { camera, size } = useThree();
+  useEffect(() => {
+    const orthographic = camera as THREE.OrthographicCamera;
+    orthographic.position.set(0, 14, 3.2);
+    orthographic.zoom = size.width < 760 ? 46 : 92;
+    orthographic.lookAt(0, 0, 0);
+    orthographic.updateProjectionMatrix();
+  }, [camera, size.width]);
+  return null;
 }
 
 function RoomScene(props: Props) {
@@ -86,26 +99,22 @@ function RoomScene(props: Props) {
   const listenerPoint = new THREE.Vector3(listenerWorld[0], .06, listenerWorld[2]);
 
   return <>
-    <ambientLight intensity={1.45} />
-    <directionalLight castShadow position={[4, 8, 5]} intensity={1.35} shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
-    <directionalLight position={[-5, 4, -5]} intensity={.26} color="#e7ded1" />
-    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow onPointerMove={updateFromEvent} onPointerUp={stopDrag}><planeGeometry args={[roomWidth, roomDepth]} /><meshStandardMaterial color="#e7e6df" roughness={.96} /></mesh>
-    <Grid args={[roomWidth, roomDepth]} cellSize={roomWidth / 12} cellThickness={.32} cellColor="#b7b7af" sectionSize={roomWidth} sectionThickness={.48} sectionColor="#74756f" fadeDistance={18} fadeStrength={1.3} position={[0, .012, 0]} />
-    <group position={[0, .023, 0]}><mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[.035, roomDepth * .92]} /><meshBasicMaterial color="#74756f" transparent opacity={.22} /></mesh><mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[roomWidth * .92, .035]} /><meshBasicMaterial color="#74756f" transparent opacity={.22} /></mesh></group>
-    <mesh position={[0, 1.12, -roomDepth / 2]} receiveShadow><boxGeometry args={[roomWidth, 2.2, .18]} /><meshStandardMaterial color="#a4a39c" roughness={.93} /></mesh>
-    <mesh position={[-roomWidth / 2, .82, 0]} rotation={[0, 0, -.12]}><boxGeometry args={[.2, 1.65, roomDepth]} /><meshStandardMaterial color="#b8b7b0" roughness={.94} /></mesh>
-    <mesh position={[roomWidth / 2, .82, 0]} rotation={[0, 0, .12]}><boxGeometry args={[.2, 1.65, roomDepth]} /><meshStandardMaterial color="#b8b7b0" roughness={.94} /></mesh>
-    <group position={[0, .23, -3.05]}><mesh castShadow><boxGeometry args={[1.9, .45, .68]} /><meshStandardMaterial color="#e0dfd7" roughness={.78} /></mesh>{[-.35, 0, .35].map((x) => <mesh key={x} position={[x, .02, .37]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[.09, .09, .04, 16]} /><meshStandardMaterial color="#242622" /></mesh>)}</group>
-    <mesh position={[0, .02, -.7]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.64, .67, 36]} /><meshBasicMaterial color={props.sourceColor ?? "#d65342"} transparent opacity={.46} side={THREE.DoubleSide} /></mesh>
-    <mesh position={[0, .06, -.7]}><sphereGeometry args={[.12, 20, 16]} /><meshStandardMaterial color={props.sourceColor ?? "#d65342"} emissive={props.sourceColor ?? "#d65342"} emissiveIntensity={.22} /></mesh>
-    {selected && <><mesh><tubeGeometry args={[new THREE.CatmullRomCurve3([sourcePoint, new THREE.Vector3(sourcePoint.x, .08, (sourcePoint.z + speakerPoint.z) / 2), speakerPoint]), 24, .022, 7, false]} /><meshBasicMaterial color="#d65342" transparent opacity={.86} /></mesh><mesh><tubeGeometry args={[new THREE.CatmullRomCurve3([speakerPoint, new THREE.Vector3((speakerPoint.x + listenerPoint.x) / 2, .04, (speakerPoint.z + listenerPoint.z) / 2), listenerPoint]), 24, .017, 6, false]} /><meshBasicMaterial color="#d65342" transparent opacity={.58} /></mesh><mesh position={[speakerPoint.x, .075, speakerPoint.z]}><sphereGeometry args={[.075, 16, 12]} /><meshBasicMaterial color="#d65342" /></mesh></>}
+    <ambientLight intensity={1.48} />
+    <directionalLight castShadow position={[4, 9, 5]} intensity={1.18} shadow-mapSize-width={1024} shadow-mapSize-height={1024} />
+    <directionalLight position={[-5, 6, -4]} intensity={.18} color="#e7ded1" />
+    <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow onPointerMove={updateFromEvent} onPointerUp={stopDrag}><planeGeometry args={[roomWidth, roomDepth]} /><meshStandardMaterial color="#e9e8e1" roughness={.98} /></mesh>
+    <Grid args={[roomWidth, roomDepth]} cellSize={roomWidth / 12} cellThickness={.48} cellColor="#b3b3ab" sectionSize={roomWidth} sectionThickness={.6} sectionColor="#808178" fadeDistance={30} fadeStrength={.8} position={[0, .012, 0]} />
+    <group position={[0, .023, 0]}><mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[.026, roomDepth * .92]} /><meshBasicMaterial color="#808179" transparent opacity={.16} /></mesh><mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[roomWidth * .92, .026]} /><meshBasicMaterial color="#808179" transparent opacity={.16} /></mesh></group>
+    <group position={[0, .09, -3.3]}><mesh castShadow><boxGeometry args={[1.75, .18, .55]} /><meshStandardMaterial color="#d8d7cf" roughness={.86} /></mesh><mesh position={[0, .095, 0]}><boxGeometry args={[1.45, .014, .34]} /><meshStandardMaterial color="#b1b1a9" roughness={.9} /></mesh>{[-.35, 0, .35].map((x) => <mesh key={x} position={[x, .105, .2]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[.06, .06, .025, 16]} /><meshStandardMaterial color="#343630" /></mesh>)}</group>
+    <mesh position={[0, .02, -.7]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.35, .37, 36]} /><meshBasicMaterial color={props.sourceColor ?? "#d65342"} transparent opacity={.32} side={THREE.DoubleSide} /></mesh>
+    <mesh position={[0, .045, -.7]}><sphereGeometry args={[.09, 20, 16]} /><meshStandardMaterial color={props.sourceColor ?? "#d65342"} roughness={.58} /></mesh>
+    {selected && props.signalActive && <><mesh><tubeGeometry args={[new THREE.CatmullRomCurve3([sourcePoint, new THREE.Vector3(sourcePoint.x, .08, (sourcePoint.z + speakerPoint.z) / 2), speakerPoint]), 24, .014, 7, false]} /><meshBasicMaterial color="#d65342" transparent opacity={.72} /></mesh><mesh><tubeGeometry args={[new THREE.CatmullRomCurve3([speakerPoint, new THREE.Vector3((speakerPoint.x + listenerPoint.x) / 2, .04, (speakerPoint.z + listenerPoint.z) / 2), listenerPoint]), 24, .011, 6, false]} /><meshBasicMaterial color="#d65342" transparent opacity={.42} /></mesh><mesh position={[speakerPoint.x, .075, speakerPoint.z]}><sphereGeometry args={[.055, 16, 12]} /><meshBasicMaterial color="#d65342" /></mesh></>}
     {props.speakers.map((speaker) => <SpeakerObject key={speaker.id} speaker={speaker} selected={speaker.id === props.selectedSpeakerId} onSelect={() => props.onSpeakerSelect(speaker.id)} onDragStart={() => { drag.current = { type: "speaker", id: speaker.id }; }} onDragMove={updateFromEvent} onDragEnd={stopDrag} />)}
     <ListenerObject listener={props.listener} onDragStart={() => { drag.current = { type: "listener" }; }} onDragMove={updateFromEvent} onDragEnd={stopDrag} />
     <ContactShadows position={[0, .001, 0]} opacity={.34} scale={14} blur={2.8} far={6} />
-    <OrbitControls enablePan={false} enableZoom={false} enableRotate={false} target={[0, 0, -.3]} />
   </>;
 }
 
 export default function ClubFloor3D(props: Props) {
-  return <div className="club-floor-3d"><Canvas shadows camera={{ position: [0, 10.5, 7.2], fov: 42 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}><color attach="background" args={["#e7e6df"]} /><RoomScene {...props} /></Canvas><div className="three-room-label north">N / ROOM AXIS</div><div className="three-room-label stage">STAGE / 0</div><div className="three-room-label scale">0M&nbsp;&nbsp; 3M&nbsp;&nbsp; 6M</div><div className="three-map-rule" aria-hidden="true">{Array.from({ length: 11 }, (_, index) => <i key={index} />)}</div><div className="three-room-hint">GRAB A CABINET · SPEAKERS SNAP TO GRID · MOVE ◎ YOU</div></div>;
+  return <div className="club-floor-3d"><Canvas orthographic shadows camera={{ position: [0, 14, 3.2], zoom: 92 }} dpr={[1, 1.5]} gl={{ antialias: true, alpha: true }}><color attach="background" args={["#e9e8e1"]} /><ResponsiveFloorCamera /><RoomScene {...props} /></Canvas><div className="three-room-label north">N / floor axis</div><div className="three-room-label stage">stage reference</div><div className="three-room-label scale">0m&nbsp;&nbsp; 3m&nbsp;&nbsp; 6m</div><div className="three-map-rule" aria-hidden="true">{Array.from({ length: 11 }, (_, index) => <i key={index} />)}</div><div className="three-room-hint">Drag a cabinet or the listener</div></div>;
 }

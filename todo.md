@@ -50,4 +50,9 @@
 - [x] Floor Viewを画面の主役にし、周囲の操作を最小限へ再配置する。
 - [x] 音源選択、再生、Speaker配置、Listener、Inspectorの既存操作を保ったまま視覚を再設計する。
 - [x] desktop / mobileで新しい1画面レイアウトと既存操作を検証する。
-- [ ] UI再設計をチェックポイントへ保存する。
+- [x] UI再設計をチェックポイントへ保存する。
+- [x] 固定Sidebarをなくし、Floorが画面の85〜90%を占める単一作業面へ再構成する。
+- [x] 上部の現在曲名から開く曲選択Popoverと端末音源追加を実装する。
+- [x] 選択Speakerに寄り添う最小限のFloating Inspectorへ既存調整を移す。
+- [x] orthographicなFloor、Speaker cabinet、Listener、条件付きSignal threadへ3D表現を更新する。
+- [ ] 既存の再生・配置・Listener操作を検証し、Floor中心UIを保存する。

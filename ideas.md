@@ -113,6 +113,20 @@ gradient、neon、glow、cyberpunk、青紫のAIサービス風配色、pill but
 - Speaker Typeは色よりも、cabinet比率、ドライバー、グリル、ホーン、影で判別できることを優先する。
 - Signal Vermilionのthreadは、選択音源、選択Speaker、Listenerを常に一続きに結ぶ、Club Craftの最も重要な視覚記号として扱う。
 
+## Floor-Centric Instrument Screen
+
+次のメイン画面では固定Sidebarを廃止する。中央のFloorは大きな余白を含めてviewportの85〜90%の視覚的重要度を持つ、直交投影の建築模型とする。上部中央の現在曲名は曲選択Popoverの唯一の入口にし、Popover内には**Club Craft Picks**と**Upload Audio**だけを表示する。曲一覧は常設せず、選ぶと静かに閉じる。
+
+選択中のSpeakerはFloor右下の小さなFloating Inspectorで調整する。操作はSpeaker Type、Volume、Mute、Removeに限り、数値座標・Routing・計測器・追加設定を出さない。Speaker追加はFloor下端の小さなobject trayに置き、Speakerを「追加する」より「置く」感覚を優先する。
+
+Roomは3面の壁ではなく、薄いfloor surfaceと小さなStageだけで示す。Listenerはtarget iconではなく、白いListening markerと低いgraphite baseとして表現する。距離リングはごく細い1本までに削減する。Signal Vermilion threadは通常時は消し、選択・ドラッグ・再生中だけ短く可視化する。
+
+### Style Decisions
+
+- HeaderのClub Craft lockupは、開いた同心円markと、Space Groteskを使う固有の広いwordmarkを固定の組として扱う。一般的なall-caps見出しにはしない。
+- 床図にはgrid、軸、縮尺、Stage referenceを残すが、すべて薄い鉛筆線として扱う。最初に設定を読ませるための技術UIには発展させない。
+- Floating InspectorとSpeaker trayは、細いgraphiteのtop rail、控えめな内側のハイライト、刻印のようなlabelを備える、小さな機器の操作プレートとして扱う。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |
