@@ -153,6 +153,14 @@ Inspectorはborderlessな半透明control surfaceとし、Full Range、Type、Le
 - Signal Vermilion `#D64B35`は、再生中のSource、短いSignal thread、Play状態だけに現す。待機時のUI装飾や大きな選択ringには使わない。
 - Headerのbrand lockupは開いた同心円markと、ゆるやかなspacingを持つClub Craft wordmarkを不可分の組として扱う。控えめだが、default app labelにはしない。
 
+## One Scene, Three Views
+
+TOP、SIDE、POVは別Sceneではない。唯一の`ClubScene`が保持するSpeakerの`position.x / position.y / position.z`と、Listenerの`position`および`orientation`を、3つの表示がそのまま読む。View切替は投影と操作の切替だけであり、Speaker Audio Graph、Audio Source、HRTF PannerNodeを再生成しない。
+
+**TOP**は通常編集面とし、横を`x`、縦を`y`として12×12 gridにsnapする。Topのdragは`x/y`だけを更新し、`z`は保持する。**SIDE**は横を`y`、縦を`z`とする小さな横向き模型である。dragは`y/z`だけを更新し、`x`は保持する。重なった模型は保存値を動かさず、描画上だけ数pixelずらす。TOPとSIDEの選択Speakerは共有する。
+
+**POV**は編集面ではなくListening Previewである。CameraはListenerの`position`から開始し、pointer dragによるyaw/pitchだけを許可する。yaw/pitchはforward vectorに変換し、`AudioListener.forwardX / forwardY / forwardZ`へ同じ値を平滑に送る。TOP / SIDE / POVの小さな文字切替は、現在選択中のViewをweightと短い下線だけで示す。切替は200ms以下のopacity / projection transitionに留め、機能PanelやBlender風カメラにはしない。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

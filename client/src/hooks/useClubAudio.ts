@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
-export type ClubListener = { position: Position3D; orientation: { forwardX: number; forwardY: number; forwardZ: number } };
+export type ClubListener = { position: Position3D; orientation: { yaw: number; pitch: number } };
 export type ClubSpeaker = { id: string; kind: SpeakerKind; label: string; position: Position3D; level: number; muted: boolean; responseProfileId: string; activity: number };
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
@@ -23,7 +23,8 @@ export function sceneToAudioPosition(position: Position3D) { return { x: (positi
 
 function smoothParam(param: AudioParam | undefined, value: number, now: number) { param?.setTargetAtTime(value, now, .035); }
 function setSpatialPosition(node: LegacySpatialNode, position: { x: number; y: number; z: number }, now: number) { if (node.positionX && node.positionY && node.positionZ) { smoothParam(node.positionX, position.x, now); smoothParam(node.positionY, position.y, now); smoothParam(node.positionZ, position.z, now); } else node.setPosition?.(position.x, position.y, position.z); }
-function setListenerOrientation(node: LegacySpatialNode, orientation: ClubListener["orientation"], now: number) { if (node.forwardX && node.forwardY && node.forwardZ) { smoothParam(node.forwardX, orientation.forwardX, now); smoothParam(node.forwardY, orientation.forwardY, now); smoothParam(node.forwardZ, orientation.forwardZ, now); } else node.setOrientation?.(orientation.forwardX, orientation.forwardY, orientation.forwardZ); }
+export function sceneOrientationToAudioOrientation(orientation: ClubListener["orientation"]) { return { x: Math.sin(orientation.yaw) * Math.cos(orientation.pitch), y: Math.sin(orientation.pitch), z: -Math.cos(orientation.yaw) * Math.cos(orientation.pitch) }; }
+function setListenerOrientation(node: LegacySpatialNode, orientation: ClubListener["orientation"], now: number) { const forward = sceneOrientationToAudioOrientation(orientation); if (node.forwardX && node.forwardY && node.forwardZ) { smoothParam(node.forwardX, forward.x, now); smoothParam(node.forwardY, forward.y, now); smoothParam(node.forwardZ, forward.z, now); } else node.setOrientation?.(forward.x, forward.y, forward.z); }
 
 function makeOfficialVoice(context: AudioContext, source: ClubSource): Voice {
   const output = context.createGain(); output.gain.value = .24;

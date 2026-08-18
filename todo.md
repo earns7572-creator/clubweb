@@ -71,3 +71,9 @@
 - [x] ローカル音源の再生同期とAudioContext resumeを修正する。
 - [x] 非対応音声ファイルや再生失敗をユーザーが分かる形で表示する。
 - [x] 型検査、production build、実行時ログでローカル音源経路を検証し保存する。
+- [x] TOP・SIDE・POVの共通ClubSceneと、残りの受入基準を確認する。
+- [x] 同一Position3Dを読む小さなTOP / SIDE / POV View Switcherを追加する。
+- [x] SIDE ViewでY/Zだけを直接ドラッグ編集できる小さなSound System模型を実装する。
+- [x] POVでListener位置・yaw・pitchを視覚とAudioListenerへ同期する。
+- [x] View切替でもAudio Graphを作り直さず、既存HRTF・ローカル音源を保つ。
+- [x] desktop/mobile、Top/Side/POV、音響同期を検証して保存・報告する。
