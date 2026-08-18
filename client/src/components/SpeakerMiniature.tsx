@@ -59,12 +59,13 @@ const fullHorn = makeHornFlare(.74, .42, .18, .11, .36);
 const midHorn = makeHornFlare(.62, .22, .14, .08, .23);
 const highHorn = makeHornFlare(1.02, .42, .16, .1, .42);
 
+function makeBlueprint(body: [number, number, number], profile: ActivityProfile, taper: number): Blueprint { const cabinet = makeChamferCabinet(...body, taper); return { body, profile, cabinet, edges: new THREE.EdgesGeometry(cabinet, 14) }; }
 const blueprints: Record<SpeakerKind, Blueprint> = {
-  sub: { body: [2.42, .92, 1.42], profile: { attack: .68, spread: 1.48, rim: .17, driver: .28 }, cabinet: makeChamferCabinet(2.42, .92, 1.42, .018), edges: new THREE.EdgesGeometry(makeChamferCabinet(2.42, .92, 1.42, .018), 14) },
-  woofer: { body: [1.18, 1.56, 1.1], profile: { attack: .82, spread: 1.05, rim: .21, driver: .38 }, cabinet: makeChamferCabinet(1.18, 1.56, 1.1, .045), edges: new THREE.EdgesGeometry(makeChamferCabinet(1.18, 1.56, 1.1, .045), 14) },
-  full: { body: [1.12, 2.04, 1.1], profile: { attack: .9, spread: .9, rim: .27, driver: .42 }, cabinet: makeChamferCabinet(1.12, 2.04, 1.1, .115), edges: new THREE.EdgesGeometry(makeChamferCabinet(1.12, 2.04, 1.1, .115), 14) },
-  mid: { body: [.86, .92, .56], profile: { attack: 1.18, spread: .62, rim: .2, driver: .48 }, cabinet: makeChamferCabinet(.86, .92, .56, .04), edges: new THREE.EdgesGeometry(makeChamferCabinet(.86, .92, .56, .04), 14) },
-  high: { body: [1.18, .6, 1.18], profile: { attack: 1.38, spread: .48, rim: .16, driver: .5 }, cabinet: makeChamferCabinet(1.18, .6, 1.18, .1), edges: new THREE.EdgesGeometry(makeChamferCabinet(1.18, .6, 1.18, .1), 14) },
+  sub: makeBlueprint([2.42, .92, 1.42], { attack: .68, spread: 1.48, rim: .17, driver: .28 }, .018),
+  woofer: makeBlueprint([1.18, 1.56, 1.1], { attack: .82, spread: 1.05, rim: .21, driver: .38 }, .045),
+  full: makeBlueprint([1.12, 2.04, 1.1], { attack: .9, spread: .9, rim: .27, driver: .42 }, .115),
+  mid: makeBlueprint([.86, .92, .56], { attack: 1.18, spread: .62, rim: .2, driver: .48 }, .04),
+  high: makeBlueprint([1.18, .6, 1.18], { attack: 1.38, spread: .48, rim: .16, driver: .5 }, .1),
 };
 const activityColor: Record<SpeakerKind, string> = { sub: "#ef3e32", woofer: "#f06a31", full: "#f2a842", mid: "#e7d64b", high: "#56d46a" };
 

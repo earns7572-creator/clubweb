@@ -147,3 +147,9 @@
 - [x] TOP限定でcontinuous drag、soft snap、Smart Guides、Shift / Alt modifierを実装する。
 - [x] 16台、desktop / touch、drag開始、snap解除、guide表示、型検査、production buildを検証する。
 - [x] placement UX更新をGitHub mainへpushする。
+- [x] Audio sync、AudioParam、activity state、Canvas、drag、POV、SIDE、geometry、bundle、Object URLの現状を計測・確認する。
+- [x] 見た目・音・操作感を変えないAudio / React / R3F / pointer / resource最適化設計を確定する。
+- [x] Audio sync分割、AudioParam cache、activity局所化、idle RAF、demand renderingを安全に実装する。
+- [x] drag / POV / SIDE coalescing、geometry共有、model-lab lazy load、Object URL cleanupを実装する。
+- [x] 16台・3視点・再生・操作の差分を測定し、型検査・production buildを通す。
+- [ ] 性能最適化をGitHub mainへpushし、測定済み・未測定の結果を報告する。

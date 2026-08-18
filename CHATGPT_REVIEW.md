@@ -52,13 +52,14 @@ TOP Viewは操作性を優先します。停止時の可視性はambient / hemis
 | ファイル | 担当 |
 | --- | --- |
 | `client/src/pages/Home.tsx` | 共有ClubScene、View切替、曲選択、Speaker追加、Inspector |
-| `client/src/hooks/useClubAudio.ts` | Web Audio graph、HRTF、ローカルファイル再生、activity値 |
+| `client/src/hooks/useClubAudio.ts` | Web Audio graph、分割sync、AudioParam cache、HRTF、ローカルファイル再生、activity publisher |
+| `client/src/lib/activityStore.ts` | Speaker activityだけをScene projectionへ通知する小さなexternal store |
 | `client/src/components/ClubFloor3D.tsx` | TOP ViewのR3F Scene、fixed-plane drag、Soft Grid、temporary Smart Guides、軽量lighting |
 | `client/src/lib/smartPlacement.ts` | alignment、equal spacing、Listener同距離、major / minor gridのpriority・hysteresis・modifierを持つ純粋placement helper |
 | `client/src/components/SideScene.tsx` | SIDE ViewのY/Z編集 |
 | `client/src/components/PovPreview.tsx` | POVのCamera / yaw / pitchとListener orientation |
 | `client/src/components/SpeakerMiniature.tsx` | 5種のmodule-level shared PA geometry、horn flare、woofer assembly、activity光、idle edge |
-| `client/src/components/SpeakerModelValidation.tsx` | 3D Speaker形状を中立光で確認する検証用route。Typeとcamera angleをqueryで指定可能。 |
+| `client/src/components/SpeakerModelValidation.tsx` | 3D Speaker形状を中立光で確認するlazy-loaded検証用route。Typeとcamera angleをqueryで指定可能。 |
 | `client/src/dark-club.css` | 暗いクラブの操作面と浮遊UI |
 | `client/src/spatial-installation.css` | 画面全体の構成とFloor中心の配置 |
 | `client/src/three-views.css` | TOP / SIDE / POVの切替と各Viewの表示規則 |
@@ -82,6 +83,12 @@ pnpm dev
 6. `/?model-lab=1`で5種のSpeakerの形を確認します。`/?model-lab=1&active=1`ではactivity色も確認できます。
 7. 単体確認は、たとえば`/?model-lab=1&kind=sub&angle=three-quarter`、`/?model-lab=1&kind=high&angle=three-quarter`、`/?model-lab=1&kind=full&angle=front`を使います。`kind`は`sub`、`woofer`、`full`、`mid`、`high`、`angle`は`front`、`three-quarter`、`side`です。
 
+## 性能最適化の不変条件
+
+`useClubAudio.ts`はtopology、Speaker DSP、Speaker position、Listener position、Listener orientationを別effectで同期し、各nodeの直近値をcacheして、値が変わらない`AudioParam`へ再設定しません。activityはReactの親stateではなく`activityStore`を通じてScene projectionだけへ流れ、停止後にresidual envelopeが消えた時点でrequestAnimationFrameを止めます。TOPとPOVのCanvasは`frameloop="demand"`、POV lookとTOP / SIDE dragは1 frame最大1回のrAF更新です。model-labはlazy load、local audioのObject URLはsourceから外れた時またはunmount時にrevokeします。
+
+`pnpm test:performance`はこの分割、activity局所化、demand Canvas、pointer coalescing、model-lab lazy load、shared geometryを静的に検査します。production buildで確認できた最終main JSは`1,607.22 kB`、gzipは`448.84 kB`です。model-labは通常routeと別の`5.67 kB` JS chunkへ分割されています。対話型ブラウザプロファイラでのFPS / frame timeはこの環境では未測定であり、数値を推測していません。
+
 ## レビューしてほしい観点
 
 | 優先度 | 観点 | 確認してほしいこと |
@@ -91,6 +98,7 @@ pnpm dev
 | 高 | TOP操作性 | fixed-plane pointer drag、grab offset、soft snap hysteresis、Alt解除、Shift精密配置、temporary guide、停止時可視性、最大16台で不要な高負荷処理がないか |
 | 高 | R3F安全性 | JSX属性がThree.js objectへ不正に渡らないか、horn / woofer / cabinet geometryとmaterialがmodule-levelで共有されるか |
 | 中 | performance | TOP / POVにshadow mapが復活していないか、render中のgeometry allocationがなく、SpeakerにPointLight・flat haze circle・volumetric beamがないか、TOP / POVのDPR上限が1.25か |
+| 中 | performance sync | Speaker drag時に無関係なDSP / listener effectが走らないか、停止後にactivity RAFが止まるか、activity更新でHeader / Inspectorが再renderされないか、Object URLがrevokeされるか |
 | 中 | UX | 一般利用者が30秒以内に「曲を選ぶ・Speakerを置く・動かして聴く」を理解できるか |
 | 低 | visual | 暗いクラブの雰囲気を保ちつつ、TOPだけは配置編集に十分な明度を持つか |
 

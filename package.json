@@ -10,6 +10,7 @@
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
     "test:placement": "node tests/run-smartPlacement.mjs",
+    "test:performance": "node tests/performanceArchitecture.test.cjs",
     "format": "prettier --write ."
   },
   "dependencies": {
