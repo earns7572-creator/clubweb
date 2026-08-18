@@ -163,3 +163,8 @@
 - [x] 外部glow / strip / discを撤去し、Speaker本体のemissive materialへ限定置換する。
 - [x] TOP / POVのactivity更新、idle復帰、16 Speaker、material数、型検査、production buildを検証する。
 - [x] emissive activity visual更新をGitHub mainへpushする。
+- [x] 添付指示・参考画像・現行activity・3視点・performance制約を照合する。
+- [x] LOW赤→MID黄→HIGH緑の連続周波数profile、部位別material、局所soft haloを設計する。
+- [x] Speaker geometry・Audio・Mixerを変えず、frequency emissiveと低負荷haloを実装する。
+- [x] TOP / SIDE / POV、idle復帰、16 Speaker、demand rendering、型検査、production buildを検証する。
+- [ ] 周波数visual更新をGitHub mainと公開チェックポイントへ保存する。
