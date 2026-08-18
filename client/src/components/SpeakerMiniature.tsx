@@ -22,7 +22,7 @@ const staticHornFrame = new THREE.MeshStandardMaterial({ color: "#38382f", rough
 const staticDetail = new THREE.MeshStandardMaterial({ color: "#2c2d27", roughness: .84 });
 const staticMetalDetail = new THREE.MeshStandardMaterial({ color: "#4b4b42", roughness: .42, metalness: .46 });
 const staticSelection = new THREE.MeshBasicMaterial({ color: "#d5c2a8", transparent: true, opacity: .028, side: THREE.BackSide });
-const staticIdleEdge = new THREE.LineBasicMaterial({ color: "#8e8b82", transparent: true, opacity: .22 });
+const staticIdleEdge = new THREE.LineBasicMaterial({ color: "#c4c0b3", transparent: true, opacity: .42 });
 const unitBox = new THREE.BoxGeometry(1, 1, 1);
 const wooferSurround = new THREE.TorusGeometry(1, .13, 6, 24);
 const wooferCone = new THREE.ConeGeometry(1, .18, 24, 1, true);
@@ -120,7 +120,7 @@ function HighModel({ blueprint, activity, color }: { blueprint: Blueprint; activ
 export function SpeakerMiniature({ kind, activity, selected = false, showHaze = true, idleVisible = false }: Props) {
   const blueprint = blueprints[kind]; const [width, height, depth] = blueprint.body; const visibleActivity = Math.max(0, Math.min(1, activity * blueprint.profile.attack)); const color = activityColor[kind];
   return <group>
-    {idleVisible && <pointLight color="#cbc6ba" intensity={.36} distance={1.9 + blueprint.profile.spread * .45} decay={2} position={[0, .2, depth / 2 + .8]} />}
+    {idleVisible && <pointLight color="#ddd7c8" intensity={.72} distance={2.25 + blueprint.profile.spread * .55} decay={2} position={[0, .2, depth / 2 + .8]} />}
     {idleVisible && <lineSegments geometry={blueprint.edges} material={staticIdleEdge} />}
     <pointLight color={color} intensity={visibleActivity * (2.1 + blueprint.profile.spread * .9)} distance={1.7 + blueprint.profile.spread * 1.7} decay={2} position={[0, 0, depth / 2 + .52]} />
     {showHaze && visibleActivity > .018 && <group position={[0, 0, depth / 2 + .17]}>{[0, 1].map((layer) => <mesh key={layer} position={[0, 0, layer * .035]} rotation={[Math.PI / 2 + layer * .13, layer * .3, 0]}><circleGeometry args={[Math.max(width, height) * (.34 + blueprint.profile.spread * .14 + layer * .1), 20]} /><meshBasicMaterial color={color} transparent opacity={visibleActivity * (.055 + blueprint.profile.spread * .022)} blending={THREE.AdditiveBlending} depthWrite={false} side={THREE.DoubleSide} /></mesh>)}</group>}

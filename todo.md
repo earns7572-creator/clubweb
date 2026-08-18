@@ -107,3 +107,9 @@
 - [x] ロゴ・固有形状を避けたオリジナルFULL cabinet、horn、woofer、grille、detail方針を定義する。
 - [x] FULL RANGEだけを上部horn・下部大径woofer・protective grille・傾いた縦長cabinetの専用geometryへ置き換える。
 - [x] 明るい検証Sceneと本番TOPでFULLのfront / 3/4 / side、型検査、buildを確認して保存する。
+- [x] TOPの中心座標、現在の照明、haze、Floorへの光の受け方を確認する。
+- [x] 中心上部から落ちるspotlightと控えめなvolumetric-looking coneを実装する。
+- [x] TOP表示、既存Speaker activity、SIDE/POV不変、型検査、production buildを検証して保存する。
+- [x] TOP全体のambient、Floor、Grid、cabinet edgeの現在の明度を確認する。
+- [x] TOP専用にambient・Floor・Grid・cabinet edgeを明るく調整する。
+- [x] 停止時TOP、再生時帯域色、SIDE/POV不変、型検査、production buildを検証して保存する。
