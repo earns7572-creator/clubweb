@@ -137,4 +137,4 @@
 - [x] TOPのSpeaker / Listenerドラッグ開始、選択、remove control、座標変換を確認する。
 - [x] Pointerイベント競合または座標計算を最小修正し、ドラッグ開始を安定化する。
 - [x] TOPのSpeaker / Listener、Gridスナップ、SIDE / POV、Audio不変、型検査、production buildを確認する。
-- [ ] ドラッグ修正をGitHub mainへpushする。
+- [x] ドラッグ修正をGitHub mainへpushする。
