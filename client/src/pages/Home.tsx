@@ -29,8 +29,8 @@ const speakerMeta: Record<SpeakerKind, { label: string; short: string; color: st
   sub: { label: "SUB", short: "S", color: "#30302c" },
   woofer: { label: "WOOFER", short: "W", color: "#77766f" },
   full: { label: "FULL RANGE", short: "F", color: "#ece8de" },
-  mid: { label: "MID", short: "M", color: "#b3b2a9" },
-  high: { label: "HIGH", short: "H", color: "#d64b35" },
+  mid: { label: "MID", short: "M", color: "#e5b329" },
+  high: { label: "HIGH", short: "H", color: "#379a5f" },
 };
 
 const initialSpeakers: ClubSpeaker[] = [
@@ -41,9 +41,9 @@ const initialSpeakers: ClubSpeaker[] = [
 ];
 
 const officialSources: ClubSource[] = [
-  { id: "pulse", name: "Deep Pulse", category: "official", color: "#d64b35" },
-  { id: "rain", name: "Rain Room", category: "official", color: "#7b8a8b" },
-  { id: "bronze", name: "Bronze Air", category: "official", color: "#9a7353" },
+  { id: "pulse", name: "Deep Pulse", category: "official", color: "#df3f43" },
+  { id: "rain", name: "Rain Room", category: "official", color: "#e0a51b" },
+  { id: "bronze", name: "Bronze Air", category: "official", color: "#379a5f" },
 ];
 
 const presetScenes = {
@@ -197,7 +197,14 @@ export default function Home() {
         <section className="club-stage" aria-label="Your virtual club">
           <div className="stage-topline">
             <div><p className="eyebrow">YOUR CLUB / PLAN 01</p><h2>Move a speaker. The room changes.</h2></div>
-            <div className="stage-status"><span className={`live-indicator ${isPlaying ? "active" : ""}`} /> {isPlaying ? "ROOM IS LIVE" : "ROOM IS READY"}</div>
+            <div className="stage-status">
+              <span className="signal-bank" aria-hidden="true">
+                <i className={`signal-led red ${isPlaying ? "on" : ""}`} />
+                <i className={`signal-led amber ${routeCount > 0 ? "on" : ""}`} />
+                <i className={`signal-led green ${isPlaying ? "" : "on"}`} />
+              </span>
+              <span className={`live-indicator ${isPlaying ? "active" : "ready"}`} /> {isPlaying ? "ROOM IS LIVE" : "ROOM IS READY"}
+            </div>
           </div>
           <div
             ref={floorRef}
@@ -277,8 +284,8 @@ export default function Home() {
               <div className="route-panel">
                 <p>ROUTE FROM</p>
                 <div className="route-source"><span className="source-dot" style={{ backgroundColor: selectedSource?.color }} />{selectedSource?.name ?? "Choose a sound"}</div>
-                <button type="button" className={`route-toggle ${selectedRouteActive ? "routed" : ""}`} onClick={toggleRoute}>
-                  <span>{selectedRouteActive ? "ROUTED" : "ROUTE HERE"}</span><Volume2 size={16} />
+                <button type="button" className={`route-toggle ${selectedRouteActive ? "routed" : "armed"}`} onClick={toggleRoute}>
+                  <span>{selectedRouteActive ? "ROUTED" : "ARM ROUTE"}</span><Volume2 size={16} />
                 </button>
                 <small>{routeCount} speaker{routeCount === 1 ? "" : "s"} connected from this sound</small>
               </div>
