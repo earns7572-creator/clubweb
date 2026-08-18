@@ -82,3 +82,7 @@
 - [x] TOP・SIDE・POVで共有する黒いクラブ空間と低密度のvolumetric-looking hazeを実装する。
 - [x] Speaker activityと再生状態に連動する控えめなcone illumination・rim lightを実装する。
 - [x] 既存の再生、HRTF、配置、3視点、desktop/mobileを検証して保存する。
+- [x] 現在のInspector、Speaker追加、選択Speaker、TOP停止時描画の接続を確認する。
+- [x] ロゴと重ならないInspector、選択Speaker上のRemove、Type別追加アイコンの方針を定義する。
+- [x] Inspector位置調整、選択Speaker右上のRemove、Type別ワンタップ追加を実装する。
+- [x] 停止中TOPの環境光と3視点の操作面を検証して保存する。

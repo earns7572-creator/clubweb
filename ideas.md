@@ -171,6 +171,14 @@ Smokeは粒子群ではなく、front/back/heightを読むための薄いsoft ha
 
 操作面はdark translucent glassに近い最小限のsurfaceに留める。文字はsoft gray、borderはほぼ見えない程度、InspectorはSpeakerの存在を邪魔しない。視覚的優先順位は**活動Speaker → 空間配置 → hazeの奥行き → UI**とする。
 
+## Dark Club Direct Manipulation
+
+InspectorはHeaderやbrand markの近くに置かない。TOP / SIDEでは右下の安全領域にだけ現れ、POVでは消す。RemoveはInspector内の文字操作ではなく、選択したSpeaker cabinetの右上へ重なる小さな`×`アイコンにする。誤削除を避けるため、選択中のSpeakerにだけ現す。
+
+Speaker追加はselect inputや文章ではなく、SUB / WOOFER / FULL / MID / HIGHのsilhouetteを示す5つの小さなType iconを左下へ並べる。ユーザーはiconを一度押すだけでSpeakerを追加できる。暗い空間でもアイコンはsoft gray、hover / selectedだけを弱いwarm lightで示す。
+
+停止中のTOPには、音の活動光とは別に、ごく弱いambient fillを残す。これはSpeakerを白く照らすためではなく、cabinet silhouette、Floor、stageを指で選べる最低限の状態にするための光である。再生中には実音声activityによる暖色illuminationが、このbase visibilityの上にのみ加わる。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |
