@@ -113,3 +113,6 @@
 - [x] TOP全体のambient、Floor、Grid、cabinet edgeの現在の明度を確認する。
 - [x] TOP専用にambient・Floor・Grid・cabinet edgeを明るく調整する。
 - [x] 停止時TOP、再生時帯域色、SIDE/POV不変、型検査、production buildを検証して保存する。
+- [x] TOP View内のshadow・haze・light処理から、操作性を損なう負荷要素を確認する。
+- [x] 環境光由来のリアルタイム影を外し、軽量なbase visibilityへ置き換える。
+- [x] TOPの操作性と可視性、既存audio・SIDE/POV不変、型検査、production buildを検証して保存する。
