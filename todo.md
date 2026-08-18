@@ -41,8 +41,13 @@
 - [x] 各Typeで異なる形状の低ポリゴン3D Speakerモデルを用意する。
 - [x] Speaker Typeの変更と追加で正しい3DモデルがFloorへ表示されるようにする。
 - [x] Type別3Dモデルの仕様とChatGPT Web 0.6資料を更新する。
-- [ ] 実3D Speakerモデルを含む完成版を保存する。
+- [x] 実3D Speakerモデルを含む完成版を保存する。
 - [x] React Three Fiberのdata-loc属性クラッシュの注入経路を特定する。
 - [x] 開発用属性が3D Canvas内部のThree.jsオブジェクトへ渡らないよう修正する。
 - [x] 型検査、production build、表示確認で3D Floorの回復を検証する。
-- [ ] クラッシュ修正を保存して原因と結果を記録する。
+- [x] クラッシュ修正を保存して原因と結果を記録する。
+- [x] Club Craftの固定Design Systemを、物理的な小型サウンドシステム／建築模型として文書化する。
+- [x] Floor Viewを画面の主役にし、周囲の操作を最小限へ再配置する。
+- [x] 音源選択、再生、Speaker配置、Listener、Inspectorの既存操作を保ったまま視覚を再設計する。
+- [x] desktop / mobileで新しい1画面レイアウトと既存操作を検証する。
+- [ ] UI再設計をチェックポイントへ保存する。

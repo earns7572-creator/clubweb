@@ -1,14 +1,16 @@
-/* WebGL Floor frame: the real 3D room remains an object-like part of the same light architectural workbench. */
+/* Physical Sound System UI: the WebGL room is the main architectural model, not a dashboard widget. */
 .club-floor-3d {
   position: relative;
   flex: 1;
   min-height: 535px;
   overflow: hidden;
-  border: 1px solid #b8b7b0;
-  background: #e4e3dc;
-  box-shadow: inset 0 0 65px rgba(64, 63, 57, .15), inset 0 1px rgba(255, 255, 255, .9);
+  border: 1px solid #5e605a;
+  background: #e7e6df;
+  box-shadow: inset 0 0 0 9px #f1f0ea, inset 0 0 45px rgba(56, 57, 52, .09), 0 18px 36px rgba(52, 51, 46, .10);
 }
 .club-floor-3d canvas { display: block; width: 100% !important; height: 100% !important; touch-action: none; }
-.three-room-label,.three-room-hint { position: absolute; z-index: 3; pointer-events: none; color: #74766e; font: 600 8px "Space Grotesk"; letter-spacing: .12em; }
-.three-room-label.north { top: 18px; left: 25px; }.three-room-label.stage { top: 35%; left: 50%; transform: translateX(-50%); color: #51534d; }.three-room-label.scale { right: 20px; bottom: 17px; }.three-room-hint { left: 14px; bottom: 12px; }
-@media (max-width:760px) { .club-floor-3d { min-height: 0; aspect-ratio: 1 / 1; }.three-room-label.north { top: 13px; left: 16px; }.three-room-label.scale { right: 15px; bottom: 14px; }.three-room-hint { left: 11px; bottom: 10px; font-size: 7px; } }
+.three-room-label,.three-room-hint { position: absolute; z-index: 3; pointer-events: none; color: #6a6b65; font: 600 8px "Space Grotesk"; letter-spacing: .12em; }
+.three-room-label.north { top: 18px; left: 25px; }.three-room-label.stage { top: 35%; left: 50%; transform: translateX(-50%); color: #4f514b; }.three-room-label.scale { right: 20px; bottom: 17px; }.three-room-hint { left: 20px; bottom: 17px; }
+.three-map-rule { position:absolute; z-index:3; top:30px; right:22px; display:flex; width:112px; height:7px; justify-content:space-between; border-top:1px solid rgba(78,80,74,.42); pointer-events:none; }
+.three-map-rule i { display:block; width:1px; height:5px; background:rgba(78,80,74,.42); }
+@media (max-width:760px) { .club-floor-3d { min-height: 0; aspect-ratio: 1 / 1; }.three-room-label.north { top: 13px; left: 16px; }.three-room-label.scale { right: 15px; bottom: 14px; }.three-room-hint { left: 11px; bottom: 10px; font-size: 7px; }.three-map-rule { top:22px; right:14px; width:76px; } }

@@ -1,4 +1,7 @@
-/** Sound System Playground: a one-screen, beginner-first spatial music toy. */
+/**
+ * Physical Sound System UI: Floor View is the primary instrument; the surrounding controls
+ * stay quiet, material, and architectural rather than reading as a SaaS dashboard.
+ */
 import { useRef, useState } from "react";
 import { CircleHelp, Headphones, Music2, Pause, Play, Plus, RotateCcw, Volume2, VolumeX, X } from "lucide-react";
 import { type ClubSource, type ClubSpeaker, type SpeakerKind, useClubAudio } from "@/hooks/useClubAudio";
@@ -9,6 +12,7 @@ import "../grid-snap.css";
 import "../room-architecture.css";
 import "../club-floor-3d.css";
 import "../three-polish.css";
+import "../physical-system.css";
 
 const logoMark = "/manus-storage/clubcraft-mark_066a01b1.png";
 const speakerMeta: Record<SpeakerKind, { label: string; short: string; color: string; note: string }> = {

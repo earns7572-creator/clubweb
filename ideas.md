@@ -90,6 +90,29 @@ Floor上のSpeakerはドラッグ中に1.02倍へごく小さく持ち上がり�
 - 実3D Floorでは、Listenerと一緒に距離リングを動かし、選択曲 → 選択Speaker → ListenerのSignal Vermilion threadを連続表示する。3Dルームの印象よりも、配置と距離の読み取りを優先する。
 - Speakerは色だけで区別せず、SUBの大きいキューブ、WOOFERの横長2ドライバー、FULL RANGEの縦長2way、MIDの小型縦型、HIGHのホーン付き小型筐体という固有のsilhouetteを持たせる。
 
+## 固定Design System — Physical Sound System
+
+Club Craftは、SaaS dashboardではなく、机上で触る**小さな物理サウンドシステム／建築模型**である。画面は一枚の作業面として扱い、Floor Viewを画面の70〜80%の視覚的重要度を持つ主役に据える。音源選択、再生、Speaker追加、選択中のSpeaker調整は、Floorの周囲にある小さな実機の操作部としてのみ配置する。
+
+| 要素 | 固定する判断 |
+|---|---|
+| 色 | off-white、warm light gray、graphiteを土台にする。Signal Vermilionだけを再生・選択・音の経路に用い、装飾色にはしない。|
+| 面と奥行き | 角丸カードや大きい影ではなく、1pxの細い輪郭、わずかな内側の影、紙・樹脂・金属を思わせる面差で深さを作る。|
+| レイアウト | パネルを均等に並べない。Floorに面した細い音源レール、上部の静かなtransport、選択時だけ強く読める右側の調整面で構成する。|
+| Speaker | UI記号ではなく、無彩色で3Dプリントされた小さなSpeaker cabinetとして扱う。形、寸法、ドライバー構成でTypeを伝える。|
+| タイポグラフィ | Space Groteskを機能名・数値、Noto Sans JPを説明文に使う。見出しは抑制し、短い命令より「配置すると変わる」という結果を示す。|
+| 動き | hover、press、dragだけに短い物理的フィードバックを与える。光る演出、gradient、neon、ゲーム的な動きは使わない。|
+
+### 禁止事項
+
+gradient、neon、glow、cyberpunk、青紫のAIサービス風配色、pill buttonの連続、無意味なアイコン、大きすぎる見出し、カードの反復を使わない。設計判断に迷ったときは、**「これは楽器の操作面を強めるか、それとも一般的なWebダッシュボードに近づけるか」**で判断する。
+
+### Style Decisions
+
+- Floor Viewの外側の操作面は、薄いgraphiteまたはブラッシュドメタルのインセットプレートとして見せる。汎用カードにはせず、細い刻印ラベルと小さな状態点だけで状態を伝える。
+- Speaker Typeは色よりも、cabinet比率、ドライバー、グリル、ホーン、影で判別できることを優先する。
+- Signal Vermilionのthreadは、選択音源、選択Speaker、Listenerを常に一続きに結ぶ、Club Craftの最も重要な視覚記号として扱う。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |
