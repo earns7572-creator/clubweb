@@ -1,0 +1,99 @@
+/* Club Room: a light architectural model with walls and stage depth; placement stays a simple 2D grid. */
+.playground-floor {
+  background: linear-gradient(180deg, #d8d7d1 0 15%, #eeece4 42%, #e1dfd6 100%);
+  perspective: 920px;
+}
+
+.playground-floor .floor-plan {
+  z-index: 1;
+  inset: 13% 8% 9%;
+  transform: perspective(900px) rotateX(16deg);
+  transform-origin: center 62%;
+  border: 1px solid rgba(80, 81, 75, .22);
+  box-shadow: 0 25px 38px rgba(50, 50, 45, .16), inset 0 0 40px rgba(73, 74, 68, .08);
+}
+
+.room-back-wall,
+.room-left-wall,
+.room-right-wall,
+.stage-plinth {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.room-back-wall {
+  top: 7%;
+  left: 17%;
+  width: 66%;
+  height: 20%;
+  border: 1px solid rgba(63, 64, 59, .34);
+  background: linear-gradient(180deg, rgba(88, 89, 83, .34), rgba(235, 233, 225, .3));
+  box-shadow: inset 0 16px 24px rgba(40, 41, 37, .14), 0 3px 0 rgba(255, 255, 255, .38);
+  clip-path: polygon(3% 0, 97% 0, 100% 100%, 0 100%);
+}
+
+.room-left-wall,
+.room-right-wall {
+  top: 16%;
+  width: 13%;
+  height: 72%;
+  border: 1px solid rgba(63, 64, 59, .28);
+  background: linear-gradient(90deg, rgba(255, 255, 255, .43), rgba(95, 96, 89, .17));
+  box-shadow: inset 0 0 28px rgba(45, 46, 42, .1);
+}
+
+.room-left-wall { left: 7%; clip-path: polygon(60% 0, 100% 8%, 70% 100%, 0 100%); }
+.room-right-wall { right: 7%; transform: scaleX(-1); clip-path: polygon(60% 0, 100% 8%, 70% 100%, 0 100%); }
+
+.stage-plinth {
+  top: 20%;
+  left: 50%;
+  width: 16%;
+  height: 10%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px solid rgba(55, 56, 51, .38);
+  background: linear-gradient(180deg, #f5f4ee, #bebeb6);
+  box-shadow: 0 9px 12px rgba(45, 46, 41, .19), inset 0 1px #fff;
+}
+
+.stage-plinth::after {
+  content: "";
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: -10px;
+  height: 10px;
+  background: linear-gradient(90deg, #92948d, #d8d7cf, #92948d);
+  transform: skewX(-24deg);
+  transform-origin: top;
+}
+
+.stage-plinth i {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #50524c;
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 33%, #7d817a, #20231f 48%, #111310 55%);
+  box-shadow: 0 1px rgba(255, 255, 255, .45);
+}
+
+.playground-floor .stage-origin { z-index: 4; top: 37%; }
+.playground-floor .song-in-room { z-index: 5; }
+.playground-floor .playground-signal { z-index: 6; }
+.playground-floor .playground-speaker { z-index: 7; }
+.playground-floor .playground-listener { z-index: 8; }
+.playground-floor .floor-annotation,
+.playground-floor .floor-tip { z-index: 9; }
+
+@media (max-width: 760px) {
+  .playground-floor .floor-plan { inset: 16% 8% 11%; transform: perspective(700px) rotateX(11deg); }
+  .room-back-wall { top: 9%; left: 17%; width: 66%; height: 19%; }
+  .room-left-wall, .room-right-wall { top: 17%; height: 72%; }
+  .stage-plinth { top: 21%; width: 23%; height: 8%; }
+  .playground-floor .stage-origin { top: 38%; }
+}

@@ -28,3 +28,8 @@
 - [x] Speaker cabinetを積層痕・マット樹脂・物理エッジを持つ3Dプリント風モデルへ更新する。
 - [x] desktop / mobileでグリッド配置とSpeakerの可読性を検証し、ChatGPT Web 0.4資料を更新する。
 - [ ] グリッド・スナップと3Dプリント風Speakerを含む完成版を保存する。
+- [x] 参照モックアップをライトなWeb Playgroundの見下ろし3Dルームへ再解釈する。
+- [x] 奥行きのある壁、Stage、12×12 Floorグリッド、Speaker cabinet配置を実装する。
+- [x] 曲選択、Speaker tray、Listener、Inspectorを新ルーム構成へ統合する。
+- [x] グリッド・音色・定位・desktop / mobileを検証し、ChatGPT Web 0.5資料を更新する。
+- [ ] 見下ろし3Dルームを含む完成版を保存する。
