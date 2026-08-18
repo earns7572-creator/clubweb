@@ -1,0 +1,4 @@
+/* Grid placement contract: speaker coordinates resolve only to visible 12-by-12 Floor intersections. */
+.playground-floor .floor-plan {
+  background-size: calc(100% / 12) calc(100% / 12), calc(100% / 12) calc(100% / 12), 100% 100%;
+}

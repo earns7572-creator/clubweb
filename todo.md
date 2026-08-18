@@ -23,3 +23,8 @@
 - [x] Speaker Type別のfilter、level、mute、距離・左右定位を一般ユーザー向け操作で検証する。
 - [x] 30秒導線、desktop / mobile、ChatGPTレビュー資料を更新する。
 - [ ] Sound System Playground完成版を保存する。
+- [x] SpeakerだけがFloorの一定間隔のグリッド交点へスナップするよう変更する。
+- [x] Speaker追加時も有効なグリッド交点へ配置する。
+- [x] Speaker cabinetを積層痕・マット樹脂・物理エッジを持つ3Dプリント風モデルへ更新する。
+- [x] desktop / mobileでグリッド配置とSpeakerの可読性を検証し、ChatGPT Web 0.4資料を更新する。
+- [ ] グリッド・スナップと3Dプリント風Speakerを含む完成版を保存する。

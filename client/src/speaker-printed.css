@@ -1,0 +1,51 @@
+/* Printed Speaker Objects: matte resin cabinets with visible horizontal print layers. */
+.speaker-puck.playground-speaker {
+  isolation: isolate;
+  border-radius: 5px 5px 4px 4px;
+  background-image:
+    linear-gradient(108deg, rgba(255, 255, 255, .42), transparent 23%),
+    repeating-linear-gradient(0deg, rgba(29, 31, 28, .10) 0 1px, rgba(255, 255, 255, .035) 1px 3px),
+    linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(0, 0, 0, .16)),
+    var(--speaker-color);
+  box-shadow: 9px 9px 0 rgba(55, 55, 50, .18), 0 12px 18px rgba(47, 46, 41, .25), inset 0 1px rgba(255, 255, 255, .62), inset 0 -7px 8px rgba(31, 33, 29, .16);
+}
+
+.speaker-puck.playground-speaker::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: -5px;
+  right: -5px;
+  bottom: -7px;
+  height: 9px;
+  border: 1px solid rgba(52, 53, 48, .46);
+  border-radius: 2px 2px 4px 4px;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .26) 0 1px, rgba(36, 38, 34, .13) 1px 4px), var(--speaker-color);
+  box-shadow: 0 4px 5px rgba(35, 35, 31, .23);
+}
+
+.speaker-puck.playground-speaker .print-layers {
+  position: absolute;
+  z-index: 0;
+  inset: 5px 5px 7px;
+  border-radius: 3px;
+  opacity: .5;
+  background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(38, 40, 36, .23) 3px 4px);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+.speaker-puck.playground-speaker .cabinet-grille { z-index: 1; }
+.speaker-puck.playground-speaker strong,
+.speaker-puck.playground-speaker small { z-index: 2; }
+
+.speaker-puck.playground-speaker.full { --speaker-color: #ecece5; }
+.speaker-puck.playground-speaker.sub { --speaker-color: #363a36; }
+.speaker-puck.playground-speaker.woofer { --speaker-color: #8b8e86; }
+.speaker-puck.playground-speaker.mid { --speaker-color: #d5b455; }
+.speaker-puck.playground-speaker.high { --speaker-color: #7ebea4; }
+
+.speaker-puck.playground-speaker.selected {
+  transform: translate(-50%, -50%) scale(1.045);
+  box-shadow: 0 0 0 4px rgba(214, 83, 66, .17), 9px 9px 0 rgba(55, 55, 50, .18), 0 14px 21px rgba(47, 46, 41, .28), inset 0 1px rgba(255, 255, 255, .67), inset 0 -7px 8px rgba(31, 33, 29, .16);
+}
