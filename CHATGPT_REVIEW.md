@@ -15,6 +15,7 @@ Club Craft Webは、端末内の音声ファイルまたはアプリ内の音源
 | 空間音響 | explicit mono downmix → Type filter → Gain → Analyser → HRTF Panner → stereo Master | 各Speakerはmono acoustic point source、Panner後のHRTF headphone outputはstereoのまま |
 | View | TOP / SIDE / POV | 3視点は同一ClubSceneを別の投影で編集・確認する |
 | TOP操作 | continuous X/Y drag、Soft Grid、Smart Guides、Speaker / Listenerのドラッグ | Gridは視覚補助であり、free placementを強制snapしない。shadow mapは使わない。 |
+| Mixer | MIX bottom sheet、Speakerごとのvertical fader、activity meter、Mute、linked relative fader | `speaker.level` / `speaker.muted`が唯一の正本であり、新しいAudio graphやgain stateを作らない。 |
 | SIDE操作 | Y/Zの高さ編集 | TOPと同じPosition3Dを更新する |
 | POV | Listener位置からの一人称確認、yaw / pitch | 見る向きもAudioListener orientationへ同期する |
 | 表現 | 暗い地下クラブ、低密度haze、再生時の周波数色 | 停止時TOPは読みやすく、SIDE / POVは没入感を優先する |
@@ -54,6 +55,8 @@ TOP Viewは操作性を優先します。停止時の可視性はambient / hemis
 | `client/src/pages/Home.tsx` | 共有ClubScene、View切替、曲選択、Speaker追加、Inspector |
 | `client/src/hooks/useClubAudio.ts` | Web Audio graph、分割sync、AudioParam cache、HRTF、ローカルファイル再生、activity publisher |
 | `client/src/lib/activityStore.ts` | Speaker activityだけをScene projectionへ通知する小さなexternal store |
+| `client/src/components/SpeakerMixer.tsx` | native bottom sheet、縦fader bank、activity meter、linked selection、pointer rAF coalescing |
+| `client/src/lib/mixerMath.ts` | linear gainとdB表示・fader positionの純粋変換。0 dB上限と既存safe minimumを維持。 |
 | `client/src/components/ClubFloor3D.tsx` | TOP ViewのR3F Scene、fixed-plane drag、Soft Grid、temporary Smart Guides、軽量lighting |
 | `client/src/lib/smartPlacement.ts` | alignment、equal spacing、Listener同距離、major / minor gridのpriority・hysteresis・modifierを持つ純粋placement helper |
 | `client/src/components/SideScene.tsx` | SIDE ViewのY/Z編集 |
@@ -89,6 +92,10 @@ pnpm dev
 
 `pnpm test:performance`はこの分割、activity局所化、demand Canvas、pointer coalescing、model-lab lazy load、shared geometryを静的に検査します。production buildで確認できた最終main JSは`1,607.22 kB`、gzipは`448.84 kB`です。model-labは通常routeと別の`5.67 kB` JS chunkへ分割されています。対話型ブラウザプロファイラでのFPS / frame timeはこの環境では未測定であり、数値を推測していません。
 
+### Mixerの正本と操作規則
+
+Mixerは既存Speaker stateを操作する別projectionです。linear `speaker.level`は`1.0 = 0 dB`として表示だけをdBへ変換し、範囲は既存Audio側と同じ`0.02`（約`−34 dB`）から`1.0`（`0 dB`）までです。faderの下端はsafe minimumで、完全無音は既存`muted`を使います。Shiftで複数stripをlinkし、そのいずれかを動かすと選択groupへ同じdB差分を適用するため、相対balanceを維持します。Mixerのactivity meterは既存`activityStore`だけをsubscribeし、新しいAnalyserNodeや親state更新を追加しません。pointer moveは最新値をrAFでまとめ、1 frameあたり最大1回だけ`speaker.level`を更新します。
+
 ## レビューしてほしい観点
 
 | 優先度 | 観点 | 確認してほしいこと |
@@ -99,6 +106,7 @@ pnpm dev
 | 高 | R3F安全性 | JSX属性がThree.js objectへ不正に渡らないか、horn / woofer / cabinet geometryとmaterialがmodule-levelで共有されるか |
 | 中 | performance | TOP / POVにshadow mapが復活していないか、render中のgeometry allocationがなく、SpeakerにPointLight・flat haze circle・volumetric beamがないか、TOP / POVのDPR上限が1.25か |
 | 中 | performance sync | Speaker drag時に無関係なDSP / listener effectが走らないか、停止後にactivity RAFが止まるか、activity更新でHeader / Inspectorが再renderされないか、Object URLがrevokeされるか |
+| 中 | mixer | Mixerが`level` / `muted`の正本を増やさず、Inspectorと同期するか。meterがactivityStoreだけで動くか。linked faderが同じ絶対値ではなく相対dB差を維持するか。新しいAudioNodeがないか。 |
 | 中 | UX | 一般利用者が30秒以内に「曲を選ぶ・Speakerを置く・動かして聴く」を理解できるか |
 | 低 | visual | 暗いクラブの雰囲気を保ちつつ、TOPだけは配置編集に十分な明度を持つか |
 

@@ -9,6 +9,7 @@ const pov = read("client/src/components/PovPreview.tsx");
 const side = read("client/src/components/SideScene.tsx");
 const app = read("client/src/App.tsx");
 const miniature = read("client/src/components/SpeakerMiniature.tsx");
+const mixer = read("client/src/components/SpeakerMixer.tsx");
 
 assert.match(audio, /syncTopology/);
 assert.match(audio, /syncSpeakerDsp/);
@@ -29,5 +30,12 @@ assert.match(side, /getBoundingClientRect\(\)/);
 assert.match(side, /requestAnimationFrame\(flush\)/);
 assert.match(app, /lazy\(\(\) => import\("\.\/components\/SpeakerModelValidation"\)\)/);
 assert.match(miniature, /const cabinet = makeChamferCabinet/);
+assert.match(home, /<SpeakerMixer/);
+assert.match(home, /onLevelsChange=\{updateSpeakerLevels\}/);
+assert.match(mixer, /useSpeakerActivity\(store\)/);
+assert.match(mixer, /requestAnimationFrame\(applyLatest\)/);
+assert.match(mixer, /setPointerCapture/);
+assert.doesNotMatch(mixer, /createAnalyser|createGain|createPanner/);
+assert.doesNotMatch(mixer, /DrawerContent|DrawerPrimitive/);
 
 console.log("performance architecture tests passed");

@@ -11,6 +11,7 @@
     "check": "tsc --noEmit",
     "test:placement": "node tests/run-smartPlacement.mjs",
     "test:performance": "node tests/performanceArchitecture.test.cjs",
+    "test:mixer": "node tests/run-mixerMath.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {

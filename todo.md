@@ -153,3 +153,8 @@
 - [x] drag / POV / SIDE coalescing、geometry共有、model-lab lazy load、Object URL cleanupを実装する。
 - [x] 16台・3視点・再生・操作の差分を測定し、型検査・production buildを通す。
 - [x] 性能最適化をGitHub mainへpushし、測定済み・未測定の結果を報告する。
+- [x] Speaker state、Inspector Level / Mute、activityStore、下部UI、既存gain minimumを確認する。
+- [x] dB mapping、fader clamp、pointer rAF、linked fader、selection、activity subscription、bottom sheetを設計する。
+- [x] MIX triggerとTOP / SIDE / POV共通のSpeaker Mixer・vertical fader bankを実装する。
+- [x] level / mute同期、selection、linked fader、double-click reset、activity局所更新、desktop / touchを検証する。
+- [ ] Speaker Mixerを型検査・production build・GitHub main同期まで完了する。
