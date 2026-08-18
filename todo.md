@@ -96,3 +96,6 @@
 - [x] SpeakerMiniatureを専用geometry・bevel・recess・woofer・horn・feet構成へ置き換える。
 - [x] 明るい検証Sceneで5種横並びとFULLのfront / 3/4 / sideを確認する。
 - [x] 本番のTOP / SIDE / POV、型検査、production buildを検証して保存する。
+- [x] TOPの停止時照明、Floor、Speaker silhouette、Listener、Stageの現在の可視性を確認する。
+- [x] TOP専用のbase illuminationと、再生時activityがより明確に見える階層を実装する。
+- [x] 停止中・再生時TOP、SIDE・POV不変、型検査、production buildを検証して保存する。
