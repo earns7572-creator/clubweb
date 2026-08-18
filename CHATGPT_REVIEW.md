@@ -45,7 +45,7 @@ TOP Viewは操作性を優先します。停止時の可視性はambient / hemis
 
 ### 4. Speakerの形で種類を認識できる
 
-色だけに依存せず、すべてThree.jsの手続き型sub-meshで組み立てます。SUBは正面wooferを見せないwide dual folded-horn、WOOFERはupper chamberとlower folded mouthを持つvertical horn-loaded cabinet、FULL RANGEはupper deep hornとrecessed large wooferを持つtall 2-way PA、MIDはcompact horn＋driver＋reflex ports、HIGHはwide horn mouthからnarrow throatを経てrear compression-driver-like bodyへつながる専用enclosureです。固有の製品名、logo、固有意匠は使いません。
+色だけに依存せず、すべてThree.jsの手続き型sub-meshで組み立てます。SUBとWOOFERは全面baffleを置かず、mouthからflare、開いたthroat、短いtunnel wall、recessed throatへ続くdeep chamberを持ちます。FULL RANGEはupper deep hornとrecessed large wooferを持つtall 2-way PA、MIDはwide / low hornと大きめdriver、single horizontal portを持つ浅いcompact enclosure、HIGHはwide horn mouthからnarrow throat、short neck、円筒compression driver、rear magnet housingへつながる専用frameです。固有の製品名、logo、固有意匠は使いません。
 
 ## 主なコード案内
 
@@ -89,7 +89,7 @@ pnpm dev
 | 高 | 共有Scene | TOP / SIDE / POVでPosition3Dが一貫し、View切替で状態が失われないか |
 | 高 | TOP操作性 | pointer drag、grid snap、停止時可視性、最大16台で不要な高負荷処理がないか |
 | 高 | R3F安全性 | JSX属性がThree.js objectへ不正に渡らないか、horn / woofer / cabinet geometryとmaterialがmodule-levelで共有されるか |
-| 中 | performance | TOPにshadow mapやContactShadowsが復活していないか、render中のgeometry allocationがなく、最大16台でpoint lightとhazeの量が妥当か |
+| 中 | performance | TOPにshadow mapやContactShadowsが復活していないか、render中のgeometry allocationがなく、最大16台で各SpeakerのPointLightが1個だけか、hazeが共有geometryを使うか |
 | 中 | UX | 一般利用者が30秒以内に「曲を選ぶ・Speakerを置く・動かして聴く」を理解できるか |
 | 低 | visual | 暗いクラブの雰囲気を保ちつつ、TOPだけは配置編集に十分な明度を持つか |
 

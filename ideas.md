@@ -225,6 +225,12 @@ TOPは操作性を優先するため、Speaker modelの更新後もshadow map、
 
 補正後の確認では、FULL RANGEの正面でhorn frame、throat、recessed woofer、lower portが読め、3/4ではcabinet depthとside handleが見える。SUBは二つのhorn mouthと中央dividerを識別できるため、次の調整では斜めflare panelを前寄りの中間色materialでさらに明確にする。HIGHはhorn mouthとrear bodyを確認できるが、小型のため単体validationではcameraを近づける。
 
+### Targeted Geometry and Light Refinement
+
+SUBとWOOFERは前面の全面baffleを持たず、horn mouthの先にflare、開いたthroat、さらに短いtunnel wallと奥のrecessed throatが続く構造へ限定改良する。これは平面的なgrilleの背面ではなく、3/4でmouth → deep chamber → narrowing path → throatを読めるための実メッシュである。HIGHの後方bodyはBoxではなく、neck、cylindrical compression-driver body、rear magnet housingを連結する。MIDはFULLと異なる低く浅いfront layoutと、wide horn、相対的に大きいdriver、single horizontal portを持つ。
+
+activity用PointLightは各Speakerのfrontに一つだけ残す。hornとwoofer内部の追加PointLight、停止時のidle fill PointLightは使わず、activity haze、共有light、既存materialの面差で読みやすさを保つ。FULLのselection / idle edgeだけはmodelと同じ後方傾斜を適用し、HIGHはcabinet offsetを除いてshell / edge / actual modelの基準座標を統一する。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

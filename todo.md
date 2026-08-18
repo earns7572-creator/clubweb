@@ -124,3 +124,8 @@
 - [x] Audio・HRTF・TOP / SIDE / POV・UIを変更せず、5種のSpeaker modelだけを差し替える。
 - [x] 明るい検証Scene、TOP / SIDE / POV、activity、型検査、production buildで検証する。
 - [x] GitHubのmainへSpeaker model更新と検証資料をpushする。
+- [x] SUB / WOOFERのhorn chamber、全面baffle、PointLight、HIGH outlineの現在実装を確認する。
+- [x] 深いfolded-horn chamber、HIGHの円筒compression driver、MIDの独自front layoutを設計する。
+- [x] Speaker renderingだけを限定修正し、1 SpeakerあたりのPointLightを最大1個へ削減する。
+- [x] Model Validation、TOP / SIDE / POV、activity、outline位置、最大16台前提を検証する。
+- [ ] 型検査・production build・GitHub main同期を完了する。
