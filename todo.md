@@ -141,4 +141,4 @@
 - [x] 現在のSpeakerNode、voice接続、node解除、channel設定を確認する。
 - [x] Speaker入力にexplicit stereo→mono downmix nodeを追加し、接続・解除を更新する。
 - [x] 1台mono point source、HRTF stereo、2台独立branch、型検査、production buildを確認する。
-- [ ] mono downmix routing修正をGitHub mainへpushする。
+- [x] mono downmix routing修正をGitHub mainへpushする。
