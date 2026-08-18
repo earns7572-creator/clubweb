@@ -33,3 +33,12 @@
 - [x] 曲選択、Speaker tray、Listener、Inspectorを新ルーム構成へ統合する。
 - [x] グリッド・音色・定位・desktop / mobileを検証し、ChatGPT Web 0.5資料を更新する。
 - [ ] 見下ろし3Dルームを含む完成版を保存する。
+- [x] CSS疑似3D SpeakerをWebGLの実3Dメッシュモデルへ置き換える方式を定義する。
+- [x] SUB、WOOFER、FULL RANGE、MID、HIGHに対応する低ポリゴンSpeakerモデルを準備する。
+- [x] 3DモデルをFloorのグリッド、選択、Listener、Web Audio定位へ統合する。
+- [x] 3D描画のdesktop / mobile性能と操作性を検証する。
+- [x] SUB、WOOFER、FULL RANGE、MID、HIGHのTypeごとの筐体比率、形状、ドライバー構成を定義する。
+- [x] 各Typeで異なる形状の低ポリゴン3D Speakerモデルを用意する。
+- [x] Speaker Typeの変更と追加で正しい3DモデルがFloorへ表示されるようにする。
+- [x] Type別3Dモデルの仕様とChatGPT Web 0.6資料を更新する。
+- [ ] 実3D Speakerモデルを含む完成版を保存する。

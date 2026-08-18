@@ -87,6 +87,8 @@ Floor上のSpeakerはドラッグ中に1.02倍へごく小さく持ち上がり�
 - Floorは中立的なグリッドではなく、距離リング、軸、縮尺、Stage原点をもつ建築的なオーディオ地図として扱う。
 - Side panelと小さな操作は、graphite、薄いブラッシュ感、内側の影、小さな発光点を使い、SaaSカードではなく物理的な楽器の操作面として見せる。
 - 主要copyは設定語ではなく、身体動作と結果で書く。`choose / place / move / stand / listen / change`を優先する。
+- 実3D Floorでは、Listenerと一緒に距離リングを動かし、選択曲 → 選択Speaker → ListenerのSignal Vermilion threadを連続表示する。3Dルームの印象よりも、配置と距離の読み取りを優先する。
+- Speakerは色だけで区別せず、SUBの大きいキューブ、WOOFERの横長2ドライバー、FULL RANGEの縦長2way、MIDの小型縦型、HIGHのホーン付き小型筐体という固有のsilhouetteを持たせる。
 
 ### 音源入力
 

@@ -1,0 +1,23 @@
+/* Acoustic Topography refinement: limestone map inside, graphite instrument panels outside. */
+.three-playground-app .sound-picker,
+.three-playground-app .speaker-inspector {
+  background-color: #e1e0d9;
+  background-image: linear-gradient(120deg, rgba(255,255,255,.45), transparent 22%), repeating-linear-gradient(0deg, rgba(47,49,45,.045) 0 1px, transparent 1px 4px);
+  box-shadow: inset 0 1px rgba(255,255,255,.86), inset -1px 0 rgba(59,60,55,.12);
+}
+.three-playground-app .track-card,
+.three-playground-app .add-track,
+.three-playground-app .speaker-add-row button,
+.three-playground-app .type-pills button,
+.three-playground-app .mute-button {
+  border-color: #9b9d95;
+  background: linear-gradient(180deg,#f1f0ea,#d6d5ce);
+  box-shadow: inset 0 1px rgba(255,255,255,.92), inset 0 -1px rgba(45,47,43,.15), 0 1px rgba(255,255,255,.45);
+}
+.three-playground-app .track-card.selected { border-color:#474a44; box-shadow: inset 3px 0 #d65342, inset 0 1px rgba(255,255,255,.92), 0 1px rgba(255,255,255,.45); }
+.three-playground-app .source-light,
+.three-playground-app .track-led,
+.three-playground-app .speaker-add-row i { box-shadow: 0 0 0 2px rgba(255,255,255,.6), 0 0 8px currentColor; }
+.three-playground-app .panel-kicker { color:#565953; text-shadow:0 1px rgba(255,255,255,.66); }
+.three-playground-app .play-brand h1 { letter-spacing:.12em; font-weight:700; }
+.three-playground-app .play-brand img { filter:contrast(1.18) saturate(.72); }
