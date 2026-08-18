@@ -201,6 +201,10 @@ TOPは三視点の中で唯一、停止中でも配置編集に必要な可視�
 
 帯域色はSpeaker TypeのDSP意図を短時間の活動光として可視化する。SUBはdeep red、WOOFERはred-orange、FULL RANGEはwarm yellow、MIDはyellow-green、HIGHはgreenとする。これは常時のcabinet色ではなく、実音声activityがある間だけ出る連続的なvisual gradientである。光の強さはbase fillより明確に高く、音の帯域を見た瞬間に把握できるが、laser、HUD、永続neonにはしない。
 
+## FULL RANGE Reference-Informed PA Form
+
+FULL RANGEは、一般的な縦長2-way PAの構造原理だけを参考にする。Club Craftのオリジナルモデルは、わずかに後方へ傾くtall cabinet、厚い丸角のfront bezel、上部の横長deep horn cavity、下部の大径woofer、前面を覆うindependent perforated grille plane、四隅の小さいfastener detail、控えめなtop mounting recessで構成する。固有のブランド名、logo、具体的な表面意匠は使用しない。frontではhornとwooferの明確な2-way構造、3/4ではcabinet depthとbezel、sideでは縦長の後方傾斜が読めることを合格条件とする。
+
 ### 音源入力
 
 | 種別 | 表示 | 保存・公開 |

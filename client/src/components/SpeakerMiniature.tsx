@@ -20,12 +20,14 @@ const staticDustCap = new THREE.MeshStandardMaterial({ color: "#34352e", roughne
 const staticHornExterior = new THREE.MeshStandardMaterial({ color: "#20211c", roughness: .62, metalness: .12, side: THREE.DoubleSide });
 const staticHornFrame = new THREE.MeshStandardMaterial({ color: "#38382f", roughness: .6, metalness: .18 });
 const staticDetail = new THREE.MeshStandardMaterial({ color: "#2c2d27", roughness: .84 });
+const staticMetalDetail = new THREE.MeshStandardMaterial({ color: "#4b4b42", roughness: .42, metalness: .46 });
 const staticSelection = new THREE.MeshBasicMaterial({ color: "#d5c2a8", transparent: true, opacity: .028, side: THREE.BackSide });
 const staticIdleEdge = new THREE.LineBasicMaterial({ color: "#8e8b82", transparent: true, opacity: .22 });
 const unitBox = new THREE.BoxGeometry(1, 1, 1);
 const wooferSurround = new THREE.TorusGeometry(1, .13, 6, 24);
 const wooferCone = new THREE.ConeGeometry(1, .18, 24, 1, true);
 const dustCap = new THREE.SphereGeometry(1, 16, 10);
+const fastenerHead = new THREE.CylinderGeometry(.042, .042, .018, 12);
 
 function makeChamferCabinet(width: number, height: number, depth: number, taper = 0) {
   const top = width * (1 - taper); const shape = new THREE.Shape();
@@ -45,7 +47,7 @@ function makeHornFlare(mouthWidth: number, mouthHeight: number, throatWidth: num
 const blueprints: Record<SpeakerKind, Blueprint> = {
   sub: { body: [2.06, .78, 1.3], profile: { attack: .68, spread: 1.48, rim: .17, driver: .28 }, cabinet: makeChamferCabinet(2.06, .78, 1.3, .025), baffle: new THREE.BoxGeometry(1.86, .58, .065) },
   woofer: { body: [1.22, 1.08, .98], profile: { attack: .82, spread: 1.05, rim: .21, driver: .38 }, cabinet: makeChamferCabinet(1.22, 1.08, .98, .05), baffle: new THREE.BoxGeometry(1.04, .88, .06) },
-  full: { body: [.82, 2.08, .96], profile: { attack: .9, spread: .9, rim: .27, driver: .42 }, cabinet: makeChamferCabinet(.82, 2.08, .96, .16), baffle: new THREE.BoxGeometry(.64, 1.78, .06), horn: makeHornFlare(.5, .28, .17, .09, .22) },
+  full: { body: [1.02, 1.94, 1.04], profile: { attack: .9, spread: .9, rim: .27, driver: .42 }, cabinet: makeChamferCabinet(1.02, 1.94, 1.04, .12), baffle: new THREE.BoxGeometry(.78, 1.66, .06), horn: makeHornFlare(.66, .36, .19, .10, .28) },
   mid: { body: [.74, .78, .6], profile: { attack: 1.18, spread: .62, rim: .2, driver: .48 }, cabinet: makeChamferCabinet(.74, .78, .6, .06), baffle: new THREE.BoxGeometry(.57, .58, .05) },
   high: { body: [1.02, .56, .72], profile: { attack: 1.38, spread: .48, rim: .16, driver: .5 }, cabinet: makeChamferCabinet(.72, .42, .56, .12), baffle: new THREE.BoxGeometry(.88, .4, .055), horn: makeHornFlare(.76, .33, .18, .09, .28) },
 };
@@ -75,7 +77,43 @@ function CabinetFeet({ width, height, depth, count = 2 }: { width: number; heigh
 
 function SubModel({ blueprint, activity, color }: { blueprint: Blueprint; activity: number; color: string }) { const [width, height, depth] = blueprint.body; return <><mesh geometry={blueprint.cabinet} material={staticCabinet} castShadow receiveShadow /><RecessedBaffle blueprint={blueprint} depth={depth} /><WooferAssembly size={.38} activity={activity} character={blueprint.profile.driver} y={.02} color={color} /><mesh geometry={unitBox} position={[0, -.255, depth / 2 + .062]} scale={[.64, .09, .03]} material={staticHornInterior} /><CabinetFeet width={width} height={height} depth={depth} count={4} /></>; }
 function WooferModel({ blueprint, activity, color }: { blueprint: Blueprint; activity: number; color: string }) { const [width, height, depth] = blueprint.body; return <><mesh geometry={blueprint.cabinet} material={staticCabinet} castShadow receiveShadow /><RecessedBaffle blueprint={blueprint} depth={depth} /><WooferAssembly size={.31} activity={activity} character={blueprint.profile.driver} y={-.08} color={color} /><mesh geometry={unitBox} position={[0, .37, depth / 2 + .062]} scale={[.48, .026, .026]} material={staticDetail} /><CabinetFeet width={width} height={height} depth={depth} /></>; }
-function FullModel({ blueprint, activity, color }: { blueprint: Blueprint; activity: number; color: string }) { const [width, height, depth] = blueprint.body; return <><mesh geometry={blueprint.cabinet} material={staticCabinet} castShadow receiveShadow /><RecessedBaffle blueprint={blueprint} depth={depth} /><WooferAssembly size={.22} activity={activity} character={blueprint.profile.driver} y={-.44} color={color} /><HornFlare geometry={blueprint.horn!} y={.48} depth={depth} activity={activity} character={blueprint.profile.driver} mouthWidth={.5} mouthHeight={.28} color={color} /><mesh geometry={unitBox} position={[0, .06, depth / 2 + .06]} scale={[.5, .024, .024]} material={staticDetail} /><CabinetFeet width={width} height={height} depth={depth} /></>; }
+function FullGrille({ width, height, depth }: { width: number; height: number; depth: number }) {
+  const z = depth / 2 + .102; const vertical = [-.34, .34]; const horizontal = [-.77, .08, .77];
+  return <group position={[0, 0, z]}>
+    {vertical.map((x) => <mesh key={`v-${x}`} geometry={unitBox} position={[x, 0, .012]} scale={[.016, height * .83, .014]} material={staticMetalDetail} />)}
+    {horizontal.map((y) => <mesh key={`h-${y}`} geometry={unitBox} position={[0, y, .014]} scale={[width * .74, .016, .014]} material={staticMetalDetail} />)}
+  </group>;
+}
+
+function FullBezel({ width, height, depth }: { width: number; height: number; depth: number }) {
+  const z = depth / 2 + .066;
+  return <group position={[0, 0, z]}>
+    <mesh geometry={unitBox} position={[0, height * .43, 0]} scale={[width * .88, .08, .075]} material={staticDetail} />
+    <mesh geometry={unitBox} position={[0, -height * .43, 0]} scale={[width * .88, .08, .075]} material={staticDetail} />
+    <mesh geometry={unitBox} position={[-width * .44, 0, 0]} scale={[.08, height * .86, .075]} material={staticDetail} />
+    <mesh geometry={unitBox} position={[width * .44, 0, 0]} scale={[.08, height * .86, .075]} material={staticDetail} />
+  </group>;
+}
+
+function FullFasteners({ width, height, depth }: { width: number; height: number; depth: number }) {
+  const coordinates: Array<[number, number]> = [[-.39, .77], [.39, .77], [-.39, -.78], [.39, -.78]];
+  return <>{coordinates.map(([x, y], index) => <mesh key={index} geometry={fastenerHead} rotation={[Math.PI / 2, 0, 0]} position={[x, y, depth / 2 + .125]} material={staticMetalDetail} />)}</>;
+}
+
+function FullModel({ blueprint, activity, color }: { blueprint: Blueprint; activity: number; color: string }) {
+  const [width, height, depth] = blueprint.body;
+  return <group rotation={[-.055, 0, 0]}>
+    <mesh geometry={blueprint.cabinet} material={staticCabinet} castShadow receiveShadow />
+    <FullBezel width={width} height={height} depth={depth} />
+    <FullGrille width={width} height={height} depth={depth} />
+    <WooferAssembly size={.31} activity={activity} character={blueprint.profile.driver} y={-.43} color={color} />
+    <HornFlare geometry={blueprint.horn!} y={.49} depth={depth} activity={activity} character={blueprint.profile.driver} mouthWidth={.66} mouthHeight={.36} color={color} />
+    <mesh geometry={unitBox} position={[0, .055, depth / 2 + .135]} scale={[width * .72, .034, .026]} material={staticMetalDetail} />
+    <FullFasteners width={width} height={height} depth={depth} />
+    {[-.25, .25].map((x, index) => <mesh key={index} geometry={fastenerHead} rotation={[0, 0, 0]} position={[x, height / 2 + .004, .05]} material={staticHornInterior} />)}
+    <CabinetFeet width={width} height={height} depth={depth} />
+  </group>;
+}
 function MidModel({ blueprint, activity, color }: { blueprint: Blueprint; activity: number; color: string }) { const [, , depth] = blueprint.body; return <><mesh geometry={blueprint.cabinet} material={staticCabinet} castShadow receiveShadow /><RecessedBaffle blueprint={blueprint} depth={depth} /><WooferAssembly size={.2} activity={activity} character={blueprint.profile.driver} y={0} color={color} /></>; }
 function HighModel({ blueprint, activity, color }: { blueprint: Blueprint; activity: number; color: string }) { const [width, height, depth] = blueprint.body; return <><mesh geometry={blueprint.cabinet} position={[0, 0, -.07]} material={staticCabinet} castShadow receiveShadow /><mesh geometry={blueprint.baffle} position={[0, 0, depth / 2 + .02]} material={staticBaffle} /><HornFlare geometry={blueprint.horn!} y={0} depth={depth} activity={activity} character={blueprint.profile.driver} mouthWidth={.76} mouthHeight={.33} color={color} /><mesh geometry={unitBox} position={[-width * .31, -.22, -.1]} scale={[.07, .24, .08]} material={staticFoot} /><mesh geometry={unitBox} position={[width * .31, -.22, -.1]} scale={[.07, .24, .08]} material={staticFoot} /></>; }
 

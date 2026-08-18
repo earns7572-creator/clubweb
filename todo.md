@@ -103,3 +103,7 @@
 - [x] TOP専用idle paletteと低域赤・中域黄・高域緑の帯域色・光量階層を定義する。
 - [x] TOPのbase visibilityと帯域色activity illuminationを実装する。
 - [x] 停止中TOP、再生時帯域色、SIDE/POV、型検査、production buildを検証して保存する。
+- [x] 参照写真の縦長2-way PA構造と現在のFULLモデルを照合する。
+- [x] ロゴ・固有形状を避けたオリジナルFULL cabinet、horn、woofer、grille、detail方針を定義する。
+- [x] FULL RANGEだけを上部horn・下部大径woofer・protective grille・傾いた縦長cabinetの専用geometryへ置き換える。
+- [x] 明るい検証Sceneと本番TOPでFULLのfront / 3/4 / side、型検査、buildを確認して保存する。
