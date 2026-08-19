@@ -227,3 +227,22 @@
 - [x] 不要な前面・下部geometryを撤去し、horn・compact driver・single reflex portだけの自然な構成へ修正する。
 - [x] Model Lab・TOP・POVでMIDのsilhouetteと既存activityを検証する。
 - [x] MID修正をGitHub mainと公開チェックポイントへ保存する。
+
+## 実音響geometryと埋め込みactivity表現の再設計
+
+- [x] 添付レビューと現行のhorn・woofer・halo・material構成を照合し、実装差分を確定する。
+- [x] 共有のreal horn flare、inner flare emitter、concave woofer cone、埋め込み発光materialを実装する。
+- [x] Model LabでFULL・MIDに残る全高taper形状の描画源を特定し、実horn・凹wooferだけが見えるよう修正する。
+- [x] Haloを除外した新規Model Lab URLでも同じ全高taper形状が再現することを確認した。
+- [x] Scene検査でFULLのcabinetがBoxGeometryへ置換済みであり、taperの描画源は別meshだと確認した。
+- [x] Scene検査では中央形状を一意に特定できず、Model Lab専用のgeometry可視化へ切り替えて切り分ける方針にした。
+- [x] horn flareとinner emitterを一時非表示にしても全高taperが残るため、horn mesh自体は原因ではないと確認した。
+- [x] demand描画の更新依頼後もModel Lab画像が変化しないため、強制再読込で最新Sceneを再検証する必要がある。
+- [x] Sceneのhorn flare実寸はFULLで幅0.76・高0.36と正しく、全高taperはhorn geometryではないと再確認した。
+- [x] 一時的なModel Lab Scene検査コードを削除し、通常のgeometry確認ビューへ復帰した。
+- [x] SUB・WOOFER・FULL・MID・HIGHを物理的な凹形状へ移行し、平面の色付き丸を撤去する。
+- [x] Haloを遮蔽対応で非常に弱い補助表現へ変更し、cabinetを少し暗いneutral grayへ整える。
+- [x] 停止時のemitter base colorをゼロへ連動させ、OFF-WHITEで色付き丸が残らないよう修正する。
+- [x] 全5種のModel Lab、TOP・SIDE・POV、停止時・activity時、最大16台の前提を検証する。
+- [x] TOPとSIDEで停止時の中立gray cabinet表示と既存の移動操作を確認した。
+- [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
