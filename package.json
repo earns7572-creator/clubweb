@@ -12,6 +12,7 @@
     "test:placement": "node tests/run-smartPlacement.mjs",
     "test:performance": "node tests/performanceArchitecture.test.cjs",
     "test:mixer": "node tests/run-mixerMath.mjs",
+    "test:response": "tsx tests/responseCurve.test.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

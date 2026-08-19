@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createActivityStore } from "@/lib/activityStore";
 import type { SpeakerEq } from "@/lib/speakerEq";
+import { filterForKind } from "@/lib/speakerProfiles";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
@@ -21,9 +22,6 @@ type SpeakerNode = { input: GainNode; filter: BiquadFilterNode; eq: SpeakerEqNod
 type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam };
 
 const EPSILON = .0001;
-const filterForKind: Record<SpeakerKind, { type: BiquadFilterType; frequency: number; q: number }> = {
-  sub: { type: "lowpass", frequency: 110, q: .8 }, woofer: { type: "lowpass", frequency: 460, q: .62 }, full: { type: "allpass", frequency: 1000, q: .3 }, mid: { type: "bandpass", frequency: 1600, q: .6 }, high: { type: "highpass", frequency: 3600, q: .7 },
-};
 const toneForOfficialSound: Record<string, number> = { pulse: 55, rain: 196, bronze: 146 };
 export const initialHeightForKind: Record<SpeakerKind, number> = { sub: 0, woofer: .22, full: .5, mid: .66, high: .78 };
 const visualEnvelopeForKind: Record<SpeakerKind, { attack: number; release: number; gain: number }> = {

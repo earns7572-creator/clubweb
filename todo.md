@@ -199,3 +199,9 @@
 - [x] CUSTOM panel、reset、選択Speaker連携、モバイル表示を実装する。
 - [x] 距離高域カットなし、EQ reset、複数Speaker、DSP cache、UIを検証する。
 - [x] Custom EQ更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] 添付仕様と既存EQ DSP・CUSTOM panel・type filter定義を監査する。
+- [x] 共有filter profile、純粋response計算、SVG graph、交点・drag操作を設計する。
+- [x] 共有type filter定義とpure response curve calculationを実装する。
+- [x] SVG System Response Editor、curve選択、交点・EQ point dragを実装する。
+- [x] response整合性、選択・drag、最大16 curve、Audio・performance不変条件を検証する。
+- [ ] System Response Editor更新をGitHub mainと公開チェックポイントへ保存する。
