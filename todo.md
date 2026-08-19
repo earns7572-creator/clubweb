@@ -210,4 +210,4 @@
 - [x] FULL／HIGHを再構築し、SUB／WOOFER／MIDの前面構造を整える。
 - [x] neutral albedo、emissive core、短距離local haloへactivity glowを刷新する。
 - [x] Model Lab全type、TOP／POV idle/active、軽量描画を検証する。
-- [ ] Speaker geometry・glow刷新をGitHub mainと公開チェックポイントへ保存する。
+- [x] Speaker geometry・glow刷新をGitHub mainと公開チェックポイントへ保存する。
