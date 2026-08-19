@@ -15,6 +15,7 @@
     "test:response": "tsx tests/responseCurve.test.ts",
     "test:bass": "tsx tests/bassPressure.test.ts",
     "test:stack": "node tests/run-stacking.mjs",
+    "test:models": "tsx tests/speakerModels.test.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

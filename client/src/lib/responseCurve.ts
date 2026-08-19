@@ -1,6 +1,6 @@
 /** Pure electrical Filter Response calculations — no AudioNodes are created for UI rendering. */
 import type { ClubSpeaker } from "@/hooks/useClubAudio";
-import { filterForKind } from "@/lib/speakerProfiles";
+import { getSpeakerModel } from "@/lib/speakerModels";
 
 export type VisualFilter = { type: BiquadFilterType; frequency: number; q?: number; gainDb?: number };
 export type ResponsePoint = { frequency: number; db: number };
@@ -19,8 +19,8 @@ export const dbToY = (db: number, height: number) => height - ((clamp(db, GRAPH_
 export const yToGainDb = (y: number, height: number) => clamp(GRAPH_MAX_DB - clamp(y / height, 0, 1) * (GRAPH_MAX_DB - GRAPH_MIN_DB), -12, 12);
 
 export function speakerFilters(speaker: ClubSpeaker): VisualFilter[] {
-  const typeFilter = filterForKind[speaker.kind];
-  return [{ ...typeFilter }, { type: "lowshelf", frequency: speaker.eq.low.frequency, gainDb: speaker.eq.low.gainDb }, { type: "peaking", frequency: speaker.eq.lowMid.frequency, gainDb: speaker.eq.lowMid.gainDb, q: speaker.eq.lowMid.q }, { type: "peaking", frequency: speaker.eq.highMid.frequency, gainDb: speaker.eq.highMid.gainDb, q: speaker.eq.highMid.q }, { type: "highshelf", frequency: speaker.eq.high.frequency, gainDb: speaker.eq.high.gainDb }];
+  const characterFilters = getSpeakerModel(speaker.modelId, speaker.kind).characterFilters;
+  return [...characterFilters, { type: "lowshelf", frequency: speaker.eq.low.frequency, gainDb: speaker.eq.low.gainDb }, { type: "peaking", frequency: speaker.eq.lowMid.frequency, gainDb: speaker.eq.lowMid.gainDb, q: speaker.eq.lowMid.q }, { type: "peaking", frequency: speaker.eq.highMid.frequency, gainDb: speaker.eq.highMid.gainDb, q: speaker.eq.highMid.q }, { type: "highshelf", frequency: speaker.eq.high.frequency, gainDb: speaker.eq.high.gainDb }];
 }
 
 function coefficients(filter: VisualFilter) {

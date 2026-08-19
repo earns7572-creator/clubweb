@@ -1,26 +1,26 @@
 /**
- * Club Craft audio graph: Source → mono input → Type Filter → four-band Custom EQ → Gain → Analyser → HRTF Panner → stereo Master.
+ * Club Craft audio graph: Source → mono input → model character filters → four-band Custom EQ → Gain → Analyser → HRTF Panner → stereo Master.
  * Sync is deliberately split so a listener turn or one Speaker drag never reprograms unrelated DSP nodes.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createActivityStore } from "@/lib/activityStore";
 import type { SpeakerEq } from "@/lib/speakerEq";
-import { filterForKind } from "@/lib/speakerProfiles";
+import { getSpeakerModel, resolveModelId, type CharacterFilter, type SpeakerModelId } from "@/lib/speakerModels";
 import { getBandEnergy } from "@/lib/bassPressure";
 import { createStackResolver } from "@/lib/speakerStacking";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
 export type ClubListener = { position: Position3D; orientation: { yaw: number; pitch: number } };
-export type ClubSpeaker = { id: string; kind: SpeakerKind; label: string; position: Position3D; stackParentId?: string | null; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
+export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; stackParentId?: string | null; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
 type Voice = { output: GainNode; stop?: () => void; media?: HTMLAudioElement; dispose?: () => void };
 type SpatialCache = { x?: number; y?: number; z?: number };
 type EqCache = { lowFrequency?: number; lowGain?: number; lowMidFrequency?: number; lowMidGain?: number; lowMidQ?: number; highMidFrequency?: number; highMidGain?: number; highMidQ?: number; highFrequency?: number; highGain?: number };
-type SpeakerCache = SpatialCache & { kind?: SpeakerKind; frequency?: number; q?: number; gain?: number; eq: EqCache };
+type SpeakerCache = SpatialCache & { modelId?: SpeakerModelId; gain?: number; eq: EqCache };
 type SpeakerEqNodes = { low: BiquadFilterNode; lowMid: BiquadFilterNode; highMid: BiquadFilterNode; high: BiquadFilterNode };
-type SpeakerNode = { input: GainNode; filter: BiquadFilterNode; eq: SpeakerEqNodes; gain: GainNode; analyser: AnalyserNode; analyserData: Uint8Array; frequencyData: Uint8Array; panner: PannerNode; cache: SpeakerCache };
+type SpeakerNode = { input: GainNode; characterFilters: BiquadFilterNode[]; eq: SpeakerEqNodes; gain: GainNode; analyser: AnalyserNode; analyserData: Uint8Array; frequencyData: Uint8Array; panner: PannerNode; cache: SpeakerCache };
 type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam };
 
 const EPSILON = .0001;
@@ -86,14 +86,17 @@ function createSpeakerEqNodes(context: AudioContext): SpeakerEqNodes {
   const high = context.createBiquadFilter(); high.type = "highshelf";
   return { low, lowMid, highMid, high };
 }
-function createSpeakerNode(context: AudioContext, master: GainNode): SpeakerNode {
-  const input = context.createGain(); const filter = context.createBiquadFilter(); const eq = createSpeakerEqNodes(context); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner();
+function configureCharacterNode(node: BiquadFilterNode, filter: CharacterFilter) { node.type = filter.type; node.frequency.value = filter.frequency; node.Q.value = filter.q ?? .7; if (filter.type === "peaking" || filter.type === "lowshelf" || filter.type === "highshelf") node.gain.value = filter.gainDb ?? 0; }
+function createCharacterFilters(context: AudioContext, modelId: SpeakerModelId) { return getSpeakerModel(modelId, getSpeakerModel(modelId, "sub").kind).characterFilters.map((filter) => { const node = context.createBiquadFilter(); configureCharacterNode(node, filter); return node; }); }
+function connectCharacterChain(input: AudioNode, filters: BiquadFilterNode[], destination: AudioNode) { if (!filters.length) { input.connect(destination); return; } input.connect(filters[0]); for (let index = 0; index < filters.length - 1; index += 1) filters[index].connect(filters[index + 1]); filters[filters.length - 1].connect(destination); }
+function createSpeakerNode(context: AudioContext, master: GainNode, modelId: SpeakerModelId): SpeakerNode {
+  const input = context.createGain(); const characterFilters = createCharacterFilters(context, modelId); const eq = createSpeakerEqNodes(context); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner();
   input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 1024; analyser.smoothingTimeConstant = .78;
   panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 360;
-  input.connect(filter); filter.connect(eq.low); eq.low.connect(eq.lowMid); eq.lowMid.connect(eq.highMid); eq.highMid.connect(eq.high); eq.high.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master);
-  return { input, filter, eq, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), frequencyData: new Uint8Array(analyser.frequencyBinCount), panner, cache: { eq: {} } };
+  connectCharacterChain(input, characterFilters, eq.low); eq.low.connect(eq.lowMid); eq.lowMid.connect(eq.highMid); eq.highMid.connect(eq.high); eq.high.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master);
+  return { input, characterFilters, eq, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), frequencyData: new Uint8Array(analyser.frequencyBinCount), panner, cache: { modelId, eq: {} } };
 }
-function disconnectSpeakerNode(node: SpeakerNode) { node.input.disconnect(); node.filter.disconnect(); node.eq.low.disconnect(); node.eq.lowMid.disconnect(); node.eq.highMid.disconnect(); node.eq.high.disconnect(); node.gain.disconnect(); node.analyser.disconnect(); node.panner.disconnect(); }
+function disconnectSpeakerNode(node: SpeakerNode) { node.input.disconnect(); node.characterFilters.forEach((filter) => filter.disconnect()); node.eq.low.disconnect(); node.eq.lowMid.disconnect(); node.eq.highMid.disconnect(); node.eq.high.disconnect(); node.gain.disconnect(); node.analyser.disconnect(); node.panner.disconnect(); }
 function syncEq(node: SpeakerNode, eq: SpeakerEq, now: number) {
   const cache = node.cache.eq;
   smoothParam(node.eq.low.frequency, eq.low.frequency, cache.lowFrequency, now); smoothParam(node.eq.low.gain, eq.low.gainDb, cache.lowGain, now);
@@ -108,8 +111,8 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   topologyPayloadRef.current = { speakers, sources, activeSourceId };
   speakersRef.current = speakers; listenerRef.current = listener;
   const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null);
-  const topologyKey = useMemo(() => `${activeSourceId}:${sources.map((source) => `${source.id}:${source.category}:${source.localUrl ?? ""}`).join("|")}:${speakers.map((speaker) => speaker.id).sort().join("|")}`, [activeSourceId, sources, speakers]);
-  const speakerDspKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.kind}:${speaker.level}:${speaker.muted}:${speaker.eq.low.frequency}:${speaker.eq.low.gainDb}:${speaker.eq.lowMid.frequency}:${speaker.eq.lowMid.gainDb}:${speaker.eq.lowMid.q}:${speaker.eq.highMid.frequency}:${speaker.eq.highMid.gainDb}:${speaker.eq.highMid.q}:${speaker.eq.high.frequency}:${speaker.eq.high.gainDb}`).join("|"), [speakers]);
+  const topologyKey = useMemo(() => `${activeSourceId}:${sources.map((source) => `${source.id}:${source.category}:${source.localUrl ?? ""}`).join("|")}:${speakers.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}`).sort().join("|")}`, [activeSourceId, sources, speakers]);
+  const speakerDspKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}:${speaker.level}:${speaker.muted}:${speaker.eq.low.frequency}:${speaker.eq.low.gainDb}:${speaker.eq.lowMid.frequency}:${speaker.eq.lowMid.gainDb}:${speaker.eq.lowMid.q}:${speaker.eq.highMid.frequency}:${speaker.eq.highMid.gainDb}:${speaker.eq.highMid.q}:${speaker.eq.high.frequency}:${speaker.eq.high.gainDb}`).join("|"), [speakers]);
   const speakerPositionKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.position.x}:${speaker.position.y}:${speaker.position.z}:${speaker.stackParentId ?? "floor"}`).join("|"), [speakers]);
   const listenerPositionKey = `${listener.position.x}:${listener.position.y}:${listener.position.z}`;
   const listenerOrientationKey = `${listener.orientation.yaw}:${listener.orientation.pitch}`;
@@ -119,15 +122,15 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     const { speakers: speakerList, sources: sourceList, activeSourceId: sourceId } = topologyPayloadRef.current;
     const speakerNodes = speakerNodesRef.current; const requestedIds = new Set(speakerList.map((speaker) => speaker.id));
     Array.from(speakerNodes.entries()).forEach(([id, node]) => { if (!requestedIds.has(id)) { disconnectSpeakerNode(node); speakerNodes.delete(id); delete visualEnvelopeRef.current[id]; delete lowEnvelopeRef.current[id]; kindBySpeakerRef.current.delete(id); topologyRef.current = ""; } });
-    speakerList.forEach((speaker) => { if (!speakerNodes.has(speaker.id)) { speakerNodes.set(speaker.id, createSpeakerNode(context, master)); topologyRef.current = ""; } });
+    speakerList.forEach((speaker) => { const modelId = resolveModelId(speaker.modelId, speaker.kind); const existing = speakerNodes.get(speaker.id); if (!existing || existing.cache.modelId !== modelId) { if (existing) disconnectSpeakerNode(existing); speakerNodes.set(speaker.id, createSpeakerNode(context, master, modelId)); topologyRef.current = ""; } });
     const desiredSource = sourceList.find((source) => source.id === sourceId); const voices = voicesRef.current;
     Array.from(voices.entries()).forEach(([id, voice]) => { if (id !== sourceId || !desiredSource) { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); voices.delete(id); topologyRef.current = ""; } });
     if (desiredSource && shouldPlay && !voices.has(desiredSource.id)) { const nextVoice = desiredSource.category === "local" && desiredSource.localUrl ? makeLocalVoice(context, desiredSource, setPlaybackError) : makeOfficialVoice(context, desiredSource, () => { voicesRef.current.delete(desiredSource.id); topologyRef.current = ""; setIsPlaying(false); }); voices.set(desiredSource.id, nextVoice); if (nextVoice.media) void nextVoice.media.play().catch(() => { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }); topologyRef.current = ""; }
-    const graph = `${sourceId}:${speakerList.map((speaker) => speaker.id).sort().join("|")}`;
+    const graph = `${sourceId}:${speakerList.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}`).sort().join("|")}`;
     if (topologyRef.current !== graph) { voices.forEach((voice) => { voice.output.disconnect(); speakerList.forEach((speaker) => { const node = speakerNodes.get(speaker.id); if (node) voice.output.connect(node.input); }); }); topologyRef.current = graph; }
   }, []);
 
-  const syncSpeakerDsp = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (!node) return; const config = filterForKind[speaker.kind]; if (node.cache.kind !== speaker.kind) node.filter.type = config.type; smoothParam(node.filter.frequency, config.frequency, node.cache.frequency, now); smoothParam(node.filter.Q, config.q, node.cache.q, now); syncEq(node, speaker.eq, now); const targetGain = speaker.muted ? 0 : Math.max(.02, speaker.level); smoothParam(node.gain.gain, targetGain, node.cache.gain, now); node.cache.kind = speaker.kind; node.cache.frequency = config.frequency; node.cache.q = config.q; node.cache.gain = targetGain; }); }, []);
+  const syncSpeakerDsp = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (!node) return; syncEq(node, speaker.eq, now); const targetGain = speaker.muted ? 0 : Math.max(.02, speaker.level); smoothParam(node.gain.gain, targetGain, node.cache.gain, now); node.cache.gain = targetGain; }); }, []);
   const syncSpeakerPositions = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (node) setSpatialPosition(node.panner as unknown as LegacySpatialNode, speakerToAudioPosition(speaker, speakerList), node.cache, now); }); }, []);
   const syncListenerPosition = useCallback((nextListener: ClubListener) => { const context = contextRef.current; if (context) setSpatialPosition(context.listener as unknown as LegacySpatialNode, sceneToAudioPosition(nextListener.position), listenerPositionCacheRef.current, context.currentTime); }, []);
   const syncListenerOrientation = useCallback((nextListener: ClubListener) => { const context = contextRef.current; if (context) setListenerOrientation(context.listener as unknown as LegacySpatialNode, nextListener.orientation, listenerOrientationCacheRef.current, context.currentTime); }, []);

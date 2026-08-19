@@ -294,3 +294,15 @@
 - [x] stack tree、循環防止、高さ、親移動、3View、audio graph不変をテスト・視覚検証する。
 - [x] stack tree、循環防止、top候補、実寸高さ、remove時のchild継承をpure stack testへ追加する。
 - [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+## Reggae Sound System Speaker Family + System Preset
+
+- [x] 添付仕様の残りと既存audio・model・stack・UIの統合要件を照合する。
+- [x] SpeakerFamily・SpeakerModelId・speakerModels registry・modern fallbackを実装する。
+- [x] Reggae Scoop・Kick・Mid Horn・Topの専用geometry、activity面、stylized cabinet voicingを実装する。
+- [x] family pickerとReggae Dub Session presetを追加し、stack・TOP・SIDE・POVへ統合する。
+- [x] Modern回帰、model別voicing、stack高さ、Reggae preset、3Viewをテスト・視覚検証する。
+- [x] Modern fallback、model registry、Reggae preset stack、shared response filter chainをpure model testへ追加する。
+- [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+> 添付仕様の確定事項: Modern PAはmodelId fallbackで維持し、ReggaeはScoop／Kick／Mid Horn／Topの4モデルを既存kindへ対応させる。DSPはmodel character filter chain→既存Custom EQ→既存gain／analyser／HRTFを共有し、Reggae Sound System presetは明示的なLoad操作でのみ現在sceneを置換する。
