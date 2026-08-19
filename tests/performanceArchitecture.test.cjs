@@ -153,6 +153,8 @@ assert.match(top, /onSpeakerDetach/);
 assert.match(home, /modelIdsForFamily/);
 assert.match(home, /REGGAE_WALL/);
 assert.match(home, /loadSystemPreset/);
+assert.match(home, /selectedSpeakerId, setSelectedSpeakerId\] = useState\(""\)/);
+assert.match(top, /onPointerDown=\{\(\) => props\.onSpeakerSelect\(""\)\}/);
 assert.match(audio, /type ClubListener = \{ name: string;/);
 assert.match(home, /club-craft-listener-name/);
 assert.match(home, /onListenerNameChange=\{changeListenerName\}/);

@@ -349,3 +349,11 @@
 - [x] TOP / SIDE / POV、型検査、production build、GitHub main、公開チェックポイントを確認する。
 
 > POV再確認: booth後方のDJを上方かつ手前へ移し、停止時も頭・胴体・片腕がbooth上部から読めること、再生時は両腕がdeck / mixer方向へ現れることを確認した。
+
+## Optional Speaker Selection
+
+- [ ] 初期選択・空きFloor pointer・Inspectorの現行依存を確認する。
+- [x] 初期未選択と空きFloorクリックによるSpeaker選択解除を実装する。
+- [x] TOP / SIDE / POV、Inspector、型検査、production build、GitHub main、公開チェックポイントを確認する。
+
+> TOP実機確認: 新規表示時点で選択リングとInspectorがなく、Speaker未選択の状態になっている。Canvas座標を確認してSpeakerを選択すると、そのときだけ選択リング・Remove・Inspectorが表示されることを確認した。続けて空きFloorをクリックすると選択リング・Remove・Inspectorが消え、Speaker未選択へ戻ることを確認した。操作後のbrowser consoleにruntime errorはない。
