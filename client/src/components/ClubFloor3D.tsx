@@ -39,7 +39,7 @@ function SpeakerObject({ speaker, activity, selected, canRemove, centerY, xy, on
   const [x, , z] = toWorld(xy);
   return <group position={[x, centerY, z]} onPointerDown={(event) => { event.stopPropagation(); onSelect(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(event); }}>
     {selected && <mesh position={[0, -height / 2 + .012, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[Math.max(width, depth) * .7, Math.max(width, depth) * .715, 40]} /><meshBasicMaterial color="#c6c3b8" transparent opacity={.15} side={THREE.DoubleSide} /></mesh>}
-    {canRemove && <Html position={[width / 2 + .12, height / 2 + .14, depth / 2]} center transform sprite><button className="cabinet-remove" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onRemove(); }} aria-label={`Remove ${speaker.kind} speaker`}>×</button></Html>}
+    {selected && canRemove && <Html position={[width / 2 + .12, height / 2 + .14, depth / 2]} center transform sprite><button className="cabinet-remove" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onRemove(); }} aria-label={`Remove ${speaker.kind} speaker`}>×</button></Html>}
     <SpeakerMiniature kind={speaker.kind} activity={activity} selected={selected} idleVisible />
   </group>;
 }
