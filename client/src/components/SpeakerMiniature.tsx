@@ -14,10 +14,10 @@ type Blueprint = { body: [number, number, number]; profile: ActivityProfile; cab
 type HornProps = { geometry: THREE.BufferGeometry; x?: number; y: number; frontZ: number; mouthWidth: number; mouthHeight: number; throatWidth: number; throatHeight: number; depth: number; folded?: boolean; openThroat?: boolean };
 type SpeakerMaterials = { cabinet: THREE.MeshStandardMaterial; baffle: THREE.MeshStandardMaterial; horn: THREE.MeshStandardMaterial; driver: THREE.MeshStandardMaterial };
 
-const passiveFrameMaterial = new THREE.MeshStandardMaterial({ color: "#393a31", roughness: .59, metalness: .19 });
-const passiveDetailMaterial = new THREE.MeshStandardMaterial({ color: "#2d2e28", roughness: .82 });
-const passiveMetalMaterial = new THREE.MeshStandardMaterial({ color: "#55554b", roughness: .4, metalness: .5 });
-const passiveFootMaterial = new THREE.MeshStandardMaterial({ color: "#080907", roughness: .87, metalness: .08 });
+const passiveFrameMaterial = new THREE.MeshStandardMaterial({ color: "#747570", roughness: .68, metalness: .11 });
+const passiveDetailMaterial = new THREE.MeshStandardMaterial({ color: "#5d5e59", roughness: .84 });
+const passiveMetalMaterial = new THREE.MeshStandardMaterial({ color: "#8b8c87", roughness: .48, metalness: .22 });
+const passiveFootMaterial = new THREE.MeshStandardMaterial({ color: "#4c4d48", roughness: .87, metalness: .04 });
 const selectionMaterial = new THREE.MeshBasicMaterial({ color: "#d5c2a8", transparent: true, opacity: .028, side: THREE.BackSide });
 const idleEdgeMaterial = new THREE.LineBasicMaterial({ color: "#c4c0b3", transparent: true, opacity: .42 });
 
@@ -62,19 +62,21 @@ const typeGlowGain: Record<SpeakerKind, { horn: number; driver: number }> = {
 const lowBandColor = new THREE.Color("#ef3e32");
 const midBandColor = new THREE.Color("#e7d64b");
 const highBandColor = new THREE.Color("#56d46a");
+const neutralHornColor = new THREE.Color("#6d6e69");
+const neutralDriverColor = new THREE.Color("#51524e");
 function setFrequencyColor(target: THREE.Color, position: number) {
   const band = THREE.MathUtils.clamp(position, 0, 1);
   return band <= .5 ? target.copy(lowBandColor).lerp(midBandColor, band * 2) : target.copy(midBandColor).lerp(highBandColor, (band - .5) * 2);
 }
 
-function createSpeakerMaterials(): SpeakerMaterials { return { cabinet: new THREE.MeshStandardMaterial({ color: "#171815", roughness: .74, metalness: .08, emissive: "#000000", emissiveIntensity: .01 }), baffle: new THREE.MeshStandardMaterial({ color: "#0e0f0c", roughness: .9, metalness: .03, emissive: "#000000", emissiveIntensity: .015 }), horn: new THREE.MeshStandardMaterial({ color: "#11120f", roughness: .66, metalness: .04, side: THREE.DoubleSide, emissive: "#000000", emissiveIntensity: .015 }), driver: new THREE.MeshStandardMaterial({ color: "#0a0b08", roughness: .54, metalness: .05, side: THREE.DoubleSide, emissive: "#000000", emissiveIntensity: .02 }) }; }
+function createSpeakerMaterials(): SpeakerMaterials { return { cabinet: new THREE.MeshStandardMaterial({ color: "#a5a6a1", roughness: .83, metalness: .02, emissive: "#000000", emissiveIntensity: .01 }), baffle: new THREE.MeshStandardMaterial({ color: "#858681", roughness: .92, metalness: .01, emissive: "#000000", emissiveIntensity: .015 }), horn: new THREE.MeshStandardMaterial({ color: neutralHornColor, roughness: .76, metalness: .02, side: THREE.DoubleSide, emissive: "#000000", emissiveIntensity: .015 }), driver: new THREE.MeshStandardMaterial({ color: neutralDriverColor, roughness: .68, metalness: .02, side: THREE.DoubleSide, emissive: "#000000", emissiveIntensity: .02 }) }; }
 function useSpeakerMaterials(kind: SpeakerKind, activity: number) {
   const materials = useMemo(createSpeakerMaterials, []); const { invalidate } = useThree();
   useEffect(() => () => { materials.cabinet.dispose(); materials.baffle.dispose(); materials.horn.dispose(); materials.driver.dispose(); }, [materials]);
   useEffect(() => {
     const active = THREE.MathUtils.clamp(activity, 0, 1); const bands = speakerBandProfile[kind]; const gains = typeGlowGain[kind];
     setFrequencyColor(materials.cabinet.emissive, bands.cabinet); setFrequencyColor(materials.baffle.emissive, bands.baffle); setFrequencyColor(materials.horn.emissive, bands.horn); setFrequencyColor(materials.driver.emissive, bands.driver);
-    materials.horn.color.copy(materials.horn.emissive).multiplyScalar(active * .16); materials.driver.color.copy(materials.driver.emissive).multiplyScalar(active * .18);
+    materials.horn.color.copy(neutralHornColor).lerp(materials.horn.emissive, active * .16); materials.driver.color.copy(neutralDriverColor).lerp(materials.driver.emissive, active * .18);
     materials.cabinet.emissiveIntensity = 0; materials.baffle.emissiveIntensity = 0; materials.horn.emissiveIntensity = active * .8 * gains.horn; materials.driver.emissiveIntensity = active * .95 * gains.driver;
     invalidate();
   }, [activity, invalidate, kind, materials]);

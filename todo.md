@@ -183,3 +183,8 @@
 - [x] 背景・UI外枠・文字色を限定調整し、音響と3D操作を維持する。
 - [x] TOP / SIDE / POV、モバイル可読性、型検査、production buildを検証する。
 - [x] オフホワイト背景更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] 現在の背景theme、Speaker material、UI操作構成を確認する。
+- [x] 背景切替の選択肢とニュートラルグレー模型materialのコントラスト方針を設計する。
+- [x] 背景切替UIとneutral gray Speaker materialを実装する。
+- [x] 各背景、TOP / SIDE / POV、モバイルで可読性・activity・操作性を検証する。
+- [ ] 背景切替・グレーSpeaker更新をGitHub mainと公開チェックポイントへ保存する。
