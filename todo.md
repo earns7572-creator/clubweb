@@ -205,3 +205,9 @@
 - [x] SVG System Response Editor、curve選択、交点・EQ point dragを実装する。
 - [x] response整合性、選択・drag、最大16 curve、Audio・performance不変条件を検証する。
 - [x] System Response Editor更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] 現行Speaker geometry、material、activity glow、Model Lab検証経路を監査する。
+- [x] 5 typeのfront／side構造、neutral material、emissive core、local halo配置を設計する。
+- [x] FULL／HIGHを再構築し、SUB／WOOFER／MIDの前面構造を整える。
+- [x] neutral albedo、emissive core、短距離local haloへactivity glowを刷新する。
+- [x] Model Lab全type、TOP／POV idle/active、軽量描画を検証する。
+- [ ] Speaker geometry・glow刷新をGitHub mainと公開チェックポイントへ保存する。
