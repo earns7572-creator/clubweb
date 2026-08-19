@@ -47,7 +47,21 @@ function setListenerOrientation(node: LegacySpatialNode, orientation: ClubListen
   cache.x = forward.x; cache.y = forward.y; cache.z = forward.z;
 }
 
-function makeOfficialVoice(context: AudioContext, source: ClubSource): Voice {
+const SWEEP_START_HZ = 20;
+const SWEEP_END_HZ = 20_000;
+const SWEEP_DURATION_SECONDS = 15;
+
+function makeSweepVoice(context: AudioContext, onComplete: () => void): Voice {
+  const output = context.createGain(); const level = context.createGain(); const oscillator = context.createOscillator(); const now = context.currentTime; let stoppedManually = false;
+  output.gain.value = .24; level.gain.setValueAtTime(0, now); level.gain.linearRampToValueAtTime(.18, now + .025); level.gain.setValueAtTime(.18, now + SWEEP_DURATION_SECONDS - .04); level.gain.linearRampToValueAtTime(0, now + SWEEP_DURATION_SECONDS);
+  oscillator.type = "sine"; oscillator.frequency.setValueAtTime(SWEEP_START_HZ, now); oscillator.frequency.exponentialRampToValueAtTime(SWEEP_END_HZ, now + SWEEP_DURATION_SECONDS); oscillator.connect(level); level.connect(output);
+  oscillator.onended = () => { output.disconnect(); level.disconnect(); if (!stoppedManually) onComplete(); };
+  oscillator.start(now); oscillator.stop(now + SWEEP_DURATION_SECONDS);
+  return { output, stop: () => { stoppedManually = true; oscillator.onended = null; oscillator.stop(); level.disconnect(); output.disconnect(); } };
+}
+
+function makeOfficialVoice(context: AudioContext, source: ClubSource, onSweepComplete: () => void): Voice {
+  if (source.id === "sweep") return makeSweepVoice(context, onSweepComplete);
   const output = context.createGain(); output.gain.value = .24;
   const osc = context.createOscillator(); const overtone = context.createOscillator(); const lowpass = context.createBiquadFilter(); const lfo = context.createOscillator(); const lfoGain = context.createGain(); const fundamental = toneForOfficialSound[source.id] ?? 110;
   osc.type = source.id === "rain" ? "sine" : "triangle"; osc.frequency.value = fundamental; overtone.type = "sine"; overtone.frequency.value = fundamental * (source.id === "bronze" ? 2.01 : 1.5); overtone.detune.value = source.id === "bronze" ? 7 : -4;
@@ -90,7 +104,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     speakerList.forEach((speaker) => { if (!speakerNodes.has(speaker.id)) { speakerNodes.set(speaker.id, createSpeakerNode(context, master)); topologyRef.current = ""; } });
     const desiredSource = sourceList.find((source) => source.id === sourceId); const voices = voicesRef.current;
     Array.from(voices.entries()).forEach(([id, voice]) => { if (id !== sourceId || !desiredSource) { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); voices.delete(id); topologyRef.current = ""; } });
-    if (desiredSource && !voices.has(desiredSource.id)) { const nextVoice = desiredSource.category === "local" && desiredSource.localUrl ? makeLocalVoice(context, desiredSource, setPlaybackError) : makeOfficialVoice(context, desiredSource); voices.set(desiredSource.id, nextVoice); if (shouldPlay && nextVoice.media) void nextVoice.media.play().catch(() => { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }); topologyRef.current = ""; }
+    if (desiredSource && shouldPlay && !voices.has(desiredSource.id)) { const nextVoice = desiredSource.category === "local" && desiredSource.localUrl ? makeLocalVoice(context, desiredSource, setPlaybackError) : makeOfficialVoice(context, desiredSource, () => { voicesRef.current.delete(desiredSource.id); topologyRef.current = ""; setIsPlaying(false); }); voices.set(desiredSource.id, nextVoice); if (nextVoice.media) void nextVoice.media.play().catch(() => { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }); topologyRef.current = ""; }
     const graph = `${sourceId}:${speakerList.map((speaker) => speaker.id).sort().join("|")}`;
     if (topologyRef.current !== graph) { voices.forEach((voice) => { voice.output.disconnect(); speakerList.forEach((speaker) => { const node = speakerNodes.get(speaker.id); if (node) voice.output.connect(node.input); }); }); topologyRef.current = graph; }
   }, []);

@@ -22,7 +22,7 @@ const speakerMeta: Record<SpeakerKind, { label: string; color: string }> = { sub
 const makeSpeaker = (id: string, kind: SpeakerKind, x: number, y: number, level: number): ClubSpeaker => ({ id, kind, label: speakerMeta[kind].label, position: { x, y, z: initialHeightForKind[kind] }, level, muted: false, responseProfileId: kind, activity: 0 });
 const initialSpeakers: ClubSpeaker[] = [makeSpeaker("sub-1", "sub", .1667, .75, .78), makeSpeaker("full-1", "full", .3333, .3333, .72), makeSpeaker("full-2", "full", .6667, .3333, .72), makeSpeaker("high-1", "high", .8333, .6667, .6)];
 const initialListener: ClubListener = { position: { x: .5, y: .72, z: .5 }, orientation: { yaw: 0, pitch: 0 } };
-const clubTracks: ClubSource[] = [{ id: "pulse", name: "Deep Pulse", category: "official", color: "#e65b4a" }, { id: "rain", name: "Rain Room", category: "official", color: "#d6aa43" }, { id: "bronze", name: "Bronze Air", category: "official", color: "#4bbd92" }];
+const clubTracks: ClubSource[] = [{ id: "pulse", name: "Deep Pulse", category: "official", color: "#e65b4a" }, { id: "rain", name: "Rain Room", category: "official", color: "#d6aa43" }, { id: "bronze", name: "Bronze Air", category: "official", color: "#4bbd92" }, { id: "sweep", name: "20 Hz → 20 kHz · 15 sec", category: "official", color: "#e7d64b" }];
 const gridSpawnPoints = [{ x: .5, y: .5 }, { x: .4167, y: .5 }, { x: .5833, y: .5 }, { x: .5, y: .5833 }, { x: .5, y: .4167 }];
 const clamp = (value: number) => Math.max(.07, Math.min(.93, value));
 const clampPitch = (value: number) => Math.max(-1.12, Math.min(1.12, value));

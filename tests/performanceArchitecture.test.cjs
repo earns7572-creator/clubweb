@@ -49,5 +49,12 @@ assert.match(mixer, /requestAnimationFrame\(applyLatest\)/);
 assert.match(mixer, /setPointerCapture/);
 assert.doesNotMatch(mixer, /createAnalyser|createGain|createPanner/);
 assert.doesNotMatch(mixer, /DrawerContent|DrawerPrimitive/);
+assert.match(audio, /const SWEEP_START_HZ = 20/);
+assert.match(audio, /const SWEEP_END_HZ = 20_000/);
+assert.match(audio, /const SWEEP_DURATION_SECONDS = 15/);
+assert.match(audio, /oscillator\.frequency\.exponentialRampToValueAtTime\(SWEEP_END_HZ, now \+ SWEEP_DURATION_SECONDS\)/);
+assert.match(audio, /oscillator\.stop\(now \+ SWEEP_DURATION_SECONDS\)/);
+assert.match(audio, /desiredSource && shouldPlay && !voices\.has\(desiredSource\.id\)/);
+assert.match(home, /id: "sweep", name: "20 Hz → 20 kHz · 15 sec"/);
 
 console.log("performance architecture tests passed");

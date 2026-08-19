@@ -173,3 +173,8 @@
 - [x] エンクロージャー発光を撤去し、driver／開口部限定の周波数色・漏光へ修正する。
 - [x] 暗所TOP／POV、各type、idle復帰、demand rendering、型検査、production buildを検証する。
 - [x] 漏光visual修正をGitHub mainと公開チェックポイントへ保存する。
+- [x] 既存の公式音源生成、source picker、再生停止ライフサイクルを確認する。
+- [x] 15秒で20 Hzから20 kHzへ上昇するスイープの仕様と終了挙動を設計する。
+- [x] 公式サンプル音源としてスイープを実装し、source pickerへ追加する。
+- [x] 15秒の周波数遷移、停止・再開始、Speaker response、activity・performanceを検証する。
+- [ ] スイープ音源更新をGitHub mainと公開チェックポイントへ保存する。
