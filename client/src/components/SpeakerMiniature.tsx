@@ -3,6 +3,7 @@ import * as THREE from "three";
 import { useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
 import type { SpeakerKind } from "@/hooks/useClubAudio";
+import { speakerBodyTuple } from "@/lib/speakerDimensions";
 
 type Props = { kind: SpeakerKind; activity: number; selected?: boolean; showHaze?: boolean; idleVisible?: boolean };
 type Blueprint = { body: [number, number, number]; cabinet: THREE.BufferGeometry; edges: THREE.EdgesGeometry };
@@ -34,7 +35,7 @@ const midHorn = makeHornFlare(.56, .2, .12, .07, .19); const midHornGlow = makeH
 const highHorn = makeHornFlare(.88, .38, .12, .08, .36); const highHornGlow = makeHornFlare(.65, .27, .08, .05, .29);
 const concaveWooferCone = makeConcaveDisc(1, 32, .18); const concaveWooferGlow = makeConcaveDisc(1, 32, .145);
 function makeBlueprint(body: [number, number, number], taper: number): Blueprint { const cabinet = makeChamferCabinet(...body, taper); return { body, cabinet, edges: new THREE.EdgesGeometry(cabinet, 14) }; }
-const blueprints: Record<SpeakerKind, Blueprint> = { sub: makeBlueprint([2.36, .9, 1.4], .015), woofer: makeBlueprint([1.15, 1.5, 1.08], .04), full: makeBlueprint([1.1, 2, 1.08], .1), mid: makeBlueprint([.84, .88, .58], .035), high: makeBlueprint([1.08, .62, .72], .08) };
+const blueprints: Record<SpeakerKind, Blueprint> = { sub: makeBlueprint(speakerBodyTuple("sub"), .015), woofer: makeBlueprint(speakerBodyTuple("woofer"), .04), full: makeBlueprint(speakerBodyTuple("full"), .1), mid: makeBlueprint(speakerBodyTuple("mid"), .035), high: makeBlueprint(speakerBodyTuple("high"), .08) };
 
 const LOW = new THREE.Color("#ff3b30"); const MID = new THREE.Color("#ffd60a"); const HIGH = new THREE.Color("#32d05b");
 const neutralCabinetColor = new THREE.Color("#62635e"); const neutralBaffleColor = new THREE.Color("#30312d"); const neutralHornColor = new THREE.Color("#151613"); const neutralConeColor = new THREE.Color("#171815");

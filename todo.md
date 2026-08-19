@@ -284,3 +284,13 @@
 
 > POV実再生: Deep PulseをPOVで開始し、3D cameraのみの低域pressure vibrationを確認する準備を完了した。
 > POV限定確認: Pause後はPOV cameraが基準姿勢へ戻り、TOPへ切り替えた後はcamera vibrationが一切発生しないことを確認した。
+
+## Physical Speaker Stacking System
+
+- [x] 添付仕様のstack候補、detach、親子追従、3View、audio不変の受入条件を現行実装と照合する。
+- [x] speakerDimensions・6m vertical座標・stack tree helper・cycle guard・remove時の子detachを実装する。
+- [x] 新規Speakerのfloor spawn、stack高さ解決、親移動時の子孫追従をTOP／SIDE／POVへ統合する。
+- [x] TOP dragのstack candidate・吸着preview・dropでの親子化・floor detachを実装する。
+- [x] stack tree、循環防止、高さ、親移動、3View、audio graph不変をテスト・視覚検証する。
+- [x] stack tree、循環防止、top候補、実寸高さ、remove時のchild継承をpure stack testへ追加する。
+- [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。

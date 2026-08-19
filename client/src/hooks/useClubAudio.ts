@@ -7,11 +7,12 @@ import { createActivityStore } from "@/lib/activityStore";
 import type { SpeakerEq } from "@/lib/speakerEq";
 import { filterForKind } from "@/lib/speakerProfiles";
 import { getBandEnergy } from "@/lib/bassPressure";
+import { createStackResolver } from "@/lib/speakerStacking";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
 export type ClubListener = { position: Position3D; orientation: { yaw: number; pitch: number } };
-export type ClubSpeaker = { id: string; kind: SpeakerKind; label: string; position: Position3D; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
+export type ClubSpeaker = { id: string; kind: SpeakerKind; label: string; position: Position3D; stackParentId?: string | null; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
 type Voice = { output: GainNode; stop?: () => void; media?: HTMLAudioElement; dispose?: () => void };
@@ -24,11 +25,11 @@ type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => vo
 
 const EPSILON = .0001;
 const toneForOfficialSound: Record<string, number> = { pulse: 55, rain: 196, bronze: 146 };
-export const initialHeightForKind: Record<SpeakerKind, number> = { sub: 0, woofer: .22, full: .5, mid: .66, high: .78 };
 const visualEnvelopeForKind: Record<SpeakerKind, { attack: number; release: number; gain: number }> = {
   sub: { attack: .16, release: .07, gain: 5.6 }, woofer: { attack: .22, release: .11, gain: 5.1 }, full: { attack: .26, release: .14, gain: 5.2 }, mid: { attack: .38, release: .18, gain: 6.6 }, high: { attack: .46, release: .21, gain: 7.8 },
 };
 export function sceneToAudioPosition(position: Position3D) { return { x: (position.x - .5) * 9, y: (position.z - .5) * 4.8, z: (position.y - .5) * 9 }; }
+export function speakerToAudioPosition(speaker: ClubSpeaker, speakers: ClubSpeaker[]) { const resolver = createStackResolver(speakers); const xy = resolver.getXY(speaker); return { x: (xy.x - .5) * 9, y: resolver.getCenterMeters(speaker), z: (xy.y - .5) * 9 }; }
 export function sceneOrientationToAudioOrientation(orientation: ClubListener["orientation"]) { return { x: Math.sin(orientation.yaw) * Math.cos(orientation.pitch), y: Math.sin(orientation.pitch), z: -Math.cos(orientation.yaw) * Math.cos(orientation.pitch) }; }
 
 const differs = (next: number, previous: number | undefined) => previous === undefined || Math.abs(next - previous) > EPSILON;
@@ -109,7 +110,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null);
   const topologyKey = useMemo(() => `${activeSourceId}:${sources.map((source) => `${source.id}:${source.category}:${source.localUrl ?? ""}`).join("|")}:${speakers.map((speaker) => speaker.id).sort().join("|")}`, [activeSourceId, sources, speakers]);
   const speakerDspKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.kind}:${speaker.level}:${speaker.muted}:${speaker.eq.low.frequency}:${speaker.eq.low.gainDb}:${speaker.eq.lowMid.frequency}:${speaker.eq.lowMid.gainDb}:${speaker.eq.lowMid.q}:${speaker.eq.highMid.frequency}:${speaker.eq.highMid.gainDb}:${speaker.eq.highMid.q}:${speaker.eq.high.frequency}:${speaker.eq.high.gainDb}`).join("|"), [speakers]);
-  const speakerPositionKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.position.x}:${speaker.position.y}:${speaker.position.z}`).join("|"), [speakers]);
+  const speakerPositionKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.position.x}:${speaker.position.y}:${speaker.position.z}:${speaker.stackParentId ?? "floor"}`).join("|"), [speakers]);
   const listenerPositionKey = `${listener.position.x}:${listener.position.y}:${listener.position.z}`;
   const listenerOrientationKey = `${listener.orientation.yaw}:${listener.orientation.pitch}`;
   const ensureContext = useCallback(() => { if (contextRef.current) return contextRef.current; const context = new AudioContext(); const master = context.createGain(); const compressor = context.createDynamicsCompressor(); master.gain.value = .82; compressor.threshold.value = -18; compressor.ratio.value = 5; master.connect(compressor); compressor.connect(context.destination); contextRef.current = context; masterRef.current = master; return context; }, []);
@@ -127,7 +128,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   }, []);
 
   const syncSpeakerDsp = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (!node) return; const config = filterForKind[speaker.kind]; if (node.cache.kind !== speaker.kind) node.filter.type = config.type; smoothParam(node.filter.frequency, config.frequency, node.cache.frequency, now); smoothParam(node.filter.Q, config.q, node.cache.q, now); syncEq(node, speaker.eq, now); const targetGain = speaker.muted ? 0 : Math.max(.02, speaker.level); smoothParam(node.gain.gain, targetGain, node.cache.gain, now); node.cache.kind = speaker.kind; node.cache.frequency = config.frequency; node.cache.q = config.q; node.cache.gain = targetGain; }); }, []);
-  const syncSpeakerPositions = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (node) setSpatialPosition(node.panner as unknown as LegacySpatialNode, sceneToAudioPosition(speaker.position), node.cache, now); }); }, []);
+  const syncSpeakerPositions = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (node) setSpatialPosition(node.panner as unknown as LegacySpatialNode, speakerToAudioPosition(speaker, speakerList), node.cache, now); }); }, []);
   const syncListenerPosition = useCallback((nextListener: ClubListener) => { const context = contextRef.current; if (context) setSpatialPosition(context.listener as unknown as LegacySpatialNode, sceneToAudioPosition(nextListener.position), listenerPositionCacheRef.current, context.currentTime); }, []);
   const syncListenerOrientation = useCallback((nextListener: ClubListener) => { const context = contextRef.current; if (context) setListenerOrientation(context.listener as unknown as LegacySpatialNode, nextListener.orientation, listenerOrientationCacheRef.current, context.currentTime); }, []);
 

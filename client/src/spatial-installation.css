@@ -54,6 +54,7 @@
 .spatial-control input { width: 100%; accent-color: #575850; }
 .height-control { margin-top: 13px; }
 .height-control .height-stops { grid-column: 2; display: flex; justify-content: space-between; margin: -2px 0 0; color: #acada6; font: 400 7px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
+.stacked-status { margin: 13px 0 0 56px; color: #8e8f88; font: 400 10px/1 "Noto Sans JP", sans-serif; }
 .spatial-inspector .inspector-actions { display: flex; gap: 14px; margin-top: 16px; }
 .spatial-inspector .inspector-actions button { min-height: auto; display: inline-flex; justify-content: flex-start; gap: 4px; border: 0; padding: 0; color: #686962; background: transparent; font: 400 11px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
 .spatial-inspector .inspector-actions .muted { color: var(--gallery-sound); background: transparent; }
