@@ -294,3 +294,10 @@
 - [x] stack tree、循環防止、高さ、親移動、3View、audio graph不変をテスト・視覚検証する。
 - [x] stack tree、循環防止、top候補、実寸高さ、remove時のchild継承をpure stack testへ追加する。
 - [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+## 常時表示のSpeaker削除アイコン
+
+- [x] TOP・SIDEの削除アイコン表示条件とstack削除継承の現状を確認する。
+- [x] 各Speaker右上の削除アイコンを選択状態に依存せず常時表示へ変更する。
+- [x] TOP・SIDEでアイコン位置、誤操作防止、stack parent削除時のchild継承を検証する。
+- [x] 型検査、production build、GitHub main、公開チェックポイントを完了する。
