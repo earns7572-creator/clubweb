@@ -198,4 +198,4 @@
 - [x] 4-band EQ DSPとSpeakerごとのstate・差分同期を実装する。
 - [x] CUSTOM panel、reset、選択Speaker連携、モバイル表示を実装する。
 - [x] 距離高域カットなし、EQ reset、複数Speaker、DSP cache、UIを検証する。
-- [ ] Custom EQ更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] Custom EQ更新をGitHub mainと公開チェックポイントへ保存する。
