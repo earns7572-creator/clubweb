@@ -215,4 +215,4 @@
 - [x] マットな中間グレーのcabinet・baffle・horn・driver paletteを設計する。
 - [x] neutral gray materialへ限定調整し、emissive core・halo・geometryを保持する。
 - [x] TOP／POV・Model Lab・activity時の可読性と軽量描画を検証する。
-- [ ] グレーSpeaker復帰をGitHub mainと公開チェックポイントへ保存する。
+- [x] グレーSpeaker復帰をGitHub mainと公開チェックポイントへ保存する。
