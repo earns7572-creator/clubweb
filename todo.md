@@ -177,4 +177,4 @@
 - [x] 15秒で20 Hzから20 kHzへ上昇するスイープの仕様と終了挙動を設計する。
 - [x] 公式サンプル音源としてスイープを実装し、source pickerへ追加する。
 - [x] 15秒の周波数遷移、停止・再開始、Speaker response、activity・performanceを検証する。
-- [ ] スイープ音源更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] スイープ音源更新をGitHub mainと公開チェックポイントへ保存する。
