@@ -306,3 +306,10 @@
 - [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
 
 > 添付仕様の確定事項: Modern PAはmodelId fallbackで維持し、ReggaeはScoop／Kick／Mid Horn／Topの4モデルを既存kindへ対応させる。DSPはmodel character filter chain→既存Custom EQ→既存gain／analyser／HRTFを共有し、Reggae Sound System presetは明示的なLoad操作でのみ現在sceneを置換する。
+
+## Systemメニューとview switcherの重なり修正
+
+- [x] header・System popover・TOP／SIDE／POV switcherの位置関係を確認する。
+- [x] desktopと狭い幅で干渉しない余白・z-index・popover originへ調整する。
+- [x] desktop・mobileでSystem popoverとview switcherが重ならないことを確認する。
+- [x] 型検査、production build、GitHub main、公開チェックポイントを完了する。
