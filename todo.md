@@ -204,4 +204,4 @@
 - [x] 共有type filter定義とpure response curve calculationを実装する。
 - [x] SVG System Response Editor、curve選択、交点・EQ point dragを実装する。
 - [x] response整合性、選択・drag、最大16 curve、Audio・performance不変条件を検証する。
-- [ ] System Response Editor更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] System Response Editor更新をGitHub mainと公開チェックポイントへ保存する。
