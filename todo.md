@@ -341,3 +341,11 @@
 > SIDE / POV実機確認: SIDEには名前付きCSS人型とstage側の小さなbooth・DJシルエットが表示された。POVにはListener自身や名前を表示せず、正面のbooth、two decks、mixer、DJの頭・胴体・腕が読めることを確認した。
 
 > Playback実機確認: POVでPlay状態へ切り替え、DJの両腕がdeck / mixer方向へ向くactive poseを確認した。再生操作後のbrowser consoleにはruntime errorがない。DJ専用のRAF / `useFrame` / skeleton animationは追加していない。
+
+## DJ Visibility Correction
+
+- [x] POVのbooth・DJのローカル座標、向き、boothによる遮蔽を再確認する。
+- [x] POVでDJがboothの後方から常に上半身まで見える配置へ修正する。
+- [x] TOP / SIDE / POV、型検査、production build、GitHub main、公開チェックポイントを確認する。
+
+> POV再確認: booth後方のDJを上方かつ手前へ移し、停止時も頭・胴体・片腕がbooth上部から読めること、再生時は両腕がdeck / mixer方向へ現れることを確認した。

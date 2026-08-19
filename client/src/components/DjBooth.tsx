@@ -24,6 +24,6 @@ export function DjBooth({ active, tone }: { active: boolean; tone: SurfaceTone }
     <mesh geometry={mixerGeometry} material={mixerMaterial} position={[0, .84, .02]} raycast={ignoreRaycast} />
     <mesh geometry={deckGeometry} material={deckMaterial} position={[.52, .83, .02]} raycast={ignoreRaycast} />
     <mesh geometry={boothTopGeometry} material={boothTopMaterial[tone]} position={[0, .79, .02]} raycast={ignoreRaycast} />
-    <group position={[0, .01, -.38]} raycast={ignoreRaycast}><SimpleHumanAvatar variant="dj" active={active} /></group>
+    <group position={[0, .12, -.25]} scale={[1.08, 1.08, 1.08]} raycast={ignoreRaycast}><SimpleHumanAvatar variant="dj" active={active} /></group>
   </group>;
 }
