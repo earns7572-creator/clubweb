@@ -10,6 +10,8 @@ const side = read("client/src/components/SideScene.tsx");
 const app = read("client/src/App.tsx");
 const miniature = read("client/src/components/SpeakerMiniature.tsx");
 const mixer = read("client/src/components/SpeakerMixer.tsx");
+const custom = read("client/src/components/SpeakerCustomPanel.tsx");
+const speakerEq = read("client/src/lib/speakerEq.ts");
 
 assert.match(audio, /syncTopology/);
 assert.match(audio, /syncSpeakerDsp/);
@@ -56,5 +58,21 @@ assert.match(audio, /oscillator\.frequency\.exponentialRampToValueAtTime\(SWEEP_
 assert.match(audio, /oscillator\.stop\(now \+ SWEEP_DURATION_SECONDS\)/);
 assert.match(audio, /desiredSource && shouldPlay && !voices\.has\(desiredSource\.id\)/);
 assert.match(home, /id: "sweep", name: "20 Hz → 20 kHz · 15 sec"/);
+assert.match(audio, /type SpeakerEqNodes/);
+assert.match(audio, /createSpeakerEqNodes/);
+assert.match(audio, /filter\.connect\(eq\.low\); eq\.low\.connect\(eq\.lowMid\); eq\.lowMid\.connect\(eq\.highMid\); eq\.highMid\.connect\(eq\.high\); eq\.high\.connect\(gain\)/);
+assert.match(audio, /function syncEq\(node: SpeakerNode, eq: SpeakerEq, now: number\)/);
+assert.match(audio, /panner\.distanceModel = "inverse"; panner\.refDistance = 1\.2; panner\.maxDistance = 12; panner\.rolloffFactor = \.85; panner\.coneInnerAngle = 360/);
+assert.match(home, /<SpeakerCustomPanel/);
+assert.match(custom, /positionToFrequency/);
+assert.match(custom, /Reset EQ/);
+assert.doesNotMatch(mixer, /SpeakerCustomPanel|createBiquad/);
+assert.match(speakerEq, /low: \{ frequency: 100, gainDb: 0 \}/);
+assert.match(speakerEq, /lowMid: \{ frequency: 300, gainDb: 0, q: 1 \}/);
+assert.match(speakerEq, /highMid: \{ frequency: 2500, gainDb: 0, q: 1 \}/);
+assert.match(speakerEq, /high: \{ frequency: 8000, gainDb: 0 \}/);
+assert.match(speakerEq, /function createDefaultEq\(\)/);
+assert.match(audio, /panner\.distanceModel = "inverse"/);
+assert.doesNotMatch(audio, /distance[^\n]{0,80}(?:lowpass|highshelf|lowshelf)/i);
 
 console.log("performance architecture tests passed");

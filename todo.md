@@ -193,3 +193,9 @@
 - [x] POVへtheme伝播とlight／floor paletteを実装し、操作を維持する。
 - [x] 各背景のPOV、TOP / SIDE、モバイル、activity、demand renderingを検証する。
 - [x] POVテーマ統合をGitHub mainと公開チェックポイントへ保存する。
+- [x] 添付仕様全体、Audio graph、Speaker data、Inspector、距離処理を監査する。
+- [x] EQ data model、node chain、cache同期、限定的なCUSTOM UIを設計する。
+- [x] 4-band EQ DSPとSpeakerごとのstate・差分同期を実装する。
+- [x] CUSTOM panel、reset、選択Speaker連携、モバイル表示を実装する。
+- [x] 距離高域カットなし、EQ reset、複数Speaker、DSP cache、UIを検証する。
+- [ ] Custom EQ更新をGitHub mainと公開チェックポイントへ保存する。
