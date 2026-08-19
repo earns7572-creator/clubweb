@@ -19,6 +19,8 @@ const bassPressure = read("client/src/lib/bassPressure.ts");
 const spatialCoordinates = read("client/src/lib/spatialCoordinates.ts");
 const stacking = read("client/src/lib/speakerStacking.ts");
 const dimensions = read("client/src/lib/speakerDimensions.ts");
+const avatar = read("client/src/components/SimpleHumanAvatar.tsx");
+const djBooth = read("client/src/components/DjBooth.tsx");
 
 assert.match(audio, /syncTopology/);
 assert.match(audio, /syncSpeakerDsp/);
@@ -151,5 +153,18 @@ assert.match(top, /onSpeakerDetach/);
 assert.match(home, /modelIdsForFamily/);
 assert.match(home, /REGGAE_WALL/);
 assert.match(home, /loadSystemPreset/);
+assert.match(audio, /type ClubListener = \{ name: string;/);
+assert.match(home, /club-craft-listener-name/);
+assert.match(home, /onListenerNameChange=\{changeListenerName\}/);
+assert.match(top, /<SimpleHumanAvatar variant="listener"/);
+assert.match(top, /<ListenerNameTag name=\{listener\.name\}/);
+assert.match(top, /<DjBooth active=\{Boolean\(props\.signalActive\)\}/);
+assert.match(side, /side-listener-name/);
+assert.match(side, /side-dj-booth/);
+assert.match(pov, /<DjBooth active=\{isPlaying\}/);
+assert.match(avatar, /const headGeometry = new THREE\.SphereGeometry/);
+assert.match(avatar, /const torsoGeometry = new THREE\.CylinderGeometry/);
+assert.doesNotMatch(avatar, /useFrame|requestAnimationFrame|setInterval/);
+assert.doesNotMatch(djBooth, /useFrame|requestAnimationFrame|setInterval/);
 
 console.log("performance architecture tests passed");

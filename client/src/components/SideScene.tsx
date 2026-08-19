@@ -1,5 +1,5 @@
-/**
- * Side View — a small elevation model of the same ClubScene.
+/*
+ * Club Craft SIDE rule — the named Listener is a CSS human silhouette; the booth remains a non-interactive scene object.
  * Pointer drag edits depth (Y) and height (Z) only; X remains untouched in this projection.
  */
 import { useEffect, useRef } from "react";
@@ -17,8 +17,8 @@ export default function SideScene({ speakers, activityBySpeaker, listener, selec
   const stop = () => { if (frameRef.current !== null) { cancelAnimationFrame(frameRef.current); flush(); } dragRef.current = null; rectRef.current = null; pendingRef.current = null; };
   useEffect(() => () => { if (frameRef.current !== null) cancelAnimationFrame(frameRef.current); }, []);
   return <div ref={sceneRef} className="side-scene" onPointerMove={update} onPointerUp={stop} onPointerLeave={stop}>
-    <div className="side-stage">stage</div><div className="side-floor" /><div className="side-depth">floor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stage</div>
+    <div className="side-stage">stage</div><div className="side-floor" /><div className="side-depth">floor&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stage</div><div className="side-dj-booth" aria-hidden="true"><i className="side-dj-table" /><span className="side-dj-human"><b className="side-human-head" /><b className="side-human-body" /><b className="side-human-leg side-human-leg-left" /><b className="side-human-leg side-human-leg-right" /></span></div>
     {speakers.map((speaker, index) => { const stacked = Boolean(speaker.stackParentId); const xy = stackResolver.getXY(speaker); const centerMeters = stackResolver.getCenterMeters(speaker); return <div key={speaker.id} className={`side-speaker ${speaker.kind} ${speaker.id === selectedSpeakerId ? "selected" : ""} ${stacked ? "stacked" : ""}`} style={{ left: `${xy.y * 88 + 6}%`, bottom: `${centerMeters / SCENE_VERTICAL_METERS * 74 + 9}%`, marginLeft: `${((index % 3) - 1) * 2}px`, "--activity": activityBySpeaker[speaker.id] ?? 0 } as React.CSSProperties}><button className="side-speaker-drag" disabled={stacked} onPointerDown={(event) => { if (stacked) return; event.preventDefault(); event.stopPropagation(); dragRef.current = speaker.id; rectRef.current = sceneRef.current?.getBoundingClientRect() ?? null; onSpeakerSelect(speaker.id); sceneRef.current?.setPointerCapture(event.pointerId); }} aria-label={`Move ${speaker.kind} speaker`}><i /><b /></button>{speaker.id === selectedSpeakerId && canRemove && <button className="side-cabinet-remove" onPointerDown={(event) => event.stopPropagation()} onClick={(event) => { event.stopPropagation(); onSpeakerRemove(speaker.id); }} aria-label={`Remove ${speaker.kind} speaker`}>×</button>}</div>; })}
-    <div className="side-listener" style={{ left: `${listener.position.y * 88 + 6}%`, bottom: `${listener.position.z * 74 + 9}%` }} aria-label="Listener"><i /></div>
+    <div className="side-listener" style={{ left: `${listener.position.y * 88 + 6}%`, bottom: `${listener.position.z * 74 + 9}%` }} aria-label={`${listener.name}, listener position`}><span className="side-listener-name">{listener.name}</span><i className="side-human-head" /><i className="side-human-body" /><i className="side-human-leg side-human-leg-left" /><i className="side-human-leg side-human-leg-right" /></div>
   </div>;
 }

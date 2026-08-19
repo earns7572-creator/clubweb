@@ -11,7 +11,7 @@ import { sceneToAudioPosition, speakerToAudioPosition } from "@/lib/spatialCoord
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
-export type ClubListener = { position: Position3D; orientation: { yaw: number; pitch: number } };
+export type ClubListener = { name: string; position: Position3D; orientation: { yaw: number; pitch: number } };
 export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; stackParentId?: string | null; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 

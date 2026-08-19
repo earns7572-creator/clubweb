@@ -326,3 +326,18 @@
 - [ ] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
 
 > 実再生検証: POVでDeep PulseのPlay/Pause操作を完了し、Pause状態へ遷移することを確認した。操作後のbrowser consoleにはruntime errorが記録されていない。cameraの小さな振幅そのものは静止画では定量評価できないため、二帯域・gate・envelope・camera条件は自動testと実装検査で担保する。
+
+## Named Listener Avatar + DJ Booth Avatar
+
+- [x] 添付仕様と現行のListener marker・DJ booth・TOP/SIDE/POVを照合する。
+- [x] `ClubListener.name`、localStorage永続化、共有の簡易アバター構成を設計する。
+- [x] Listenerの名前編集ラベルと、抽象的なstanding / DJ poseを実装する。
+- [x] 3視点へ統合し、Listener drag・orientation・HRTF・既存ステージ操作を保持する。
+- [x] 3視点・キーボード操作・型検査・回帰テスト・production buildを確認する。
+- [x] GitHub mainと公開チェックポイントへ保存する。
+
+> TOP実機確認: Listenerの人型と頭上の名前、DJ booth（booth・decks・DJ pose）が既存Floorで表示され、名前ラベルをクリックするとインラインinputへ切り替わることを確認した。`taku`へ変更して再読み込みした後も名前が復元され、localStorage永続化が動作している。
+
+> SIDE / POV実機確認: SIDEには名前付きCSS人型とstage側の小さなbooth・DJシルエットが表示された。POVにはListener自身や名前を表示せず、正面のbooth、two decks、mixer、DJの頭・胴体・腕が読めることを確認した。
+
+> Playback実機確認: POVでPlay状態へ切り替え、DJの両腕がdeck / mixer方向へ向くactive poseを確認した。再生操作後のbrowser consoleにはruntime errorがない。DJ専用のRAF / `useFrame` / skeleton animationは追加していない。
