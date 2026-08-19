@@ -178,3 +178,8 @@
 - [x] 公式サンプル音源としてスイープを実装し、source pickerへ追加する。
 - [x] 15秒の周波数遷移、停止・再開始、Speaker response、activity・performanceを検証する。
 - [x] スイープ音源更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] 現在のapp背景、scene surface、文字色、UI外枠のCSS階層を確認する。
+- [x] オフホワイト背景と暗いclub sceneのコントラスト方針を設計する。
+- [x] 背景・UI外枠・文字色を限定調整し、音響と3D操作を維持する。
+- [x] TOP / SIDE / POV、モバイル可読性、型検査、production buildを検証する。
+- [ ] オフホワイト背景更新をGitHub mainと公開チェックポイントへ保存する。
