@@ -7,9 +7,15 @@ import * as THREE from "three";
 import { useEffect, useRef } from "react";
 import type { ClubListener, ClubSpeaker, SpeakerKind } from "@/hooks/useClubAudio";
 import { SpeakerMiniature, speakerBlueprints } from "@/components/SpeakerMiniature";
+import type { SurfaceTone } from "@/components/ClubFloor3D";
 
-type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; listener: ClubListener; onLook: (deltaYaw: number, deltaPitch: number) => void };
+type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; listener: ClubListener; surfaceTone: SurfaceTone; onLook: (deltaYaw: number, deltaPitch: number) => void };
 const world = (position: ClubSpeaker["position"]) => [(position.x - .5) * 13, position.z * 1.2, (position.y - .5) * 8] as const;
+const povPalette: Record<SurfaceTone, { background: string; fog: string; floor: string; gridMajor: string; gridMinor: string; stage: string; ambient: number; directional: number; light: string }> = {
+  paper: { background: "#f6f4ee", fog: "#f0eee7", floor: "#d9d8d1", gridMajor: "#aaa9a1", gridMinor: "#c8c7bf", stage: "#73736d", ambient: .78, directional: 1.05, light: "#fffaf0" },
+  sand: { background: "#e9e1d4", fog: "#e4dbcc", floor: "#d2c7b7", gridMajor: "#9f927e", gridMinor: "#bdb1a0", stage: "#70675d", ambient: .74, directional: 1.02, light: "#fff5e4" },
+  slate: { background: "#dde0dd", fog: "#d7dcda", floor: "#c6ccca", gridMajor: "#909894", gridMinor: "#b1b9b5", stage: "#666e69", ambient: .78, directional: 1.06, light: "#f4faf6" },
+};
 
 function CameraRig({ listener }: { listener: ClubListener }) {
   const { camera, invalidate } = useThree();
@@ -17,11 +23,12 @@ function CameraRig({ listener }: { listener: ClubListener }) {
   return null;
 }
 function PovSpeaker({ speaker, activity }: { speaker: ClubSpeaker; activity: number }) { const [, height] = speakerBlueprints[speaker.kind].body; const [x, lift, z] = world(speaker.position); return <group position={[x, height / 2 + lift, z]}><SpeakerMiniature kind={speaker.kind} activity={activity} /></group>; }
-function PovWorld({ speakers, activityBySpeaker }: { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>> }) { return <><fog attach="fog" args={["#050606", 8, 30]} /><ambientLight intensity={.24} /><directionalLight position={[-4, 8, 3]} intensity={.55} color="#958878" /><mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[28, 22]} /><meshStandardMaterial color="#0b0c0b" roughness={.96} /></mesh><mesh position={[0, .12, -3.5]}><boxGeometry args={[1.8, .24, .58]} /><meshStandardMaterial color="#171814" roughness={.86} /></mesh>{speakers.map((speaker) => <PovSpeaker key={speaker.id} speaker={speaker} activity={activityBySpeaker[speaker.id] ?? 0} />)}<gridHelper args={[24, 24, "#1b1c19", "#111210"]} position={[0, .01, 0]} /></>; }
+function PovWorld({ speakers, activityBySpeaker, surfaceTone }: { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; surfaceTone: SurfaceTone }) { const surface = povPalette[surfaceTone]; return <><fog attach="fog" args={[surface.fog, 8, 30]} /><ambientLight intensity={surface.ambient} /><directionalLight position={[-4, 8, 3]} intensity={surface.directional} color={surface.light} /><mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[28, 22]} /><meshStandardMaterial color={surface.floor} roughness={.96} /></mesh><mesh position={[0, .12, -3.5]}><boxGeometry args={[1.8, .24, .58]} /><meshStandardMaterial color={surface.stage} roughness={.86} /></mesh>{speakers.map((speaker) => <PovSpeaker key={speaker.id} speaker={speaker} activity={activityBySpeaker[speaker.id] ?? 0} />)}<gridHelper args={[24, 24, surface.gridMajor, surface.gridMinor]} position={[0, .01, 0]} /></>; }
 
-export default function PovPreview({ speakers, activityBySpeaker, listener, onLook }: Props) {
+export default function PovPreview({ speakers, activityBySpeaker, listener, surfaceTone, onLook }: Props) {
   const dragging = useRef(false); const point = useRef({ x: 0, y: 0 }); const pending = useRef({ yaw: 0, pitch: 0 }); const frame = useRef<number | null>(null);
   const flushLook = () => { frame.current = null; const { yaw, pitch } = pending.current; pending.current = { yaw: 0, pitch: 0 }; if (yaw || pitch) onLook(yaw, pitch); };
   useEffect(() => () => { if (frame.current !== null) cancelAnimationFrame(frame.current); }, []);
-  return <div className="pov-preview" onPointerDown={(event) => { dragging.current = true; point.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (!dragging.current) return; pending.current.yaw += (event.clientX - point.current.x) * .007; pending.current.pitch += (point.current.y - event.clientY) * .005; point.current = { x: event.clientX, y: event.clientY }; if (frame.current === null) frame.current = requestAnimationFrame(flushLook); }} onPointerUp={() => { dragging.current = false; if (frame.current !== null) { cancelAnimationFrame(frame.current); flushLook(); } }} onPointerLeave={() => { dragging.current = false; }}><Canvas frameloop="demand" camera={{ fov: 58, position: [0, 1, 1] }} dpr={[1, 1.25]}><color attach="background" args={["#050606"]} /><CameraRig listener={listener} /><PovWorld speakers={speakers} activityBySpeaker={activityBySpeaker} /></Canvas><p>Drag to look around</p></div>;
+  const surface = povPalette[surfaceTone];
+  return <div className="pov-preview" onPointerDown={(event) => { dragging.current = true; point.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (!dragging.current) return; pending.current.yaw += (event.clientX - point.current.x) * .007; pending.current.pitch += (point.current.y - event.clientY) * .005; point.current = { x: event.clientX, y: event.clientY }; if (frame.current === null) frame.current = requestAnimationFrame(flushLook); }} onPointerUp={() => { dragging.current = false; if (frame.current !== null) { cancelAnimationFrame(frame.current); flushLook(); } }} onPointerLeave={() => { dragging.current = false; }}><Canvas frameloop="demand" camera={{ fov: 58, position: [0, 1, 1] }} dpr={[1, 1.25]}><color attach="background" args={[surface.background]} /><CameraRig listener={listener} /><PovWorld speakers={speakers} activityBySpeaker={activityBySpeaker} surfaceTone={surfaceTone} /></Canvas><p>Drag to look around</p></div>;
 }

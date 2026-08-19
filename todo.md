@@ -188,3 +188,8 @@
 - [x] 背景切替UIとneutral gray Speaker materialを実装する。
 - [x] 各背景、TOP / SIDE / POV、モバイルで可読性・activity・操作性を検証する。
 - [x] 背景切替・グレーSpeaker更新をGitHub mainと公開チェックポイントへ保存する。
+- [x] 現在のPOV Canvas、camera、Speaker material、背景theme伝播を確認する。
+- [x] Paper／Sand／SlateをPOVの空間感へ反映する背景・床・light方針を設計する。
+- [x] POVへtheme伝播とlight／floor paletteを実装し、操作を維持する。
+- [x] 各背景のPOV、TOP / SIDE、モバイル、activity、demand renderingを検証する。
+- [ ] POVテーマ統合をGitHub mainと公開チェックポイントへ保存する。
