@@ -313,3 +313,16 @@
 - [x] desktopと狭い幅で干渉しない余白・z-index・popover originへ調整する。
 - [x] desktop・mobileでSystem popoverとview switcherが重ならないことを確認する。
 - [x] 型検査、production build、GitHub main、公開チェックポイントを完了する。
+
+## Tight Bass-Linked POV Vibration Fix
+
+- [x] 添付仕様の二帯域検出・gate・analyser・envelope・stack距離・camera収束条件を現行実装と照合する。
+- [x] spatialCoordinatesへaudio座標変換を分離し、bass distanceをstack-aware speaker positionへ統一する。
+- [x] 25〜90 Hz中心＋90〜160 Hz補助の二帯域target、gate、fast envelope、Pause収束、RAF停止を実装する。
+- [x] POV camera threshold・attack・release・振幅をtight bass挙動へ調整し、reduced motionを維持する。
+
+> 添付仕様のtight bass値: SUB 25–90 Hz、upper bass 90–160 Hzを0.18で補助し、gate 0.035、analyser smoothing 0.35、low envelope attack/release 0.55/0.32、Pause release 0.55、pressure threshold 0.12、camera lambda 15/11、zero snap 0.004を採用する。
+- [ ] band・gate・weight・stack距離・Pause・TOP/SIDE非干渉をtestと実再生で検証する。
+- [ ] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+> 実再生検証: POVでDeep PulseのPlay/Pause操作を完了し、Pause状態へ遷移することを確認した。操作後のbrowser consoleにはruntime errorが記録されていない。cameraの小さな振幅そのものは静止画では定量評価できないため、二帯域・gate・envelope・camera条件は自動testと実装検査で担保する。

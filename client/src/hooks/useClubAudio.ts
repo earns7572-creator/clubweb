@@ -6,8 +6,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createActivityStore } from "@/lib/activityStore";
 import type { SpeakerEq } from "@/lib/speakerEq";
 import { getSpeakerModel, resolveModelId, type CharacterFilter, type SpeakerModelId } from "@/lib/speakerModels";
-import { getBandEnergy } from "@/lib/bassPressure";
-import { createStackResolver } from "@/lib/speakerStacking";
+import { bassEnergy } from "@/lib/bassPressure";
+import { sceneToAudioPosition, speakerToAudioPosition } from "@/lib/spatialCoordinates";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
@@ -28,8 +28,8 @@ const toneForOfficialSound: Record<string, number> = { pulse: 55, rain: 196, bro
 const visualEnvelopeForKind: Record<SpeakerKind, { attack: number; release: number; gain: number }> = {
   sub: { attack: .16, release: .07, gain: 5.6 }, woofer: { attack: .22, release: .11, gain: 5.1 }, full: { attack: .26, release: .14, gain: 5.2 }, mid: { attack: .38, release: .18, gain: 6.6 }, high: { attack: .46, release: .21, gain: 7.8 },
 };
-export function sceneToAudioPosition(position: Position3D) { return { x: (position.x - .5) * 9, y: (position.z - .5) * 4.8, z: (position.y - .5) * 9 }; }
-export function speakerToAudioPosition(speaker: ClubSpeaker, speakers: ClubSpeaker[]) { const resolver = createStackResolver(speakers); const xy = resolver.getXY(speaker); return { x: (xy.x - .5) * 9, y: resolver.getCenterMeters(speaker), z: (xy.y - .5) * 9 }; }
+const LOW_ATTACK = .55; const LOW_RELEASE = .32; const LOW_PAUSE_RELEASE = .55; const LOW_SNAP = .006;
+export { sceneToAudioPosition, speakerToAudioPosition } from "@/lib/spatialCoordinates";
 export function sceneOrientationToAudioOrientation(orientation: ClubListener["orientation"]) { return { x: Math.sin(orientation.yaw) * Math.cos(orientation.pitch), y: Math.sin(orientation.pitch), z: -Math.cos(orientation.yaw) * Math.cos(orientation.pitch) }; }
 
 const differs = (next: number, previous: number | undefined) => previous === undefined || Math.abs(next - previous) > EPSILON;
@@ -91,7 +91,7 @@ function createCharacterFilters(context: AudioContext, modelId: SpeakerModelId) 
 function connectCharacterChain(input: AudioNode, filters: BiquadFilterNode[], destination: AudioNode) { if (!filters.length) { input.connect(destination); return; } input.connect(filters[0]); for (let index = 0; index < filters.length - 1; index += 1) filters[index].connect(filters[index + 1]); filters[filters.length - 1].connect(destination); }
 function createSpeakerNode(context: AudioContext, master: GainNode, modelId: SpeakerModelId): SpeakerNode {
   const input = context.createGain(); const characterFilters = createCharacterFilters(context, modelId); const eq = createSpeakerEqNodes(context); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner();
-  input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 1024; analyser.smoothingTimeConstant = .78;
+  input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 1024; analyser.smoothingTimeConstant = .35;
   panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 360;
   connectCharacterChain(input, characterFilters, eq.low); eq.low.connect(eq.lowMid); eq.lowMid.connect(eq.highMid); eq.highMid.connect(eq.high); eq.high.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master);
   return { input, characterFilters, eq, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), frequencyData: new Uint8Array(analyser.frequencyBinCount), panner, cache: { modelId, eq: {} } };
@@ -146,14 +146,14 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     const paint = (time: number) => {
       if (time - lastPaint < 48) { frame = requestAnimationFrame(paint); return; }
       lastPaint = time; const next: Record<string, number> = {}; const nextLow: Record<string, number> = {}; let hasResidual = false; let hasLowResidual = false;
-      speakerNodesRef.current.forEach((node, id) => { const kind = kindBySpeakerRef.current.get(id) ?? "full"; const envelope = visualEnvelopeForKind[kind]; let target = 0; let lowTarget = 0; if (isPlaying) { node.analyser.getByteTimeDomainData(node.analyserData); let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128; target = Math.min(1, (energy / node.analyserData.length) * envelope.gain); lowTarget = getBandEnergy(node.analyser, node.frequencyData, contextRef.current?.sampleRate ?? 48_000); } const previous = visualEnvelopeRef.current[id] ?? 0; const smoothed = previous + (target - previous) * (target > previous ? envelope.attack : envelope.release); const previousLow = lowEnvelopeRef.current[id] ?? 0; const lowSmoothed = previousLow + (lowTarget - previousLow) * (lowTarget > previousLow ? .36 : .12); visualEnvelopeRef.current[id] = smoothed; lowEnvelopeRef.current[id] = lowSmoothed; next[id] = smoothed; nextLow[id] = lowSmoothed; hasResidual ||= smoothed > .001; hasLowResidual ||= lowSmoothed > .001; });
+      speakerNodesRef.current.forEach((node, id) => { const kind = kindBySpeakerRef.current.get(id) ?? "full"; const envelope = visualEnvelopeForKind[kind]; let target = 0; let lowTarget = 0; if (isPlaying) { node.analyser.getByteTimeDomainData(node.analyserData); let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128; target = Math.min(1, (energy / node.analyserData.length) * envelope.gain); lowTarget = bassEnergy(node.analyser, node.frequencyData, contextRef.current?.sampleRate ?? 48_000); } const previous = visualEnvelopeRef.current[id] ?? 0; const smoothed = previous + (target - previous) * (target > previous ? envelope.attack : envelope.release); const previousLow = lowEnvelopeRef.current[id] ?? 0; const lowRate = lowTarget > previousLow ? LOW_ATTACK : (isPlaying ? LOW_RELEASE : LOW_PAUSE_RELEASE); const lowSmoothed = previousLow + (lowTarget - previousLow) * lowRate; const cleanedLow = lowSmoothed < LOW_SNAP ? 0 : lowSmoothed; visualEnvelopeRef.current[id] = smoothed; lowEnvelopeRef.current[id] = cleanedLow; next[id] = smoothed; nextLow[id] = cleanedLow; hasResidual ||= smoothed > .001; hasLowResidual ||= cleanedLow > 0; });
       const previousSnapshot = activitySnapshotRef.current; const changed = Object.keys(next).length !== Object.keys(previousSnapshot).length || Object.keys(next).some((id) => Math.abs((previousSnapshot[id] ?? 0) - next[id]) > .012);
       if (changed) { activitySnapshotRef.current = next; store.publish(next); }
       const previousLowSnapshot = lowActivitySnapshotRef.current; const lowChanged = Object.keys(nextLow).length !== Object.keys(previousLowSnapshot).length || Object.keys(nextLow).some((id) => Math.abs((previousLowSnapshot[id] ?? 0) - nextLow[id]) > .008);
       if (lowChanged) { lowActivitySnapshotRef.current = nextLow; lowStore.publish(nextLow); }
       if (isPlaying || hasResidual || hasLowResidual) frame = requestAnimationFrame(paint); else { if (Object.keys(previousSnapshot).length) { activitySnapshotRef.current = {}; store.publish({}); } if (Object.keys(previousLowSnapshot).length) { lowActivitySnapshotRef.current = {}; lowStore.publish({}); } frame = 0; }
     };
-    if (isPlaying || Object.values(visualEnvelopeRef.current).some((value) => value > .001)) frame = requestAnimationFrame(paint);
+    if (isPlaying || Object.values(visualEnvelopeRef.current).some((value) => value > .001) || Object.values(lowEnvelopeRef.current).some((value) => value > 0)) frame = requestAnimationFrame(paint);
     return () => { if (frame) cancelAnimationFrame(frame); };
   }, [isPlaying]);
   const togglePlayback = useCallback(async () => {
