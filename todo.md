@@ -220,3 +220,10 @@
 - [x] 不要な下部geometryを撤去し、reflex portとfeetだけの下部構成へ修正する。
 - [x] Model Lab・TOP・POVでFULL下部のsilhouetteと既存activityを検証する。
 - [x] FULL下部修正をGitHub mainと公開チェックポイントへ保存する。
+
+## MID キャビネットの前面・下部silhouette修正
+
+- [x] MIDの前面・下部geometryとModel Labでの見え方を監査する。
+- [x] 不要な前面・下部geometryを撤去し、horn・compact driver・single reflex portだけの自然な構成へ修正する。
+- [x] Model Lab・TOP・POVでMIDのsilhouetteと既存activityを検証する。
+- [x] MID修正をGitHub mainと公開チェックポイントへ保存する。
