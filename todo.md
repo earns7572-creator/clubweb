@@ -192,4 +192,4 @@
 - [x] Paper／Sand／SlateをPOVの空間感へ反映する背景・床・light方針を設計する。
 - [x] POVへtheme伝播とlight／floor paletteを実装し、操作を維持する。
 - [x] 各背景のPOV、TOP / SIDE、モバイル、activity、demand renderingを検証する。
-- [ ] POVテーマ統合をGitHub mainと公開チェックポイントへ保存する。
+- [x] POVテーマ統合をGitHub mainと公開チェックポイントへ保存する。
