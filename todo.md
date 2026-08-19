@@ -271,3 +271,16 @@
 > TOP／SIDE／POV検証: 持続再生できるDeep Pulseへ切り替え、各Viewでのactivity表示確認を開始した。
 > TOP／SIDE確認: Deep Pulse再生時も赤いactivityはdriver／hornの近傍に留まり、cabinet全体やfloorへ広がらないことを確認した。
 > POV確認: Deep Pulse再生中は局所的なactivity表示を維持し、停止後はすべて中立の非発光状態へ戻ることを確認した。
+
+## POV bass pressure camera vibration
+
+- [x] audio analyser、activity store、PovPreview CameraRig、demand renderingの現状を確認する。
+- [x] 20〜160 Hzのfrequency-domain energyをSpeakerごとに収集するlow activity external storeを追加する。
+- [x] Listener距離・Speaker type weight・飽和式に基づくbass pressure計算を実装する。
+- [x] 1 SUB・複数SUB・HIGHのみ・thresholdを検証するpure bass pressure testを追加する。
+- [x] POV cameraだけにthreshold・reduced motion対応の微小vibrationを追加し、audio listenerやUIを不変に保つ。
+- [x] 1 SUB・複数SUB・HIGHのみ・距離・Pause・TOP／SIDEで受入条件を検証する。
+- [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+> POV実再生: Deep PulseをPOVで開始し、3D cameraのみの低域pressure vibrationを確認する準備を完了した。
+> POV限定確認: Pause後はPOV cameraが基準姿勢へ戻り、TOPへ切り替えた後はcamera vibrationが一切発生しないことを確認した。

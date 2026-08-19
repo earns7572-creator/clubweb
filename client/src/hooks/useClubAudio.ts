@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createActivityStore } from "@/lib/activityStore";
 import type { SpeakerEq } from "@/lib/speakerEq";
 import { filterForKind } from "@/lib/speakerProfiles";
+import { getBandEnergy } from "@/lib/bassPressure";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
@@ -18,7 +19,7 @@ type SpatialCache = { x?: number; y?: number; z?: number };
 type EqCache = { lowFrequency?: number; lowGain?: number; lowMidFrequency?: number; lowMidGain?: number; lowMidQ?: number; highMidFrequency?: number; highMidGain?: number; highMidQ?: number; highFrequency?: number; highGain?: number };
 type SpeakerCache = SpatialCache & { kind?: SpeakerKind; frequency?: number; q?: number; gain?: number; eq: EqCache };
 type SpeakerEqNodes = { low: BiquadFilterNode; lowMid: BiquadFilterNode; highMid: BiquadFilterNode; high: BiquadFilterNode };
-type SpeakerNode = { input: GainNode; filter: BiquadFilterNode; eq: SpeakerEqNodes; gain: GainNode; analyser: AnalyserNode; analyserData: Uint8Array; panner: PannerNode; cache: SpeakerCache };
+type SpeakerNode = { input: GainNode; filter: BiquadFilterNode; eq: SpeakerEqNodes; gain: GainNode; analyser: AnalyserNode; analyserData: Uint8Array; frequencyData: Uint8Array; panner: PannerNode; cache: SpeakerCache };
 type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam };
 
 const EPSILON = .0001;
@@ -86,10 +87,10 @@ function createSpeakerEqNodes(context: AudioContext): SpeakerEqNodes {
 }
 function createSpeakerNode(context: AudioContext, master: GainNode): SpeakerNode {
   const input = context.createGain(); const filter = context.createBiquadFilter(); const eq = createSpeakerEqNodes(context); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner();
-  input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 64; analyser.smoothingTimeConstant = .78;
+  input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 1024; analyser.smoothingTimeConstant = .78;
   panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 360;
   input.connect(filter); filter.connect(eq.low); eq.low.connect(eq.lowMid); eq.lowMid.connect(eq.highMid); eq.highMid.connect(eq.high); eq.high.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master);
-  return { input, filter, eq, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), panner, cache: { eq: {} } };
+  return { input, filter, eq, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), frequencyData: new Uint8Array(analyser.frequencyBinCount), panner, cache: { eq: {} } };
 }
 function disconnectSpeakerNode(node: SpeakerNode) { node.input.disconnect(); node.filter.disconnect(); node.eq.low.disconnect(); node.eq.lowMid.disconnect(); node.eq.highMid.disconnect(); node.eq.high.disconnect(); node.gain.disconnect(); node.analyser.disconnect(); node.panner.disconnect(); }
 function syncEq(node: SpeakerNode, eq: SpeakerEq, now: number) {
@@ -102,7 +103,7 @@ function syncEq(node: SpeakerNode, eq: SpeakerEq, now: number) {
 }
 
 export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, sources: ClubSource[], activeSourceId: string) {
-  const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const visualEnvelopeRef = useRef<Record<string, number>>({}); const activitySnapshotRef = useRef<Record<string, number>>({}); const kindBySpeakerRef = useRef(new Map<string, SpeakerKind>()); const topologyRef = useRef(""); const listenerPositionCacheRef = useRef<SpatialCache>({}); const listenerOrientationCacheRef = useRef<SpatialCache>({}); const activityStoreRef = useRef(createActivityStore()); const topologyPayloadRef = useRef({ speakers, sources, activeSourceId }); const speakersRef = useRef(speakers); const listenerRef = useRef(listener);
+  const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const visualEnvelopeRef = useRef<Record<string, number>>({}); const lowEnvelopeRef = useRef<Record<string, number>>({}); const activitySnapshotRef = useRef<Record<string, number>>({}); const lowActivitySnapshotRef = useRef<Record<string, number>>({}); const kindBySpeakerRef = useRef(new Map<string, SpeakerKind>()); const topologyRef = useRef(""); const listenerPositionCacheRef = useRef<SpatialCache>({}); const listenerOrientationCacheRef = useRef<SpatialCache>({}); const activityStoreRef = useRef(createActivityStore()); const lowActivityStoreRef = useRef(createActivityStore()); const topologyPayloadRef = useRef({ speakers, sources, activeSourceId }); const speakersRef = useRef(speakers); const listenerRef = useRef(listener);
   topologyPayloadRef.current = { speakers, sources, activeSourceId };
   speakersRef.current = speakers; listenerRef.current = listener;
   const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null);
@@ -116,7 +117,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     const context = contextRef.current; const master = masterRef.current; if (!context || !master) return;
     const { speakers: speakerList, sources: sourceList, activeSourceId: sourceId } = topologyPayloadRef.current;
     const speakerNodes = speakerNodesRef.current; const requestedIds = new Set(speakerList.map((speaker) => speaker.id));
-    Array.from(speakerNodes.entries()).forEach(([id, node]) => { if (!requestedIds.has(id)) { disconnectSpeakerNode(node); speakerNodes.delete(id); delete visualEnvelopeRef.current[id]; kindBySpeakerRef.current.delete(id); topologyRef.current = ""; } });
+    Array.from(speakerNodes.entries()).forEach(([id, node]) => { if (!requestedIds.has(id)) { disconnectSpeakerNode(node); speakerNodes.delete(id); delete visualEnvelopeRef.current[id]; delete lowEnvelopeRef.current[id]; kindBySpeakerRef.current.delete(id); topologyRef.current = ""; } });
     speakerList.forEach((speaker) => { if (!speakerNodes.has(speaker.id)) { speakerNodes.set(speaker.id, createSpeakerNode(context, master)); topologyRef.current = ""; } });
     const desiredSource = sourceList.find((source) => source.id === sourceId); const voices = voicesRef.current;
     Array.from(voices.entries()).forEach(([id, voice]) => { if (id !== sourceId || !desiredSource) { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); voices.delete(id); topologyRef.current = ""; } });
@@ -137,14 +138,16 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   useEffect(() => { syncListenerPosition(listenerRef.current); }, [listenerPositionKey, syncListenerPosition]);
   useEffect(() => { syncListenerOrientation(listenerRef.current); }, [listenerOrientationKey, syncListenerOrientation]);
   useEffect(() => {
-    let frame = 0; let lastPaint = 0; const store = activityStoreRef.current;
+    let frame = 0; let lastPaint = 0; const store = activityStoreRef.current; const lowStore = lowActivityStoreRef.current;
     const paint = (time: number) => {
       if (time - lastPaint < 48) { frame = requestAnimationFrame(paint); return; }
-      lastPaint = time; const next: Record<string, number> = {}; let hasResidual = false;
-      speakerNodesRef.current.forEach((node, id) => { const kind = kindBySpeakerRef.current.get(id) ?? "full"; const envelope = visualEnvelopeForKind[kind]; let target = 0; if (isPlaying) { node.analyser.getByteTimeDomainData(node.analyserData); let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128; target = Math.min(1, (energy / node.analyserData.length) * envelope.gain); } const previous = visualEnvelopeRef.current[id] ?? 0; const smoothed = previous + (target - previous) * (target > previous ? envelope.attack : envelope.release); visualEnvelopeRef.current[id] = smoothed; next[id] = smoothed; hasResidual ||= smoothed > .001; });
+      lastPaint = time; const next: Record<string, number> = {}; const nextLow: Record<string, number> = {}; let hasResidual = false; let hasLowResidual = false;
+      speakerNodesRef.current.forEach((node, id) => { const kind = kindBySpeakerRef.current.get(id) ?? "full"; const envelope = visualEnvelopeForKind[kind]; let target = 0; let lowTarget = 0; if (isPlaying) { node.analyser.getByteTimeDomainData(node.analyserData); let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128; target = Math.min(1, (energy / node.analyserData.length) * envelope.gain); lowTarget = getBandEnergy(node.analyser, node.frequencyData, contextRef.current?.sampleRate ?? 48_000); } const previous = visualEnvelopeRef.current[id] ?? 0; const smoothed = previous + (target - previous) * (target > previous ? envelope.attack : envelope.release); const previousLow = lowEnvelopeRef.current[id] ?? 0; const lowSmoothed = previousLow + (lowTarget - previousLow) * (lowTarget > previousLow ? .36 : .12); visualEnvelopeRef.current[id] = smoothed; lowEnvelopeRef.current[id] = lowSmoothed; next[id] = smoothed; nextLow[id] = lowSmoothed; hasResidual ||= smoothed > .001; hasLowResidual ||= lowSmoothed > .001; });
       const previousSnapshot = activitySnapshotRef.current; const changed = Object.keys(next).length !== Object.keys(previousSnapshot).length || Object.keys(next).some((id) => Math.abs((previousSnapshot[id] ?? 0) - next[id]) > .012);
       if (changed) { activitySnapshotRef.current = next; store.publish(next); }
-      if (isPlaying || hasResidual) frame = requestAnimationFrame(paint); else { if (Object.keys(previousSnapshot).length) { activitySnapshotRef.current = {}; store.publish({}); } frame = 0; }
+      const previousLowSnapshot = lowActivitySnapshotRef.current; const lowChanged = Object.keys(nextLow).length !== Object.keys(previousLowSnapshot).length || Object.keys(nextLow).some((id) => Math.abs((previousLowSnapshot[id] ?? 0) - nextLow[id]) > .008);
+      if (lowChanged) { lowActivitySnapshotRef.current = nextLow; lowStore.publish(nextLow); }
+      if (isPlaying || hasResidual || hasLowResidual) frame = requestAnimationFrame(paint); else { if (Object.keys(previousSnapshot).length) { activitySnapshotRef.current = {}; store.publish({}); } if (Object.keys(previousLowSnapshot).length) { lowActivitySnapshotRef.current = {}; lowStore.publish({}); } frame = 0; }
     };
     if (isPlaying || Object.values(visualEnvelopeRef.current).some((value) => value > .001)) frame = requestAnimationFrame(paint);
     return () => { if (frame) cancelAnimationFrame(frame); };
@@ -156,5 +159,5 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     catch { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }
   }, [ensureContext, isPlaying, syncListenerOrientation, syncListenerPosition, syncSpeakerDsp, syncSpeakerPositions, syncTopology]);
   useEffect(() => () => { voicesRef.current.forEach((voice) => { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); }); speakerNodesRef.current.forEach(disconnectSpeakerNode); void contextRef.current?.close(); }, []);
-  return { isPlaying, activityStore: activityStoreRef.current, togglePlayback, playbackError, clearPlaybackError: () => setPlaybackError(null) };
+  return { isPlaying, activityStore: activityStoreRef.current, lowActivityStore: lowActivityStoreRef.current, togglePlayback, playbackError, clearPlaybackError: () => setPlaybackError(null) };
 }

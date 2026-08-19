@@ -1,15 +1,13 @@
-/**
- * POV Preview — listening mode only. The virtual camera begins at Listener.position and pointer drag changes yaw/pitch.
- * It does not edit Speaker positions or introduce game navigation.
- */
-import { Canvas, useThree } from "@react-three/fiber";
+/* Club Craft POV rule: visual bass pressure moves the camera only; listener coordinates, HRTF state, and DOM UI remain fixed. */
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useEffect, useRef } from "react";
-import type { ClubListener, ClubSpeaker, SpeakerKind } from "@/hooks/useClubAudio";
+import type { ClubListener, ClubSpeaker } from "@/hooks/useClubAudio";
+import { calculateBassPressure, vibrationFromPressure } from "@/lib/bassPressure";
 import { SpeakerMiniature, speakerBlueprints } from "@/components/SpeakerMiniature";
 import type { SurfaceTone } from "@/components/ClubFloor3D";
 
-type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; listener: ClubListener; surfaceTone: SurfaceTone; onLook: (deltaYaw: number, deltaPitch: number) => void };
+type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; lowActivityBySpeaker: Readonly<Record<string, number>>; listener: ClubListener; surfaceTone: SurfaceTone; onLook: (deltaYaw: number, deltaPitch: number) => void };
 const world = (position: ClubSpeaker["position"]) => [(position.x - .5) * 13, position.z * 1.2, (position.y - .5) * 8] as const;
 const povPalette: Record<SurfaceTone, { background: string; fog: string; floor: string; gridMajor: string; gridMinor: string; stage: string; ambient: number; directional: number; light: string }> = {
   paper: { background: "#f6f4ee", fog: "#f0eee7", floor: "#d9d8d1", gridMajor: "#aaa9a1", gridMinor: "#c8c7bf", stage: "#73736d", ambient: .78, directional: 1.05, light: "#fffaf0" },
@@ -17,18 +15,21 @@ const povPalette: Record<SurfaceTone, { background: string; fog: string; floor: 
   slate: { background: "#dde0dd", fog: "#d7dcda", floor: "#c6ccca", gridMajor: "#909894", gridMinor: "#b1b9b5", stage: "#666e69", ambient: .78, directional: 1.06, light: "#f4faf6" },
 };
 
-function CameraRig({ listener }: { listener: ClubListener }) {
-  const { camera, invalidate } = useThree();
-  useEffect(() => { const x = (listener.position.x - .5) * 13; const y = .55 + listener.position.z * 1.1; const z = (listener.position.y - .5) * 8; const { yaw, pitch } = listener.orientation; const forward = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)); camera.position.set(x, y, z); camera.lookAt(x + forward.x, y + forward.y, z + forward.z); invalidate(); }, [camera, invalidate, listener]);
+function CameraRig({ listener, vibration }: { listener: ClubListener; vibration: number }) {
+  const { camera, invalidate } = useThree(); const basePosition = useRef(new THREE.Vector3()); const baseQuaternion = useRef(new THREE.Quaternion()); const current = useRef(0); const offset = useRef(new THREE.Vector3()); const rotation = useRef(new THREE.Euler()); const rotationQuaternion = useRef(new THREE.Quaternion()); const reducedMotion = useRef(false);
+  useEffect(() => { const media = window.matchMedia("(prefers-reduced-motion: reduce)"); const apply = () => { reducedMotion.current = media.matches; invalidate(); }; apply(); media.addEventListener("change", apply); return () => media.removeEventListener("change", apply); }, [invalidate]);
+  useEffect(() => { const x = (listener.position.x - .5) * 13; const y = .55 + listener.position.z * 1.1; const z = (listener.position.y - .5) * 8; const { yaw, pitch } = listener.orientation; const forward = new THREE.Vector3(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch)); camera.position.set(x, y, z); camera.lookAt(x + forward.x, y + forward.y, z + forward.z); basePosition.current.copy(camera.position); baseQuaternion.current.copy(camera.quaternion); invalidate(); }, [camera, invalidate, listener]);
+  useEffect(() => { if (!reducedMotion.current && vibration > 0) invalidate(); }, [invalidate, vibration]);
+  useFrame((state, delta) => { const target = reducedMotion.current ? 0 : vibration; current.current = THREE.MathUtils.damp(current.current, target, target > current.current ? 13 : 5.5, delta); const intensity = current.current; if (intensity < .001) { camera.position.copy(basePosition.current); camera.quaternion.copy(baseQuaternion.current); return; } const t = state.clock.elapsedTime; offset.current.set(Math.sin(t * 51.7) * .012 * intensity, (Math.sin(t * 63.1) * .018 + Math.sin(t * 27.3) * .007) * intensity, Math.sin(t * 38.9) * .005 * intensity); rotation.current.set((Math.sin(t * 31.7) * .0022) * intensity, (Math.sin(t * 43.1) * .0015) * intensity, (Math.sin(t * 25.9) * .0009) * intensity); rotationQuaternion.current.setFromEuler(rotation.current); camera.position.copy(basePosition.current).add(offset.current); camera.quaternion.copy(baseQuaternion.current).multiply(rotationQuaternion.current); invalidate(); });
   return null;
 }
 function PovSpeaker({ speaker, activity }: { speaker: ClubSpeaker; activity: number }) { const [, height] = speakerBlueprints[speaker.kind].body; const [x, lift, z] = world(speaker.position); return <group position={[x, height / 2 + lift, z]}><SpeakerMiniature kind={speaker.kind} activity={activity} /></group>; }
 function PovWorld({ speakers, activityBySpeaker, surfaceTone }: { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; surfaceTone: SurfaceTone }) { const surface = povPalette[surfaceTone]; return <><fog attach="fog" args={[surface.fog, 8, 30]} /><ambientLight intensity={surface.ambient} /><directionalLight position={[-4, 8, 3]} intensity={surface.directional} color={surface.light} /><mesh rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[28, 22]} /><meshStandardMaterial color={surface.floor} roughness={.96} /></mesh><mesh position={[0, .12, -3.5]}><boxGeometry args={[1.8, .24, .58]} /><meshStandardMaterial color={surface.stage} roughness={.86} /></mesh>{speakers.map((speaker) => <PovSpeaker key={speaker.id} speaker={speaker} activity={activityBySpeaker[speaker.id] ?? 0} />)}<gridHelper args={[24, 24, surface.gridMajor, surface.gridMinor]} position={[0, .01, 0]} /></>; }
 
-export default function PovPreview({ speakers, activityBySpeaker, listener, surfaceTone, onLook }: Props) {
-  const dragging = useRef(false); const point = useRef({ x: 0, y: 0 }); const pending = useRef({ yaw: 0, pitch: 0 }); const frame = useRef<number | null>(null);
+export default function PovPreview({ speakers, activityBySpeaker, lowActivityBySpeaker, listener, surfaceTone, onLook }: Props) {
+  const dragging = useRef(false); const point = useRef({ x: 0, y: 0 }); const pending = useRef({ yaw: 0, pitch: 0 }); const frame = useRef<number | null>(null); const bassPressure = calculateBassPressure(speakers, lowActivityBySpeaker, listener); const vibration = vibrationFromPressure(bassPressure);
   const flushLook = () => { frame.current = null; const { yaw, pitch } = pending.current; pending.current = { yaw: 0, pitch: 0 }; if (yaw || pitch) onLook(yaw, pitch); };
   useEffect(() => () => { if (frame.current !== null) cancelAnimationFrame(frame.current); }, []);
   const surface = povPalette[surfaceTone];
-  return <div className="pov-preview" onPointerDown={(event) => { dragging.current = true; point.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (!dragging.current) return; pending.current.yaw += (event.clientX - point.current.x) * .007; pending.current.pitch += (point.current.y - event.clientY) * .005; point.current = { x: event.clientX, y: event.clientY }; if (frame.current === null) frame.current = requestAnimationFrame(flushLook); }} onPointerUp={() => { dragging.current = false; if (frame.current !== null) { cancelAnimationFrame(frame.current); flushLook(); } }} onPointerLeave={() => { dragging.current = false; }}><Canvas frameloop="demand" camera={{ fov: 58, position: [0, 1, 1] }} dpr={[1, 1.25]}><color attach="background" args={[surface.background]} /><CameraRig listener={listener} /><PovWorld speakers={speakers} activityBySpeaker={activityBySpeaker} surfaceTone={surfaceTone} /></Canvas><p>Drag to look around</p></div>;
+  return <div className="pov-preview" onPointerDown={(event) => { dragging.current = true; point.current = { x: event.clientX, y: event.clientY }; event.currentTarget.setPointerCapture(event.pointerId); }} onPointerMove={(event) => { if (!dragging.current) return; pending.current.yaw += (event.clientX - point.current.x) * .007; pending.current.pitch += (point.current.y - event.clientY) * .005; point.current = { x: event.clientX, y: event.clientY }; if (frame.current === null) frame.current = requestAnimationFrame(flushLook); }} onPointerUp={() => { dragging.current = false; if (frame.current !== null) { cancelAnimationFrame(frame.current); flushLook(); } }} onPointerLeave={() => { dragging.current = false; }}><Canvas frameloop="demand" camera={{ fov: 58, position: [0, 1, 1] }} dpr={[1, 1.25]}><color attach="background" args={[surface.background]} /><CameraRig listener={listener} vibration={vibration} /><PovWorld speakers={speakers} activityBySpeaker={activityBySpeaker} surfaceTone={surfaceTone} /></Canvas><p>Drag to look around</p></div>;
 }
