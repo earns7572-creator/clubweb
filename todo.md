@@ -254,3 +254,20 @@
 - [x] WooferAssemblyのZ積層をfrontZ + .01〜.03へ戻し、cone・emitter・dust capの前後関係を整える。
 - [x] FULL／MIDのfront・3/4・sideとPOVでWooferが円形かつcabinet内に収まることを検証する。
 - [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+## 実再生に基づく帯域別activity発光の調整
+
+- [x] activity取得、speakerBandProfile、emitter material、Halo係数の現状を確認する。
+- [x] 再生中にLOW・MID・HIGHの発光面とHaloを比較し、帯域ごとのgainと非線形カーブを調整する。
+- [x] TOP・SIDE・POVで停止時と再生時の発光バランスを検証する。
+- [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+> 初期観察: 実再生ではLOW寄りの公式音源に対し、FULLのWoofer emitterが赤く読める一方、筐体自体は中立grayを保っている。
+> 追加観察: 15秒sweepを選択し、20 Hzから20 kHzまでを実再生して帯域ごとの発光量を比較する準備を完了した。
+> 調整後のLOW確認: Deep Pulse再生ではFULLのWoofer面が赤く識別でき、cabinetや周囲を赤く塗り替えない状態を確認した。
+> 調整後のMID／HIGH確認: 15秒sweepを再開し、中高域・高域へ移る間のhorn emitterとHaloを確認する。
+> 高域再確認: 15秒sweepを新規に開始し、精密な待機後にHIGH用high-pass branchの発光量を確認する。
+> 実再生検証: Deep Pulseと20 Hz→20 kHz sweepを再生し、LOWのdriver面、MIDの両emitter、HIGHのhorn emitterに対するgain調整を適用した。短時間sweepの終了後はすべて停止時のneutral stateへ復帰することも確認した。
+> TOP／SIDE／POV検証: 持続再生できるDeep Pulseへ切り替え、各Viewでのactivity表示確認を開始した。
+> TOP／SIDE確認: Deep Pulse再生時も赤いactivityはdriver／hornの近傍に留まり、cabinet全体やfloorへ広がらないことを確認した。
+> POV確認: Deep Pulse再生中は局所的なactivity表示を維持し、停止後はすべて中立の非発光状態へ戻ることを確認した。

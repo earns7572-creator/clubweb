@@ -25,7 +25,7 @@ const EPSILON = .0001;
 const toneForOfficialSound: Record<string, number> = { pulse: 55, rain: 196, bronze: 146 };
 export const initialHeightForKind: Record<SpeakerKind, number> = { sub: 0, woofer: .22, full: .5, mid: .66, high: .78 };
 const visualEnvelopeForKind: Record<SpeakerKind, { attack: number; release: number; gain: number }> = {
-  sub: { attack: .13, release: .055, gain: 6.1 }, woofer: { attack: .22, release: .11, gain: 5.8 }, full: { attack: .28, release: .14, gain: 5.5 }, mid: { attack: .42, release: .2, gain: 5.1 }, high: { attack: .56, release: .28, gain: 4.8 },
+  sub: { attack: .16, release: .07, gain: 5.6 }, woofer: { attack: .22, release: .11, gain: 5.1 }, full: { attack: .26, release: .14, gain: 5.2 }, mid: { attack: .38, release: .18, gain: 6.6 }, high: { attack: .46, release: .21, gain: 7.8 },
 };
 export function sceneToAudioPosition(position: Position3D) { return { x: (position.x - .5) * 9, y: (position.z - .5) * 4.8, z: (position.y - .5) * 9 }; }
 export function sceneOrientationToAudioOrientation(orientation: ClubListener["orientation"]) { return { x: Math.sin(orientation.yaw) * Math.cos(orientation.pitch), y: Math.sin(orientation.pitch), z: -Math.cos(orientation.yaw) * Math.cos(orientation.pitch) }; }
