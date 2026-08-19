@@ -35,7 +35,7 @@ function makeBlueprint(body: [number, number, number], taper: number): Blueprint
 const blueprints: Record<SpeakerKind, Blueprint> = { sub: makeBlueprint([2.36, .9, 1.4], .015), woofer: makeBlueprint([1.15, 1.5, 1.08], .04), full: makeBlueprint([1.1, 2, 1.08], .1), mid: makeBlueprint([.84, .88, .58], .035), high: makeBlueprint([1.08, .62, .72], .08) };
 
 const LOW = new THREE.Color("#ff3b30"); const MID = new THREE.Color("#ffd60a"); const HIGH = new THREE.Color("#32d05b");
-const neutralCabinetColor = new THREE.Color("#3b3c38"); const neutralBaffleColor = new THREE.Color("#252622"); const neutralHornColor = new THREE.Color("#171815"); const neutralDriverColor = new THREE.Color("#121310");
+const neutralCabinetColor = new THREE.Color("#8f908b"); const neutralBaffleColor = new THREE.Color("#686964"); const neutralHornColor = new THREE.Color("#30312e"); const neutralDriverColor = new THREE.Color("#272824");
 const speakerBandProfile: Record<SpeakerKind, { horn: number; driver: number }> = { sub: { horn: 0, driver: 0 }, woofer: { horn: .12, driver: .04 }, full: { horn: 1, driver: 0 }, mid: { horn: .52, driver: .5 }, high: { horn: 1, driver: 1 } };
 const typeGlowGain: Record<SpeakerKind, { horn: number; driver: number }> = { sub: { horn: 1.1, driver: 0 }, woofer: { horn: .95, driver: .22 }, full: { horn: 1.5, driver: 1.05 }, mid: { horn: 1.05, driver: .92 }, high: { horn: 1.5, driver: 1.08 } };
 function setFrequencyColor(target: THREE.Color, position: number) { const band = THREE.MathUtils.clamp(position, 0, 1); return band <= .5 ? target.copy(LOW).lerp(MID, band * 2) : target.copy(MID).lerp(HIGH, (band - .5) * 2); }

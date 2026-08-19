@@ -211,3 +211,8 @@
 - [x] neutral albedo、emissive core、短距離local haloへactivity glowを刷新する。
 - [x] Model Lab全type、TOP／POV idle/active、軽量描画を検証する。
 - [x] Speaker geometry・glow刷新をGitHub mainと公開チェックポイントへ保存する。
+- [x] 現在のneutral materialとactivity glowの色分離を確認する。
+- [x] マットな中間グレーのcabinet・baffle・horn・driver paletteを設計する。
+- [x] neutral gray materialへ限定調整し、emissive core・halo・geometryを保持する。
+- [x] TOP／POV・Model Lab・activity時の可読性と軽量描画を検証する。
+- [ ] グレーSpeaker復帰をGitHub mainと公開チェックポイントへ保存する。
