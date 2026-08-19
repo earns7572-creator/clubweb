@@ -357,3 +357,16 @@
 - [x] TOP / SIDE / POV、Inspector、型検査、production build、GitHub main、公開チェックポイントを確認する。
 
 > TOP実機確認: 新規表示時点で選択リングとInspectorがなく、Speaker未選択の状態になっている。Canvas座標を確認してSpeakerを選択すると、そのときだけ選択リング・Remove・Inspectorが表示されることを確認した。続けて空きFloorをクリックすると選択リング・Remove・Inspectorが消え、Speaker未選択へ戻ることを確認した。操作後のbrowser consoleにruntime errorはない。
+
+## Mobile UX + Phone Motion Look
+
+- [x] 添付仕様全文、現行mobile CSS、POV pointer look、permission前提を照合する。
+- [x] iOS / Androidの端末姿勢permission、正規化、dead zone、smoothing、cleanupを独立hookで設計する。
+- [x] mobile header・stage・view switcher・library dock・Inspector bottom sheetを同一ClubSceneへ適用する。
+- [x] POVへMOTION OFF / ON toggleとdevice orientation lookを統合する。
+- [x] portrait / landscape / safe area / touch drag / permission拒否 / reduced motionを検証する。
+- [x] 型検査、回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+> motion確認: POVにはMOTION OFF controlが常にDOMとしてrenderされ、desktopでは`display: none`で非表示になることを確認した。mobile portraitのcaptureではMOTION OFFを表示し、MIXとの重なりを解消した。実機センサーpermissionはこのsandboxで検証できないため、iOS / Android実機で明示タップからの確認が必要である。
+
+> responsive確認: 390×844のportraitでscene中心・bottom dock・thumb位置view switcher・MOTION controlsを確認した。844×390のlandscape POVもcaptureで確認した。実機のSafari / Chrome permission dialog、実ジャイロ入力、notch / home indicatorは端末での最終確認が必要である。
