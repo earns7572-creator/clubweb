@@ -246,3 +246,11 @@
 - [x] 全5種のModel Lab、TOP・SIDE・POV、停止時・activity時、最大16台の前提を検証する。
 - [x] TOPとSIDEで停止時の中立gray cabinet表示と既存の移動操作を確認した。
 - [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
+
+## Woofer transform regression修正
+
+- [x] WooferAssemblyのCylinderGeometry軸、scale、前面Z配置と影響Speakerを確認する。
+- [x] wooferMountをmodule-levelで前向きに回転し、mesh rotationを撤去する。
+- [x] WooferAssemblyのZ積層をfrontZ + .01〜.03へ戻し、cone・emitter・dust capの前後関係を整える。
+- [x] FULL／MIDのfront・3/4・sideとPOVでWooferが円形かつcabinet内に収まることを検証する。
+- [x] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
