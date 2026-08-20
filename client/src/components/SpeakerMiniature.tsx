@@ -12,12 +12,12 @@ type Blueprint = { body: [number, number, number]; cabinet: THREE.BufferGeometry
 type SpeakerMaterials = { cabinet: THREE.MeshStandardMaterial; baffle: THREE.MeshStandardMaterial; hornShell: THREE.MeshStandardMaterial; hornEmitter: THREE.MeshStandardMaterial; wooferCone: THREE.MeshStandardMaterial; wooferEmitter: THREE.MeshStandardMaterial };
 type HornProps = { geometry: THREE.BufferGeometry; glowGeometry?: THREE.BufferGeometry; x?: number; y: number; frontZ: number; mouthWidth: number; mouthHeight: number; throatWidth: number; throatHeight: number; depth: number; materials: SpeakerMaterials };
 
-const passiveFrameMaterial = new THREE.MeshStandardMaterial({ color: "#2b2d29", roughness: .78, metalness: .08 });
-const passiveDetailMaterial = new THREE.MeshStandardMaterial({ color: "#0d0f0d", roughness: .9, metalness: .02 });
-const hornVoidMaterial = new THREE.MeshBasicMaterial({ color: "#050605", toneMapped: false });
-const hornWallMaterials = ["#171915", "#20231f", "#292c27", "#10120f"].map((color) => new THREE.MeshStandardMaterial({ color, roughness: .94, metalness: 0, side: THREE.DoubleSide }));
-const passiveMetalMaterial = new THREE.MeshStandardMaterial({ color: "#555852", roughness: .55, metalness: .18 });
-const passiveFootMaterial = new THREE.MeshStandardMaterial({ color: "#1c1d1b", roughness: .9 });
+const passiveFrameMaterial = new THREE.MeshStandardMaterial({ color: "#72777c", roughness: .74, metalness: .1 });
+const passiveDetailMaterial = new THREE.MeshStandardMaterial({ color: "#252a2e", roughness: .88, metalness: .03 });
+const hornVoidMaterial = new THREE.MeshBasicMaterial({ color: "#101316", toneMapped: false });
+const hornWallMaterials = ["#3b4146", "#4b5157", "#5c6369", "#30363b"].map((color) => new THREE.MeshStandardMaterial({ color, roughness: .9, metalness: .02, side: THREE.DoubleSide }));
+const passiveMetalMaterial = new THREE.MeshStandardMaterial({ color: "#a2a8ad", roughness: .5, metalness: .24 });
+const passiveFootMaterial = new THREE.MeshStandardMaterial({ color: "#42484d", roughness: .86 });
 const selectionMaterial = new THREE.MeshBasicMaterial({ color: "#d5c2a8", transparent: true, opacity: .028, side: THREE.BackSide });
 const idleEdgeMaterial = new THREE.LineBasicMaterial({ color: "#666761", transparent: true, opacity: .3 });
 const unitBox = new THREE.BoxGeometry(1, 1, 1);
@@ -43,7 +43,7 @@ function makeBlueprint(body: [number, number, number], taper: number): Blueprint
 const blueprints: Record<SpeakerKind, Blueprint> = { sub: makeBlueprint(speakerBodyTuple("sub"), .015), woofer: makeBlueprint(speakerBodyTuple("woofer"), .04), full: makeBlueprint(speakerBodyTuple("full"), .1), mid: makeBlueprint(speakerBodyTuple("mid"), .035), high: makeBlueprint(speakerBodyTuple("high"), .08) };
 
 const LOW = new THREE.Color("#ff3b30"); const MID = new THREE.Color("#ffd60a"); const HIGH = new THREE.Color("#32d05b");
-const neutralCabinetColor = new THREE.Color("#41433f"); const neutralBaffleColor = new THREE.Color("#20221f"); const neutralHornColor = new THREE.Color("#2b2e29"); const neutralConeColor = new THREE.Color("#151714");
+const neutralCabinetColor = new THREE.Color("#70767b"); const neutralBaffleColor = new THREE.Color("#41474c"); const neutralHornColor = new THREE.Color("#5b6268"); const neutralConeColor = new THREE.Color("#353b40");
 const speakerBandProfile: Record<SpeakerKind, { horn: number; woofer: number; hornGain: number; wooferGain: number }> = { sub: { horn: 0, woofer: 0, hornGain: .58, wooferGain: 0 }, woofer: { horn: .08, woofer: 0, hornGain: .56, wooferGain: 0 }, full: { horn: 1, woofer: 0, hornGain: .88, wooferGain: .58 }, mid: { horn: .5, woofer: .5, hornGain: .72, wooferGain: .66 }, high: { horn: 1, woofer: 1, hornGain: .95, wooferGain: 0 } };
 function setFrequencyColor(target: THREE.Color, position: number) { const band = THREE.MathUtils.clamp(position, 0, 1); return band <= .5 ? target.copy(LOW).lerp(MID, band * 2) : target.copy(MID).lerp(HIGH, (band - .5) * 2); }
 function createEmitterMaterial() { return new THREE.MeshStandardMaterial({ color: "#111111", roughness: .72, metalness: 0, emissive: "#000000", emissiveIntensity: 0, side: THREE.DoubleSide, toneMapped: false }); }
