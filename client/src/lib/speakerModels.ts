@@ -4,7 +4,10 @@ import type { SpeakerKind } from "@/hooks/useClubAudio";
 export type SpeakerFamily = "modern" | "reggae";
 export type SpeakerModelId = "modern-sub" | "modern-woofer" | "modern-full" | "modern-mid" | "modern-high" | "reggae-scoop" | "reggae-kick" | "reggae-mid-horn" | "reggae-top";
 export type CharacterFilter = { type: BiquadFilterType; frequency: number; q?: number; gainDb?: number };
-export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; characterFilters: CharacterFilter[] };
+/** GLB cabinet forward must be calibrated to Club Craft local +Z. body remains the physical source of truth. */
+export type SpeakerGlbVisual = { type: "glb"; src: string; rotation?: [number, number, number]; scale?: number; offset?: [number, number, number]; emitterMeshes?: { low?: string[]; mid?: string[]; high?: string[] } };
+export type SpeakerVisualDefinition = { type: "procedural" } | SpeakerGlbVisual;
+export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; characterFilters: CharacterFilter[]; visual?: SpeakerVisualDefinition };
 
 export const SPEAKER_MODELS: Record<SpeakerModelId, SpeakerModelDefinition> = {
   "modern-sub": { id: "modern-sub", family: "modern", kind: "sub", label: "Sub", shortLabel: "Sub", body: { width: 2.36, height: .9, depth: 1.4 }, characterFilters: [{ type: "lowpass", frequency: 110, q: .8 }] },
@@ -21,4 +24,5 @@ export const SPEAKER_MODELS: Record<SpeakerModelId, SpeakerModelDefinition> = {
 export const defaultModelForKind = (kind: SpeakerKind): SpeakerModelId => `modern-${kind}` as SpeakerModelId;
 export const resolveModelId = (modelId: SpeakerModelId | undefined | null, kind: SpeakerKind): SpeakerModelId => modelId && SPEAKER_MODELS[modelId] ? modelId : defaultModelForKind(kind);
 export const getSpeakerModel = (modelId: SpeakerModelId | undefined | null, kind: SpeakerKind) => SPEAKER_MODELS[resolveModelId(modelId, kind)];
+export const getSpeakerVisual = (modelId: SpeakerModelId | undefined | null, kind: SpeakerKind): SpeakerVisualDefinition => getSpeakerModel(modelId, kind).visual ?? { type: "procedural" };
 export const modelIdsForFamily = (family: SpeakerFamily) => (Object.keys(SPEAKER_MODELS) as SpeakerModelId[]).filter((id) => SPEAKER_MODELS[id].family === family);

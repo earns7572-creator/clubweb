@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
 import { createDefaultEq } from "../client/src/lib/speakerEq";
-import { getSpeakerModel, modelIdsForFamily, resolveModelId, SPEAKER_MODELS } from "../client/src/lib/speakerModels";
+import { getSpeakerModel, getSpeakerVisual, modelIdsForFamily, resolveModelId, SPEAKER_MODELS, type SpeakerGlbVisual } from "../client/src/lib/speakerModels";
 import { REGGAE_WALL } from "../client/src/lib/systemPresets";
 import { speakerFilters } from "../client/src/lib/responseCurve";
 import { createStackResolver } from "../client/src/lib/speakerStacking";
 import { speakerBodyForSpeaker } from "../client/src/lib/speakerDimensions";
 
 assert.equal(resolveModelId(undefined, "full"), "modern-full", "legacy speaker without modelId falls back to modern kind");
+assert.deepEqual(getSpeakerVisual("modern-full", "full"), { type: "procedural" }, "models without visual metadata remain procedural");
+const glbVisual: SpeakerGlbVisual = { type: "glb", src: "/models/speakers/reggae/future-scoop.glb", rotation: [0, Math.PI, 0], scale: 1.05, offset: [0, .02, 0], emitterMeshes: { low: ["EmitterLow"] } };
+assert.equal(glbVisual.type, "glb", "GLB visual metadata resolves by type");
+assert.deepEqual(glbVisual.emitterMeshes?.low, ["EmitterLow"], "GLB emitter metadata keeps named meshes");
+assert.deepEqual(getSpeakerModel("reggae-scoop", "sub").body, { width: 1.45, height: 1.65, depth: 1.15 }, "visual metadata never changes authoritative physical body");
 assert.equal(getSpeakerModel("reggae-scoop", "sub").family, "reggae", "scoop remains in reggae family");
 assert.equal(getSpeakerModel("reggae-scoop", "sub").kind, "sub", "scoop uses existing sub acoustic role");
 assert.equal(modelIdsForFamily("modern").length, 5, "all modern models remain available");
