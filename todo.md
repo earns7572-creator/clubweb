@@ -370,3 +370,9 @@
 > motion確認: POVにはMOTION OFF controlが常にDOMとしてrenderされ、desktopでは`display: none`で非表示になることを確認した。mobile portraitのcaptureではMOTION OFFを表示し、MIXとの重なりを解消した。実機センサーpermissionはこのsandboxで検証できないため、iOS / Android実機で明示タップからの確認が必要である。
 
 > responsive確認: 390×844のportraitでscene中心・bottom dock・thumb位置view switcher・MOTION controlsを確認した。844×390のlandscape POVもcaptureで確認した。実機のSafari / Chrome permission dialog、実ジャイロ入力、notch / home indicatorは端末での最終確認が必要である。
+
+## Codex Handoff
+
+- [x] 現在のGit SHA・主要構成・test script・公開状態・既知の実機確認項目を確認する。
+- [x] Codex向け引き継ぎ書を作成し、変更してはいけない制約と最初の確認手順を記載する。
+- [x] 引き継ぎ書をGitHub mainへcommit・pushする。
