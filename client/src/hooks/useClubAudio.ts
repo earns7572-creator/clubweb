@@ -8,20 +8,21 @@ import type { SpeakerEq } from "@/lib/speakerEq";
 import { getSpeakerModel, resolveModelId, type CharacterFilter, type SpeakerModelId } from "@/lib/speakerModels";
 import { bassEnergy } from "@/lib/bassPressure";
 import { sceneToAudioPosition, speakerToAudioPosition } from "@/lib/spatialCoordinates";
+import { speakerOrientationToAudioOrientation } from "@/lib/speakerOrientation";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
 export type ClubListener = { name: string; position: Position3D; orientation: { yaw: number; pitch: number } };
-export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; stackParentId?: string | null; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
+export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; orientation?: { yaw: number }; stackParentId?: string | null; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
 type Voice = { output: GainNode; stop?: () => void; media?: HTMLAudioElement; dispose?: () => void };
 type SpatialCache = { x?: number; y?: number; z?: number };
 type EqCache = { lowFrequency?: number; lowGain?: number; lowMidFrequency?: number; lowMidGain?: number; lowMidQ?: number; highMidFrequency?: number; highMidGain?: number; highMidQ?: number; highFrequency?: number; highGain?: number };
-type SpeakerCache = SpatialCache & { modelId?: SpeakerModelId; gain?: number; eq: EqCache };
+type SpeakerCache = SpatialCache & { modelId?: SpeakerModelId; gain?: number; eq: EqCache; orientation?: SpatialCache };
 type SpeakerEqNodes = { low: BiquadFilterNode; lowMid: BiquadFilterNode; highMid: BiquadFilterNode; high: BiquadFilterNode };
 type SpeakerNode = { input: GainNode; characterFilters: BiquadFilterNode[]; eq: SpeakerEqNodes; gain: GainNode; analyser: AnalyserNode; analyserData: Uint8Array; frequencyData: Uint8Array; panner: PannerNode; cache: SpeakerCache };
-type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam };
+type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam; orientationX?: AudioParam; orientationY?: AudioParam; orientationZ?: AudioParam };
 
 const EPSILON = .0001;
 const toneForOfficialSound: Record<string, number> = { pulse: 55, rain: 196, bronze: 146 };
@@ -46,6 +47,14 @@ function setListenerOrientation(node: LegacySpatialNode, orientation: ClubListen
   const changed = differs(forward.x, cache.x) || differs(forward.y, cache.y) || differs(forward.z, cache.z);
   if (!changed) return;
   if (node.forwardX && node.forwardY && node.forwardZ) { smoothParam(node.forwardX, forward.x, cache.x, now); smoothParam(node.forwardY, forward.y, cache.y, now); smoothParam(node.forwardZ, forward.z, cache.z, now); }
+  else node.setOrientation?.(forward.x, forward.y, forward.z);
+  cache.x = forward.x; cache.y = forward.y; cache.z = forward.z;
+}
+function setSpeakerOrientation(node: LegacySpatialNode, yaw: number, cache: SpatialCache, now: number) {
+  const forward = speakerOrientationToAudioOrientation(yaw);
+  const changed = differs(forward.x, cache.x) || differs(forward.y, cache.y) || differs(forward.z, cache.z);
+  if (!changed) return;
+  if (node.orientationX && node.orientationY && node.orientationZ) { smoothParam(node.orientationX, forward.x, cache.x, now); smoothParam(node.orientationY, forward.y, cache.y, now); smoothParam(node.orientationZ, forward.z, cache.z, now); }
   else node.setOrientation?.(forward.x, forward.y, forward.z);
   cache.x = forward.x; cache.y = forward.y; cache.z = forward.z;
 }
@@ -92,7 +101,7 @@ function connectCharacterChain(input: AudioNode, filters: BiquadFilterNode[], de
 function createSpeakerNode(context: AudioContext, master: GainNode, modelId: SpeakerModelId): SpeakerNode {
   const input = context.createGain(); const characterFilters = createCharacterFilters(context, modelId); const eq = createSpeakerEqNodes(context); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner();
   input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 1024; analyser.smoothingTimeConstant = .35;
-  panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 360;
+  panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 90; panner.coneOuterAngle = 180; panner.coneOuterGain = .35;
   connectCharacterChain(input, characterFilters, eq.low); eq.low.connect(eq.lowMid); eq.lowMid.connect(eq.highMid); eq.highMid.connect(eq.high); eq.high.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master);
   return { input, characterFilters, eq, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), frequencyData: new Uint8Array(analyser.frequencyBinCount), panner, cache: { modelId, eq: {} } };
 }
@@ -114,6 +123,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   const topologyKey = useMemo(() => `${activeSourceId}:${sources.map((source) => `${source.id}:${source.category}:${source.localUrl ?? ""}`).join("|")}:${speakers.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}`).sort().join("|")}`, [activeSourceId, sources, speakers]);
   const speakerDspKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}:${speaker.level}:${speaker.muted}:${speaker.eq.low.frequency}:${speaker.eq.low.gainDb}:${speaker.eq.lowMid.frequency}:${speaker.eq.lowMid.gainDb}:${speaker.eq.lowMid.q}:${speaker.eq.highMid.frequency}:${speaker.eq.highMid.gainDb}:${speaker.eq.highMid.q}:${speaker.eq.high.frequency}:${speaker.eq.high.gainDb}`).join("|"), [speakers]);
   const speakerPositionKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.position.x}:${speaker.position.y}:${speaker.position.z}:${speaker.stackParentId ?? "floor"}`).join("|"), [speakers]);
+  const speakerOrientationKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.orientation?.yaw ?? 0}`).join("|"), [speakers]);
   const listenerPositionKey = `${listener.position.x}:${listener.position.y}:${listener.position.z}`;
   const listenerOrientationKey = `${listener.orientation.yaw}:${listener.orientation.pitch}`;
   const ensureContext = useCallback(() => { if (contextRef.current) return contextRef.current; const context = new AudioContext(); const master = context.createGain(); const compressor = context.createDynamicsCompressor(); master.gain.value = .82; compressor.threshold.value = -18; compressor.ratio.value = 5; master.connect(compressor); compressor.connect(context.destination); contextRef.current = context; masterRef.current = master; return context; }, []);
@@ -132,6 +142,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
 
   const syncSpeakerDsp = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (!node) return; syncEq(node, speaker.eq, now); const targetGain = speaker.muted ? 0 : Math.max(.02, speaker.level); smoothParam(node.gain.gain, targetGain, node.cache.gain, now); node.cache.gain = targetGain; }); }, []);
   const syncSpeakerPositions = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (node) setSpatialPosition(node.panner as unknown as LegacySpatialNode, speakerToAudioPosition(speaker, speakerList), node.cache, now); }); }, []);
+  const syncSpeakerOrientations = useCallback((speakerList: ClubSpeaker[]) => { const context = contextRef.current; if (!context) return; const now = context.currentTime; speakerList.forEach((speaker) => { const node = speakerNodesRef.current.get(speaker.id); if (node) setSpeakerOrientation(node.panner as unknown as LegacySpatialNode, speaker.orientation?.yaw ?? 0, node.cache.orientation ?? (node.cache.orientation = {}), now); }); }, []);
   const syncListenerPosition = useCallback((nextListener: ClubListener) => { const context = contextRef.current; if (context) setSpatialPosition(context.listener as unknown as LegacySpatialNode, sceneToAudioPosition(nextListener.position), listenerPositionCacheRef.current, context.currentTime); }, []);
   const syncListenerOrientation = useCallback((nextListener: ClubListener) => { const context = contextRef.current; if (context) setListenerOrientation(context.listener as unknown as LegacySpatialNode, nextListener.orientation, listenerOrientationCacheRef.current, context.currentTime); }, []);
 
@@ -139,6 +150,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   useEffect(() => { syncTopology(isPlaying); }, [topologyKey, syncTopology, isPlaying]);
   useEffect(() => { syncSpeakerDsp(speakersRef.current); }, [speakerDspKey, syncSpeakerDsp]);
   useEffect(() => { syncSpeakerPositions(speakersRef.current); }, [speakerPositionKey, syncSpeakerPositions]);
+  useEffect(() => { syncSpeakerOrientations(speakersRef.current); }, [speakerOrientationKey, syncSpeakerOrientations]);
   useEffect(() => { syncListenerPosition(listenerRef.current); }, [listenerPositionKey, syncListenerPosition]);
   useEffect(() => { syncListenerOrientation(listenerRef.current); }, [listenerOrientationKey, syncListenerOrientation]);
   useEffect(() => {
@@ -157,11 +169,11 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     return () => { if (frame) cancelAnimationFrame(frame); };
   }, [isPlaying]);
   const togglePlayback = useCallback(async () => {
-    const context = ensureContext(); syncTopology(isPlaying); syncSpeakerDsp(speakersRef.current); syncSpeakerPositions(speakersRef.current); syncListenerPosition(listenerRef.current); syncListenerOrientation(listenerRef.current);
+    const context = ensureContext(); syncTopology(isPlaying); syncSpeakerDsp(speakersRef.current); syncSpeakerPositions(speakersRef.current); syncSpeakerOrientations(speakersRef.current); syncListenerPosition(listenerRef.current); syncListenerOrientation(listenerRef.current);
     if (isPlaying) { await context.suspend(); voicesRef.current.forEach((voice) => voice.media?.pause()); setIsPlaying(false); return; }
     try { if (context.state !== "running") await context.resume(); await Promise.all(Array.from(voicesRef.current.values()).map(async (voice) => { if (voice.media) await voice.media.play(); })); setPlaybackError(null); setIsPlaying(true); }
     catch { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }
-  }, [ensureContext, isPlaying, syncListenerOrientation, syncListenerPosition, syncSpeakerDsp, syncSpeakerPositions, syncTopology]);
+  }, [ensureContext, isPlaying, syncListenerOrientation, syncListenerPosition, syncSpeakerDsp, syncSpeakerOrientations, syncSpeakerPositions, syncTopology]);
   useEffect(() => () => { voicesRef.current.forEach((voice) => { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); }); speakerNodesRef.current.forEach(disconnectSpeakerNode); void contextRef.current?.close(); }, []);
   return { isPlaying, activityStore: activityStoreRef.current, lowActivityStore: lowActivityStoreRef.current, togglePlayback, playbackError, clearPlaybackError: () => setPlaybackError(null) };
 }

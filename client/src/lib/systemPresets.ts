@@ -1,7 +1,7 @@
 /* Club Craft system presets replace a scene only through an explicit LOAD action in the UI. */
 import type { SpeakerFamily, SpeakerModelId } from "@/lib/speakerModels";
 
-export type PresetSpeaker = { key: string; modelId: SpeakerModelId; x: number; y: number; z?: number; level: number; stackOn?: string };
+export type PresetSpeaker = { key: string; modelId: SpeakerModelId; x: number; y: number; z?: number; yaw?: number; level: number; stackOn?: string };
 export type SystemPreset = { id: string; label: string; family: SpeakerFamily; description: string; speakers: PresetSpeaker[] };
 
 export const REGGAE_WALL: SystemPreset = { id: "reggae-wall", label: "Reggae Sound System", family: "reggae", description: "Scoop bass, kick, horn mids and top boxes.", speakers: [
