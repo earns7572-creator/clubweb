@@ -16,37 +16,54 @@ type Props = {
   roomWidth: number;
   roomDepth: number;
   hazeColor?: string;
+  darkSurface?: boolean;
 };
 
-const BAND_COLORS: Record<SpeakerBand, THREE.Color> = {
-  low: new THREE.Color("#ff3b30"),
-  kick: new THREE.Color("#ff8a24"),
-  full: new THREE.Color("#b9b6a7"),
-  mid: new THREE.Color("#ffd60a"),
-  high: new THREE.Color("#32d05b"),
+const NIGHT_BAND_COLORS: Record<SpeakerBand, THREE.Color> = {
+  low: new THREE.Color("#ff4035"),
+  kick: new THREE.Color("#ff962e"),
+  full: new THREE.Color("#c9c7ba"),
+  mid: new THREE.Color("#ffe21f"),
+  high: new THREE.Color("#45e873"),
+};
+
+const LIGHT_BAND_COLORS: Record<SpeakerBand, THREE.Color> = {
+  low: new THREE.Color("#d9362d"),
+  kick: new THREE.Color("#d96d12"),
+  full: new THREE.Color("#858579"),
+  mid: new THREE.Color("#c89400"),
+  high: new THREE.Color("#168a3d"),
 };
 
 const BAND_COLOR_WEIGHTS: Record<SpeakerBand, number> = {
-  low: 0.75,
-  kick: 0.9,
-  full: 0.8,
-  mid: 1.3,
-  high: 1.45,
+  low: 0.55,
+  kick: 0.90,
+  full: 0.70,
+  mid: 2.20,
+  high: 2.80,
 };
 
 const BAND_VISIBILITY_GAINS: Record<SpeakerBand, number> = {
-  low: 0.88,
-  kick: 1.0,
-  full: 1.0,
-  mid: 1.35,
-  high: 1.55,
+  low: 0.72,
+  kick: 0.95,
+  full: 0.95,
+  mid: 1.85,
+  high: 2.25,
+};
+
+const BAND_ACTIVITY_GAMMA: Record<SpeakerBand, number> = {
+  low: 0.86,
+  kick: 0.80,
+  full: 0.78,
+  mid: 0.62,
+  high: 0.54,
 };
 
 const BAND_TINT_STRENGTH: Record<SpeakerBand, number> = {
-  low: 0.48,
+  low: 0.42,
   kick: 0.65,
   full: 0.50,
-  mid: 0.90,
+  mid: 1.00,
   high: 1.00,
 };
 
@@ -127,7 +144,7 @@ void main() {
 }
 `;
 
-export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth, roomDepth, hazeColor = "#777870" }: Props) {
+export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth, roomDepth, hazeColor = "#777870", darkSurface = false }: Props) {
   const { invalidate } = useThree();
   const resolver = useMemo(() => createStackResolver(speakers), [speakers]);
   const fieldWidth = roomWidth * SOUND_FIELD_STYLE.fieldExtentScale;
@@ -182,6 +199,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
     const outerGains = material.uniforms.uOuterGains.value as Float32Array;
     const strengths = material.uniforms.uStrengths.value as Float32Array;
     const ranges = material.uniforms.uRanges.value as Float32Array;
+    const palette = darkSurface ? NIGHT_BAND_COLORS : LIGHT_BAND_COLORS;
 
     for (let i = 0; i < MAX_SPEAKERS; i += 1) {
       strengths[i] = 0;
@@ -196,15 +214,16 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       outerCos[i] = Math.cos(model.directivity.outerAngle * 0.5 * Math.PI / 180);
       outerGains[i] = model.directivity.outerGain;
       const rawActivity = speaker.muted ? 0 : activityBySpeaker[speaker.id] ?? 0;
-      strengths[i] = Math.min(1.6, Math.pow(THREE.MathUtils.clamp(rawActivity, 0, 1), SOUND_FIELD_STYLE.activityGamma) * BAND_VISIBILITY_GAINS[model.band]);
+      const visualActivity = Math.pow(THREE.MathUtils.clamp(rawActivity, 0, 1), BAND_ACTIVITY_GAMMA[model.band]);
+      strengths[i] = Math.min(2.4, visualActivity * BAND_VISIBILITY_GAINS[model.band]);
       ranges[i] = model.directivity.visualRangeMeters;
-      colors[i].copy(BAND_COLORS[model.band]);
+      colors[i].copy(palette[model.band]);
       colorWeights[i] = BAND_COLOR_WEIGHTS[model.band];
       tintStrengths[i] = BAND_TINT_STRENGTH[model.band];
     }
 
     invalidate();
-  }, [speakers, activityBySpeaker, resolver, roomWidth, roomDepth, fieldWidth, fieldDepth, hazeColor, material, invalidate]);
+  }, [speakers, activityBySpeaker, resolver, roomWidth, roomDepth, fieldWidth, fieldDepth, hazeColor, darkSurface, material, invalidate]);
 
   useEffect(() => () => material.dispose(), [material]);
 
