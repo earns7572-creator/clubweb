@@ -441,3 +441,16 @@
 - [x] TOP / mobileで選択・回転・通常dragを検証し、型検査、build、GitHub main、公開チェックポイントを確認する。
 
 > 操作確認: Canvasの実座標へ合わせてFull Rangeを選択し、Speaker上の高コントラストな回転リング、矢印、`TURN`ラベル、広いhit areaが表示されることを確認した。RemoveとInspectorも既存どおり表示される。
+
+## Six Sound System Scenes
+
+- [x] 添付仕様全文、現行family / model / preset / GLB loader基盤を照合する。
+- [x] Scene registry、6 family metadata、model visual metadata、preset data modelを設計する。
+- [x] GLB loader未統合時はprocedural fallbackを使い、実asset接続規約とplanned pathだけを記録する。
+- [x] Free Party / Modern Club / Festival / Hi-Fi / Steppersのmodel・character filter・presetを実装する。
+- [x] 実assetは今回登録せず、planned GLB pathとSceneごとの軽量procedural visual variantを登録する。
+- [x] registryからLibrary・System preset UIを生成し、TOP / SIDE / POV / stackingへ統合する。
+- [x] 6 family・全preset上限・model ID・stack cycle・既存response / orientation / stackのtestを追加して実行する。
+- [ ] 全Sceneのdesktop / mobile viewを確認し、GitHub mainと公開チェックポイントへ保存する。
+
+> 実装方針: 今回はGLB loaderを追加しない。`plannedGlbPath`を将来のasset contractとして維持しながら、Modern / Reggaeは既存renderingを保持し、Free Party / Festival / Hi-Fi / Steppersはmodelごとに異なる軽量procedural meshで表示する。Audio graph、HRTF Panner、Analyser、Custom EQ、stack resolverは変更しない。

@@ -294,3 +294,10 @@ type ClubScene = {
 - DAW、VST3、AUとの直接接続
 - RTA、精密EQ、制作向けメーター
 - 他人のローカル音源の自動アップロードや公開
+
+## Style Decisions — Scene Library Visual Review
+
+- 各Viewには、淡いStage anchor、縮尺、Listenerを中心とする距離ringを必ず残す。これは操作説明ではなく、off-white Canvasを「音が置かれた空間」として読むための静かな基準である。
+- Signal Vermilionは、現在選ばれた音源の状態点、再生中のStage source、または意図した選択状態にのみ使う。装飾的な常時発光にはしない。
+- Club Craftのlockupは、open concentric-circle mark、ゆるいspacingのSpace Grotesk wordmark、身体的な短い行為copyを組として扱う。標準的なapp headerのような小さなgeneric labelへ縮退させない。
+- SpeakerとListenerは、配置・距離・再生状態が読み取れる小さな物理模型として扱う。UIのパネルやlegendは、Floor上の関係性より目立たせない。

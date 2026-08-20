@@ -8,14 +8,14 @@
 
 .instrument-app.spatial-installation { min-height: 100vh; padding: 16px 22px 8px; background: var(--gallery-paper); color: var(--gallery-ink); }
 .spatial-installation .instrument-header { height: 42px; max-width: none; margin: 0; border: 0; grid-template-columns: 1fr auto 1fr; }
-.spatial-brand { display: inline-flex; align-items: center; gap: 8px; }
-.spatial-brand img { width: 27px; height: 27px; opacity: .82; filter: grayscale(1) contrast(.98); }
-.spatial-word { display: inline-flex; gap: 3px; color: #3b3c37; font: 500 14px/1 "Space Grotesk", "Noto Sans JP", sans-serif; letter-spacing: .04em; }
-.spatial-word b { font-weight: 600; }.spatial-word em { color: #6c6d66; font-style: normal; font-weight: 400; }
-.spatial-brand small { padding-left: 8px; border-left: 1px solid rgba(48,49,46,.13); color: #9a9b94; font: 400 8px/1 "Noto Sans JP", sans-serif; }
+.spatial-brand { display: inline-flex; align-items: center; gap: 10px; }
+.spatial-brand img { width: 30px; height: 30px; opacity: .92; filter: grayscale(1) contrast(1.12); }
+.spatial-word { display: inline-flex; gap: 5px; color: #30312e; font: 500 14px/1 "Space Grotesk", "Noto Sans JP", sans-serif; letter-spacing: .115em; }
+.spatial-word b { font-weight: 600; }.spatial-word em { color: #666760; font-style: normal; font-weight: 400; }
+.spatial-brand small { padding-left: 10px; border-left: 1px solid rgba(48,49,46,.17); color: #85867e; font: 500 8px/1 "Noto Sans JP", sans-serif; letter-spacing: .04em; }
 .spatial-installation .source-trigger { min-width: 0; padding: 8px 11px; color: #595a54; font: 400 12px/1 "Noto Sans JP", system-ui, sans-serif; }
 .header-controls { display: inline-flex; align-items: center; gap: 2px; }
-.spatial-installation .source-trigger i { width: 5px; height: 5px; background: #777871 !important; opacity: .7; }
+.spatial-installation .source-trigger i { width: 6px; height: 6px; opacity: .92; box-shadow: 0 0 0 2px rgba(214,75,53,.08); }
 .spatial-installation .source-trigger:hover { background: rgba(45,46,42,.035); }
 .spatial-installation .source-popover { top: calc(100% + 10px); width: 268px; padding: 8px; border: 0; border-radius: 10px; background: rgba(250,249,246,.96); box-shadow: 0 18px 45px rgba(35,36,32,.10); backdrop-filter: blur(20px); }
 .spatial-installation .source-popover-label { margin: 7px 8px; color: #93948d; font: 500 10px/1 "Noto Sans JP", sans-serif; letter-spacing: 0; }
@@ -37,16 +37,16 @@
 .local-audio-error { position: absolute; z-index: 15; top: 16px; left: 50%; display: inline-flex; max-width: min(430px, calc(100% - 32px)); align-items: center; gap: 8px; padding: 9px 11px; transform: translateX(-50%); border: 0; border-radius: 7px; color: #7a372d; background: rgba(246,245,241,.94); box-shadow: 0 8px 28px rgba(45,36,33,.11); font: 400 11px/1.35 "Noto Sans JP", sans-serif; text-align: left; }
 .spatial-installation .club-floor-3d canvas { outline: none; }
 .spatial-installation .three-room-label, .spatial-installation .three-map-rule, .spatial-installation .three-room-hint { display: none; }
-.spatial-stage-anchor { position: absolute; top: 13%; left: 50%; display: flex; align-items: center; gap: 6px; transform: translateX(-50%); color: rgba(49,50,46,.28); font: 400 9px/1 "Noto Sans JP", sans-serif; letter-spacing: .01em; pointer-events: none; }
-.spatial-stage-anchor i { width: 34px; height: 1px; background: rgba(49,50,46,.20); }
-.spatial-scale-anchor { position: absolute; left: 50%; bottom: 24px; display: flex; align-items: center; gap: 8px; transform: translateX(-50%); color: rgba(49,50,46,.23); font: 400 8px/1 "Noto Sans JP", sans-serif; letter-spacing: .04em; pointer-events: none; }
-.spatial-scale-anchor i { width: 54px; height: 1px; background: rgba(49,50,46,.18); }
+.spatial-stage-anchor { position: absolute; z-index: 2; top: 13%; left: 50%; display: flex; align-items: center; gap: 7px; padding: 3px 6px; transform: translateX(-50%); color: rgba(49,50,46,.44); background: rgba(246,245,241,.52); font: 500 9px/1 "Noto Sans JP", sans-serif; letter-spacing: .06em; pointer-events: none; }
+.spatial-stage-anchor i { width: 42px; height: 1px; background: rgba(49,50,46,.33); }
+.spatial-scale-anchor { position: absolute; z-index: 2; left: 50%; bottom: 24px; display: flex; align-items: center; gap: 8px; padding: 3px 6px; transform: translateX(-50%); color: rgba(49,50,46,.36); background: rgba(246,245,241,.44); font: 500 8px/1 "Noto Sans JP", sans-serif; letter-spacing: .05em; pointer-events: none; }
+.spatial-scale-anchor i { width: 60px; height: 1px; background: rgba(49,50,46,.27); }
 
 .speaker-composer { position: absolute; z-index: 8; left: 28px; bottom: 28px; display: flex; align-items: center; gap: 7px; }
 .speaker-composer select { appearance: none; min-width: 116px; border: 0; padding: 8px 22px 8px 0; color: #555650; background: transparent; font: 400 12px/1 "Noto Sans JP", sans-serif; }
 .speaker-composer button { display: inline-flex; align-items: center; gap: 5px; border: 0; padding: 8px 0; color: #555650; background: transparent; font: 400 12px/1 "Noto Sans JP", sans-serif; }
 .speaker-composer button:hover { color: #1e201d; }
-.speaker-library { align-items: flex-start; gap: 11px; }.family-switch { display: grid; gap: 2px; }.family-switch button { padding: 2px 0; color: #94958d; font-size: 9px; text-transform: uppercase; }.family-switch button.active { color: #353632; }.model-choices { display: flex; align-items: flex-end; gap: 7px; }.speaker-library .speaker-type-icon.reggae i { background: #514438; }.speaker-library .speaker-type-icon.reggae.high i { border-radius: 3px; }.preset-trigger-wrap { position: relative; }.preset-popover { position: absolute; z-index: 30; top: calc(100% + 10px); right: calc(100% + 12px); left: auto; width: 220px; padding: 10px; border-radius: 8px; background: rgba(250,249,246,.97); box-shadow: 0 18px 42px rgba(35,36,32,.12); backdrop-filter: blur(18px); }.preset-popover p, .preset-popover strong, .preset-popover small { display: block; margin: 0 0 7px; font: 400 11px/1.35 "Noto Sans JP", sans-serif; }.preset-popover p { color: #8e8f88; }.preset-popover small { color: #85867f; }.preset-choice, .preset-load, .preset-back { width: 100%; border: 0; border-radius: 5px; padding: 9px; color: #494a44; background: rgba(45,46,42,.045); text-align: left; }.preset-load { margin-top: 8px; color: #fff; background: #383934; text-align: center; }.preset-back { margin-top: 4px; background: transparent; text-align: center; }
+.speaker-library { align-items: flex-start; gap: 12px; }.family-switch { display: grid; gap: 3px; }.family-switch button { position: relative; padding: 2px 0 2px 8px; color: #94958d; font-size: 9px; text-transform: none; }.family-switch button.active { color: #353632; }.family-switch button.active::before { position: absolute; top: 50%; left: 0; width: 3px; height: 3px; border-radius: 50%; transform: translateY(-50%); background: var(--gallery-sound); content: ""; }.model-choices { display: flex; align-items: flex-end; gap: 7px; }.speaker-library .speaker-type-icon.reggae i { background: #514438; }.speaker-library .speaker-type-icon.reggae.high i { border-radius: 3px; }.preset-trigger-wrap { position: relative; }.preset-popover { position: absolute; z-index: 30; top: calc(100% + 10px); right: calc(100% + 12px); left: auto; width: 220px; padding: 10px; border-radius: 8px; background: rgba(250,249,246,.97); box-shadow: 0 18px 42px rgba(35,36,32,.12); backdrop-filter: blur(18px); }.preset-popover p, .preset-popover strong, .preset-popover small { display: block; margin: 0 0 7px; font: 400 11px/1.35 "Noto Sans JP", sans-serif; }.preset-popover p { color: #8e8f88; }.preset-popover small { color: #85867f; }.preset-choice, .preset-load, .preset-back { width: 100%; border: 0; border-radius: 5px; padding: 9px; color: #494a44; background: rgba(45,46,42,.045); text-align: left; }.preset-load { margin-top: 8px; color: #fff; background: #383934; text-align: center; }.preset-back { margin-top: 4px; background: transparent; text-align: center; }
 
 .spatial-inspector { position: absolute; z-index: 9; right: 30px; bottom: 28px; width: 194px; padding: 4px 0; background: rgba(246,245,241,.48); backdrop-filter: blur(14px); }
 .spatial-inspector h2 { margin: 0 0 12px; color: #3d3e39; font: 400 15px/1.2 "Noto Sans JP", sans-serif; letter-spacing: -.02em; }
