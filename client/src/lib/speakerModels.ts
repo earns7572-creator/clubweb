@@ -11,12 +11,30 @@ export type SpeakerModelId =
 
 export type CharacterFilter = { type: BiquadFilterType; frequency: number; q?: number; gainDb?: number };
 export type SpeakerVisualVariant = SpeakerFamily;
-export type SpeakerVisualDefinition = { renderer: "procedural"; variant: SpeakerVisualVariant; plannedGlbPath: string };
+export type SpeakerGlbVisual = { renderer: "glb"; variant: SpeakerVisualVariant; plannedGlbPath: string; src: string; emitterMeshes?: { low?: string[]; mid?: string[]; high?: string[] } };
+export type SpeakerProceduralVisual = { renderer: "procedural"; variant: SpeakerVisualVariant; plannedGlbPath: string };
+export type SpeakerVisualDefinition = SpeakerGlbVisual | SpeakerProceduralVisual;
 export type SpeakerFamilyDefinition = { id: SpeakerFamily; label: string; shortLabel: string; description: string; order: number };
 export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; characterFilters: CharacterFilter[]; visual: SpeakerVisualDefinition };
 
-const visual = (variant: SpeakerVisualVariant, plannedGlbPath: string): SpeakerVisualDefinition => ({ renderer: "procedural", variant, plannedGlbPath });
-const model = (id: SpeakerModelId, family: SpeakerFamily, kind: SpeakerKind, label: string, shortLabel: string, body: [number, number, number], characterFilters: CharacterFilter[], plannedGlbPath: string): SpeakerModelDefinition => ({ id, family, kind, label, shortLabel, body: { width: body[0], height: body[1], depth: body[2] }, characterFilters, visual: visual(family, plannedGlbPath) });
+const GLB_ASSET_URLS: Record<string, string> = {
+  "modern/sub.glb": "/manus-storage/club-sub_945f551c.glb", "modern/point-source.glb": "/manus-storage/point-source_cf234f10.glb",
+  "reggae/scoop.glb": "/manus-storage/scoop_5fb2dc25.glb", "reggae/kick-bin.glb": "/manus-storage/kick-bin_4ded79f4.glb", "reggae/mid-horn.glb": "/manus-storage/mid-horn_88e26e4b.glb", "reggae/top.glb": "/manus-storage/top_f53d710b.glb",
+  "freeparty/w-bin.glb": "/manus-storage/w-bin_0ce00c0f.glb", "freeparty/kick-horn.glb": "/manus-storage/kick-horn_683764ee.glb", "freeparty/mid-horn.glb": "/manus-storage/mid-horn_913b1365.glb", "freeparty/hf-horn.glb": "/manus-storage/hf-horn_e168a6aa.glb",
+  "festival/sub.glb": "/manus-storage/festival-sub_a42dba39.glb", "festival/line-array-hang.glb": "/manus-storage/line-array-hang_9a71a238.glb", "festival/front-fill.glb": "/manus-storage/front-fill_863b5295.glb",
+  "hifi/large-woofer.glb": "/manus-storage/large-woofer_4221dd9f.glb", "hifi/mid-horn.glb": "/manus-storage/wooden-mid-horn_678136a1.glb", "hifi/tweeter.glb": "/manus-storage/super-tweeter_22afe845.glb",
+  "steppers/reflex-sub.glb": "/manus-storage/reflex-sub_c5d109b8.glb", "steppers/kick.glb": "/manus-storage/kick_08ffe74a.glb", "steppers/mid-top.glb": "/manus-storage/mid-top_8676374e.glb", "steppers/top.glb": "/manus-storage/hf-top_b6c07775.glb",
+};
+const emittersFor = (id: SpeakerModelId): SpeakerGlbVisual["emitterMeshes"] => {
+  if (id === "modern-full" || id === "festival-front-fill") return { low: ["EmitterLow"], high: ["EmitterHigh"] };
+  if (id === "modern-mid") return { mid: ["EmitterHigh"] };
+  if (id === "steppers-mid") return { low: ["EmitterLow"], mid: ["EmitterMid"] };
+  if (id === "festival-line-array" || id.endsWith("-top") || id === "modern-high" || id === "hifi-tweeter" || id === "freeparty-top") return { high: ["EmitterHigh"] };
+  if (id.includes("mid-horn") || id === "freeparty-mid-horn" || id === "hifi-mid-horn") return { mid: ["EmitterMid"] };
+  return { low: ["EmitterLow"] };
+};
+const visual = (variant: SpeakerVisualVariant, plannedGlbPath: string, id: SpeakerModelId): SpeakerVisualDefinition => { const src = GLB_ASSET_URLS[plannedGlbPath]; return src ? { renderer: "glb", variant, plannedGlbPath, src, emitterMeshes: emittersFor(id) } : { renderer: "procedural", variant, plannedGlbPath }; };
+const model = (id: SpeakerModelId, family: SpeakerFamily, kind: SpeakerKind, label: string, shortLabel: string, body: [number, number, number], characterFilters: CharacterFilter[], plannedGlbPath: string): SpeakerModelDefinition => ({ id, family, kind, label, shortLabel, body: { width: body[0], height: body[1], depth: body[2] }, characterFilters, visual: visual(family, plannedGlbPath, id) });
 const hp = (frequency: number, q = .7): CharacterFilter => ({ type: "highpass", frequency, q });
 const lp = (frequency: number, q = .7): CharacterFilter => ({ type: "lowpass", frequency, q });
 const peak = (frequency: number, gainDb: number, q = .75): CharacterFilter => ({ type: "peaking", frequency, gainDb, q });

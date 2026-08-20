@@ -25,6 +25,11 @@ for (const family of orderedSpeakerFamilies()) {
     assert.equal(model.family, family.id, `${id} belongs to its registered family`);
     assert.ok(model.body.width > 0 && model.body.height > 0 && model.body.depth > 0, `${id} has physical dimensions`);
     assert.ok(model.visual.plannedGlbPath.endsWith(".glb"), `${id} declares its future GLB contract path`);
+    assert.equal(model.visual.renderer, "glb", `${id} uses a real GLB visual when the asset library is available`);
+    if (model.visual.renderer === "glb") {
+      assert.ok(model.visual.src.startsWith("/manus-storage/"), `${id} uses a deployment-safe GLB URL`);
+      assert.ok(Object.values(model.visual.emitterMeshes ?? {}).flat().length > 0, `${id} maps one or more activity emitters`);
+    }
   });
 }
 assert.ok(SPEAKER_MODELS["reggae-scoop"].body.height > SPEAKER_MODELS["reggae-kick"].body.height, "scoop physical body is taller than kick");

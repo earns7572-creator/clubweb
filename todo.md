@@ -454,3 +454,16 @@
 - [ ] 全Sceneのdesktop / mobile viewを確認し、GitHub mainと公開チェックポイントへ保存する。
 
 > 実装方針: 今回はGLB loaderを追加しない。`plannedGlbPath`を将来のasset contractとして維持しながら、Modern / Reggaeは既存renderingを保持し、Free Party / Festival / Hi-Fi / Steppersはmodelごとに異なる軽量procedural meshで表示する。Audio graph、HRTF Panner、Analyser、Custom EQ、stack resolverは変更しない。
+
+## Codex Speaker 3D Model Review
+
+- [x] Codexが確認・pushしたSpeaker 3Dモデルのbranch、commit、変更ファイルを特定する。
+- [x] 現行mainとのdiff、3D render・audio・stack・performanceへの影響、統合要否を確認する。
+- [x] 必要な場合だけ安全に統合し、build・視覚確認・GitHub公開状態を報告する。
+
+## Codex GLB Speaker Asset Integration
+
+- [x] `feat/speaker-glb-assets`の20種GLB assetとmanifestをWeb配信用storageへ登録する。
+- [x] GLB loaderとmodel registry pathを統合し、読込中はprocedural fallbackを保持する。
+- [x] activity・selection・TOP / SIDE / POV・stacking・mobileで実model表示を確認する。
+- [x] registry asset contract・回帰テスト・production buildを通し、GitHub mainと公開版へ保存する。
