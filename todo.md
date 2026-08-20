@@ -433,3 +433,11 @@
 - [x] GitHub mainと公開チェックポイントへ保存する。
 
 > Speaker yaw確認: TOP / SIDE / POVを更新後の開発サーバーでcaptureし、sceneの描画が維持されることを確認した。speaker orientationはAudio PannerNodeのcone orientationへ同期され、TOPの選択Speakerには回転handleが追加される。mobile AudioContext resume修正も統合時に保持した。
+
+## Visible Speaker Rotation Handle
+
+- [x] 選択時のrotation handleの位置・depth・material・pointer hit areaを確認する。
+- [x] Speaker上で明瞭に見える回転handleとdrag操作を実装する。
+- [x] TOP / mobileで選択・回転・通常dragを検証し、型検査、build、GitHub main、公開チェックポイントを確認する。
+
+> 操作確認: Canvasの実座標へ合わせてFull Rangeを選択し、Speaker上の高コントラストな回転リング、矢印、`TURN`ラベル、広いhit areaが表示されることを確認した。RemoveとInspectorも既存どおり表示される。

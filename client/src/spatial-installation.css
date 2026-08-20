@@ -62,6 +62,7 @@
 .spatial-inspector .inspector-actions .muted { color: var(--gallery-sound); background: transparent; }
 .spatial-inspector .inspector-actions .remove { width: auto; color: #8d8e87; }
 .spatial-inspector .inspector-actions .remove:disabled { opacity: .25; }
+.speaker-rotate-label { display: inline-block; padding: 2px 5px; border-radius: 2px; color: #71684f; background: rgba(246,244,238,.72); font: 600 8px/1 "Noto Sans JP", sans-serif; letter-spacing: .12em; pointer-events: none; }
 
 .spatial-installation .instrument-footer { display: none; }
 .spatial-installation .help-sheet { border: 0; border-radius: 14px; background: rgba(250,249,246,.98); box-shadow: 0 18px 48px rgba(35,36,32,.13); }
