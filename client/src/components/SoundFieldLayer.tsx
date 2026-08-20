@@ -8,6 +8,7 @@ import { speakerOrientationToAudioOrientation } from "@/lib/speakerOrientation";
 import { SOUND_FIELD_STYLE } from "@/lib/soundFieldMath";
 
 const MAX_SPEAKERS = 16;
+const MAX_FIELD_COMPONENTS = 48;
 const ignoreRaycast: THREE.Mesh["raycast"] = () => {};
 
 type Props = {
@@ -76,21 +77,21 @@ void main() {
 `;
 
 const fragmentShader = `
-#define MAX_SPEAKERS 16
+#define MAX_FIELD_COMPONENTS 48
 varying vec2 vUv;
 uniform int uCount;
 uniform vec2 uRoomSize;
 uniform vec2 uFieldSize;
-uniform vec2 uPositions[MAX_SPEAKERS];
-uniform vec2 uDirections[MAX_SPEAKERS];
-uniform float uInnerCos[MAX_SPEAKERS];
-uniform float uOuterCos[MAX_SPEAKERS];
-uniform float uOuterGains[MAX_SPEAKERS];
-uniform float uStrengths[MAX_SPEAKERS];
-uniform float uRanges[MAX_SPEAKERS];
-uniform vec3 uColors[MAX_SPEAKERS];
-uniform float uColorWeights[MAX_SPEAKERS];
-uniform float uTintStrengths[MAX_SPEAKERS];
+uniform vec2 uPositions[MAX_FIELD_COMPONENTS];
+uniform vec2 uDirections[MAX_FIELD_COMPONENTS];
+uniform float uInnerCos[MAX_FIELD_COMPONENTS];
+uniform float uOuterCos[MAX_FIELD_COMPONENTS];
+uniform float uOuterGains[MAX_FIELD_COMPONENTS];
+uniform float uStrengths[MAX_FIELD_COMPONENTS];
+uniform float uRanges[MAX_FIELD_COMPONENTS];
+uniform vec3 uColors[MAX_FIELD_COMPONENTS];
+uniform float uColorWeights[MAX_FIELD_COMPONENTS];
+uniform float uTintStrengths[MAX_FIELD_COMPONENTS];
 uniform vec3 uHazeColor;
 uniform float uDistanceScale;
 uniform float uDistanceExponent;
@@ -106,7 +107,7 @@ void main() {
   float colorWeight = 0.0;
   vec3 weightedColor = vec3(0.0);
 
-  for (int i = 0; i < MAX_SPEAKERS; i++) {
+  for (int i = 0; i < MAX_FIELD_COMPONENTS; i++) {
     if (i < uCount) {
       float strength = uStrengths[i];
       if (strength > 0.0001) {
@@ -162,16 +163,16 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       uCount: { value: 0 },
       uRoomSize: { value: new THREE.Vector2(roomWidth, roomDepth) },
       uFieldSize: { value: new THREE.Vector2(fieldWidth, fieldDepth) },
-      uPositions: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Vector2()) },
-      uDirections: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Vector2(0, 1)) },
-      uInnerCos: { value: new Float32Array(MAX_SPEAKERS) },
-      uOuterCos: { value: new Float32Array(MAX_SPEAKERS) },
-      uOuterGains: { value: new Float32Array(MAX_SPEAKERS) },
-      uStrengths: { value: new Float32Array(MAX_SPEAKERS) },
-      uRanges: { value: new Float32Array(MAX_SPEAKERS) },
-      uColors: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Color()) },
-      uColorWeights: { value: new Float32Array(MAX_SPEAKERS) },
-      uTintStrengths: { value: new Float32Array(MAX_SPEAKERS) },
+      uPositions: { value: Array.from({ length: MAX_FIELD_COMPONENTS }, () => new THREE.Vector2()) },
+      uDirections: { value: Array.from({ length: MAX_FIELD_COMPONENTS }, () => new THREE.Vector2(0, 1)) },
+      uInnerCos: { value: new Float32Array(MAX_FIELD_COMPONENTS) },
+      uOuterCos: { value: new Float32Array(MAX_FIELD_COMPONENTS) },
+      uOuterGains: { value: new Float32Array(MAX_FIELD_COMPONENTS) },
+      uStrengths: { value: new Float32Array(MAX_FIELD_COMPONENTS) },
+      uRanges: { value: new Float32Array(MAX_FIELD_COMPONENTS) },
+      uColors: { value: Array.from({ length: MAX_FIELD_COMPONENTS }, () => new THREE.Color()) },
+      uColorWeights: { value: new Float32Array(MAX_FIELD_COMPONENTS) },
+      uTintStrengths: { value: new Float32Array(MAX_FIELD_COMPONENTS) },
       uHazeColor: { value: new THREE.Color(hazeColor) },
       uDistanceScale: { value: SOUND_FIELD_STYLE.distanceScaleMeters },
       uDistanceExponent: { value: SOUND_FIELD_STYLE.distanceExponent },
@@ -187,8 +188,14 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
     material.uniforms.uRoomSize.value.set(roomWidth, roomDepth);
     material.uniforms.uFieldSize.value.set(fieldWidth, fieldDepth);
     material.uniforms.uHazeColor.value.set(hazeColor);
-    const activeSpeakers = speakers.slice(0, MAX_SPEAKERS);
-    material.uniforms.uCount.value = activeSpeakers.length;
+    const activeFieldComponents = speakers.slice(0, MAX_SPEAKERS).flatMap((speaker) => {
+      const model = getSpeakerModel(speaker.modelId, speaker.kind);
+      const xy = resolver.getXY(speaker);
+      const orientation = speakerOrientationToAudioOrientation(speaker.orientation?.yaw ?? 0);
+      const rawActivity = speaker.muted ? 0 : activityBySpeaker[speaker.id] ?? 0;
+      return model.fieldComponents.map((component) => ({ component, x: (xy.x - .5) * roomWidth, z: (xy.y - .5) * roomDepth, directionX: orientation.x, directionZ: orientation.z, rawActivity }));
+    }).slice(0, MAX_FIELD_COMPONENTS);
+    material.uniforms.uCount.value = activeFieldComponents.length;
     const positions = material.uniforms.uPositions.value as THREE.Vector2[];
     const directions = material.uniforms.uDirections.value as THREE.Vector2[];
     const colors = material.uniforms.uColors.value as THREE.Color[];
@@ -201,25 +208,22 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
     const ranges = material.uniforms.uRanges.value as Float32Array;
     const palette = darkSurface ? NIGHT_BAND_COLORS : LIGHT_BAND_COLORS;
 
-    for (let i = 0; i < MAX_SPEAKERS; i += 1) {
+    for (let i = 0; i < MAX_FIELD_COMPONENTS; i += 1) {
       strengths[i] = 0;
-      if (i >= activeSpeakers.length) continue;
-      const speaker = activeSpeakers[i];
-      const model = getSpeakerModel(speaker.modelId, speaker.kind);
-      const xy = resolver.getXY(speaker);
-      positions[i].set((xy.x - 0.5) * roomWidth, (xy.y - 0.5) * roomDepth);
-      const orientation = speakerOrientationToAudioOrientation(speaker.orientation?.yaw ?? 0);
-      directions[i].set(orientation.x, orientation.z);
-      innerCos[i] = Math.cos(model.directivity.innerAngle * 0.5 * Math.PI / 180);
-      outerCos[i] = Math.cos(model.directivity.outerAngle * 0.5 * Math.PI / 180);
-      outerGains[i] = model.directivity.outerGain;
-      const rawActivity = speaker.muted ? 0 : activityBySpeaker[speaker.id] ?? 0;
-      const visualActivity = Math.pow(THREE.MathUtils.clamp(rawActivity, 0, 1), BAND_ACTIVITY_GAMMA[model.band]);
-      strengths[i] = Math.min(2.4, visualActivity * BAND_VISIBILITY_GAINS[model.band]);
-      ranges[i] = model.directivity.visualRangeMeters;
-      colors[i].copy(palette[model.band]);
-      colorWeights[i] = BAND_COLOR_WEIGHTS[model.band];
-      tintStrengths[i] = BAND_TINT_STRENGTH[model.band];
+      if (i >= activeFieldComponents.length) continue;
+      const field = activeFieldComponents[i];
+      const { component } = field;
+      positions[i].set(field.x, field.z);
+      directions[i].set(field.directionX, field.directionZ);
+      innerCos[i] = Math.cos(component.innerAngle * .5 * Math.PI / 180);
+      outerCos[i] = Math.cos(component.outerAngle * .5 * Math.PI / 180);
+      outerGains[i] = component.outerGain;
+      const visualActivity = Math.pow(THREE.MathUtils.clamp(field.rawActivity, 0, 1), BAND_ACTIVITY_GAMMA[component.band]);
+      strengths[i] = Math.min(2.4, visualActivity * BAND_VISIBILITY_GAINS[component.band] * component.gain);
+      ranges[i] = component.visualRangeMeters;
+      colors[i].copy(palette[component.band]);
+      colorWeights[i] = BAND_COLOR_WEIGHTS[component.band];
+      tintStrengths[i] = BAND_TINT_STRENGTH[component.band];
     }
 
     invalidate();

@@ -48,6 +48,9 @@ for (const family of orderedSpeakerFamilies()) {
 assert.ok(SPEAKER_MODELS["modern-sub"].directivity.innerAngle > SPEAKER_MODELS["modern-high"].directivity.innerAngle, "Modern Sub is wider than Modern High");
 assert.ok(SPEAKER_MODELS["reggae-scoop"].directivity.innerAngle > SPEAKER_MODELS["reggae-mid-horn"].directivity.innerAngle, "Reggae Scoop is wider than Reggae Mid Horn");
 assert.ok(SPEAKER_MODELS["freeparty-wbin"].directivity.innerAngle > SPEAKER_MODELS["freeparty-top"].directivity.innerAngle, "Free Party W-Bin is wider than Free Party Top");
+assert.deepEqual(SPEAKER_MODELS["modern-full"].fieldComponents.map((component) => component.band), ["low", "mid", "high"], "Modern Full Range has nested low, mid and high field components");
+assert.deepEqual(SPEAKER_MODELS["festival-line-array"].fieldComponents.map((component) => component.band), ["mid", "high"], "Festival Line Array has mid and high field components");
+assert.deepEqual(SPEAKER_MODELS["festival-front-fill"].fieldComponents.map((component) => component.band), ["mid", "high"], "Festival Front Fill has mid and high field components");
 assert.ok(SPEAKER_MODELS["reggae-scoop"].body.height > SPEAKER_MODELS["reggae-kick"].body.height, "scoop physical body is taller than kick");
 assert.equal(REGGAE_WALL.speakers.length, 8, "Reggae Sound System preset has two four-way stacks");
 assert.equal(REGGAE_WALL.speakers.filter((speaker) => !speaker.stackOn).length, 2, "preset has two floor roots");

@@ -12,12 +12,13 @@ export type SpeakerModelId =
 export type CharacterFilter = { type: BiquadFilterType; frequency: number; q?: number; gainDb?: number };
 export type SpeakerBand = "low" | "kick" | "full" | "mid" | "high";
 export type SpeakerDirectivity = { innerAngle: number; outerAngle: number; outerGain: number; visualRangeMeters: number };
+export type SpeakerFieldComponent = { band: "low" | "kick" | "mid" | "high"; gain: number; innerAngle: number; outerAngle: number; outerGain: number; visualRangeMeters: number };
 export type SpeakerVisualVariant = SpeakerFamily;
 export type SpeakerGlbVisual = { renderer: "glb"; variant: SpeakerVisualVariant; plannedGlbPath: string; src: string; emitterMeshes?: { low?: string[]; mid?: string[]; high?: string[] } };
 export type SpeakerProceduralVisual = { renderer: "procedural"; variant: SpeakerVisualVariant; plannedGlbPath: string };
 export type SpeakerVisualDefinition = SpeakerGlbVisual | SpeakerProceduralVisual;
 export type SpeakerFamilyDefinition = { id: SpeakerFamily; label: string; shortLabel: string; description: string; order: number };
-export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; band: SpeakerBand; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; directivity: SpeakerDirectivity; characterFilters: CharacterFilter[]; visual: SpeakerVisualDefinition };
+export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; band: SpeakerBand; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; directivity: SpeakerDirectivity; fieldComponents: SpeakerFieldComponent[]; characterFilters: CharacterFilter[]; visual: SpeakerVisualDefinition };
 
 const BAND_BY_MODEL: Record<SpeakerModelId, SpeakerBand> = {
   "modern-sub": "low", "modern-woofer": "low", "modern-full": "full", "modern-mid": "mid", "modern-high": "high",
@@ -54,6 +55,30 @@ const DIRECTIVITY_BY_MODEL: Record<SpeakerModelId, SpeakerDirectivity> = {
   "steppers-top": { innerAngle: 50, outerAngle: 90, outerGain: .08, visualRangeMeters: 10 },
 };
 
+const FIELD_COMPONENTS_BY_MODEL: Partial<Record<SpeakerModelId, SpeakerFieldComponent[]>> = {
+  "modern-full": [
+    { band: "low", gain: .32, innerAngle: 155, outerAngle: 240, outerGain: .35, visualRangeMeters: 7.5 },
+    { band: "mid", gain: .78, innerAngle: 105, outerAngle: 165, outerGain: .20, visualRangeMeters: 9 },
+    { band: "high", gain: 1, innerAngle: 72, outerAngle: 120, outerGain: .10, visualRangeMeters: 10 },
+  ],
+  "festival-line-array": [
+    { band: "mid", gain: .90, innerAngle: 100, outerAngle: 150, outerGain: .18, visualRangeMeters: 13 },
+    { band: "high", gain: 1.15, innerAngle: 84, outerAngle: 130, outerGain: .12, visualRangeMeters: 14 },
+  ],
+  "festival-front-fill": [
+    { band: "mid", gain: .78, innerAngle: 120, outerAngle: 185, outerGain: .25, visualRangeMeters: 8 },
+    { band: "high", gain: .95, innerAngle: 105, outerAngle: 165, outerGain: .20, visualRangeMeters: 8.5 },
+  ],
+};
+
+const fieldComponentsFor = (id: SpeakerModelId): SpeakerFieldComponent[] => {
+  const components = FIELD_COMPONENTS_BY_MODEL[id];
+  if (components) return components;
+  const band = BAND_BY_MODEL[id];
+  if (band === "full") return [];
+  return [{ band, gain: 1, ...DIRECTIVITY_BY_MODEL[id] }];
+};
+
 const GLB_ASSET_URLS: Record<string, string> = {
   // Modern and Reggae intentionally have no entry: their approved procedural visuals are protected from bulk GLB replacement.
   "freeparty/w-bin.glb": "/models/speakers/freeparty/w-bin.glb", "freeparty/kick-horn.glb": "/models/speakers/freeparty/kick-horn.glb", "freeparty/mid-horn.glb": "/models/speakers/freeparty/mid-horn.glb", "freeparty/hf-horn.glb": "/models/speakers/freeparty/hf-horn.glb",
@@ -70,7 +95,7 @@ const emittersFor = (id: SpeakerModelId): SpeakerGlbVisual["emitterMeshes"] => {
   return { low: ["EmitterLow"] };
 };
 const visual = (variant: SpeakerVisualVariant, plannedGlbPath: string, id: SpeakerModelId): SpeakerVisualDefinition => { const src = GLB_ASSET_URLS[plannedGlbPath]; return src ? { renderer: "glb", variant, plannedGlbPath, src, emitterMeshes: emittersFor(id) } : { renderer: "procedural", variant, plannedGlbPath }; };
-const model = (id: SpeakerModelId, family: SpeakerFamily, kind: SpeakerKind, label: string, shortLabel: string, body: [number, number, number], characterFilters: CharacterFilter[], plannedGlbPath: string): SpeakerModelDefinition => ({ id, family, kind, band: BAND_BY_MODEL[id], label, shortLabel, body: { width: body[0], height: body[1], depth: body[2] }, directivity: DIRECTIVITY_BY_MODEL[id], characterFilters, visual: visual(family, plannedGlbPath, id) });
+const model = (id: SpeakerModelId, family: SpeakerFamily, kind: SpeakerKind, label: string, shortLabel: string, body: [number, number, number], characterFilters: CharacterFilter[], plannedGlbPath: string): SpeakerModelDefinition => ({ id, family, kind, band: BAND_BY_MODEL[id], label, shortLabel, body: { width: body[0], height: body[1], depth: body[2] }, directivity: DIRECTIVITY_BY_MODEL[id], fieldComponents: fieldComponentsFor(id), characterFilters, visual: visual(family, plannedGlbPath, id) });
 const hp = (frequency: number, q = .7): CharacterFilter => ({ type: "highpass", frequency, q });
 const lp = (frequency: number, q = .7): CharacterFilter => ({ type: "lowpass", frequency, q });
 const peak = (frequency: number, gainDb: number, q = .75): CharacterFilter => ({ type: "peaking", frequency, gainDb, q });
