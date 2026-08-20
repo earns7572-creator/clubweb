@@ -467,3 +467,9 @@
 - [x] GLB loaderとmodel registry pathを統合し、読込中はprocedural fallbackを保持する。
 - [x] activity・selection・TOP / SIDE / POV・stacking・mobileで実model表示を確認する。
 - [x] registry asset contract・回帰テスト・production buildを通し、GitHub mainと公開版へ保存する。
+
+## GLB Integration — TURN Handle Regression
+
+- [x] GLB model導入後にTOPのTURN handleがpointer操作を受け取れない原因を特定する。
+- [x] 回転handleのhit target・event propagation・captureを修正し、通常dragと両立させる。
+- [x] rotation・HRTF orientation・mobile TOP・回帰テストを確認し、GitHub mainと公開版へ保存する。
