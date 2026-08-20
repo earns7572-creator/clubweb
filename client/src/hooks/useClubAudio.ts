@@ -157,10 +157,18 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     return () => { if (frame) cancelAnimationFrame(frame); };
   }, [isPlaying]);
   const togglePlayback = useCallback(async () => {
-    const context = ensureContext(); syncTopology(isPlaying); syncSpeakerDsp(speakersRef.current); syncSpeakerPositions(speakersRef.current); syncListenerPosition(listenerRef.current); syncListenerOrientation(listenerRef.current);
+    const context = ensureContext();
     if (isPlaying) { await context.suspend(); voicesRef.current.forEach((voice) => voice.media?.pause()); setIsPlaying(false); return; }
-    try { if (context.state !== "running") await context.resume(); await Promise.all(Array.from(voicesRef.current.values()).map(async (voice) => { if (voice.media) await voice.media.play(); })); setPlaybackError(null); setIsPlaying(true); }
-    catch { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }
+    try {
+      const resumePromise = context.state === "running" ? null : context.resume();
+      // Keep every resume/start call inside the Play click. Mobile Safari can reject voices created later by a state effect.
+      syncTopology(true); syncSpeakerDsp(speakersRef.current); syncSpeakerPositions(speakersRef.current); syncListenerPosition(listenerRef.current); syncListenerOrientation(listenerRef.current);
+      const mediaPlayRequests = Array.from(voicesRef.current.values()).map((voice) => voice.media ? voice.media.play() : Promise.resolve());
+      if (resumePromise) await resumePromise;
+      if (context.state !== "running") throw new Error("AudioContext did not resume");
+      await Promise.all(mediaPlayRequests);
+      setPlaybackError(null); setIsPlaying(true);
+    } catch { setPlaybackError("端末の音声を開始できませんでした。音量とブラウザの音声許可を確認して、もう一度Playを押してください。"); setIsPlaying(false); }
   }, [ensureContext, isPlaying, syncListenerOrientation, syncListenerPosition, syncSpeakerDsp, syncSpeakerPositions, syncTopology]);
   useEffect(() => () => { voicesRef.current.forEach((voice) => { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); }); speakerNodesRef.current.forEach(disconnectSpeakerNode); void contextRef.current?.close(); }, []);
   return { isPlaying, activityStore: activityStoreRef.current, lowActivityStore: lowActivityStoreRef.current, togglePlayback, playbackError, clearPlaybackError: () => setPlaybackError(null) };

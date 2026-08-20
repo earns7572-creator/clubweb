@@ -410,3 +410,17 @@
 - [x] mobileでSpeaker選択時にInspectorがdrag領域を覆う原因を確認する。
 - [x] Speaker tap選択とdragを共存させ、Inspectorがpointer操作を妨げないようにする。
 - [x] mobile TOPの選択・drag・選択解除、型検査、build、GitHub main、公開チェックポイントを確認する。
+
+## Reusable Codex Integration Skill
+
+- [x] Codex branchの確認・差分レビュー・統合・回帰検証・公開までの共通安全条件を整理する。
+- [x] 再利用スキルを初期化し、SKILL.mdへ実行手順と分岐条件を記述する。
+- [x] スキルを検証し、インストール可能な形式で納品する。
+
+## Mobile Audio Playback
+
+- [x] Play gestureからのAudioContext生成・resume・voice startとエラー伝播を確認する。
+- [x] モバイルでAudioContextがsuspendedのままにならない再生開始処理を実装する。
+- [x] 内蔵音源・local音源、Play / Pause、audio test、build、GitHub main、公開チェックポイントを確認する。
+
+> 再生確認: 開発ブラウザでPlayを押すとPause表示へ遷移し、speaker driver activityとstage markerのactivityが出ることを確認した。sandboxではiOS / Androidの実音出力を直接確認できないため、公開後に実機でPlayを一度タップして確認する。
