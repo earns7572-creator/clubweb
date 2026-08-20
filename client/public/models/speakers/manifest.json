@@ -1,0 +1,265 @@
+{
+  "reggae/scoop.glb": {
+    "triangles": 380,
+    "sizeKb": 29.9,
+    "width": 1.614,
+    "height": 1.847,
+    "depth": 1.477,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 8,
+    "validGlb": true
+  },
+  "reggae/kick-bin.glb": {
+    "triangles": 76,
+    "sizeKb": 11.9,
+    "width": 1.54,
+    "height": 1.54,
+    "depth": 1.13,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 4,
+    "validGlb": true
+  },
+  "reggae/mid-horn.glb": {
+    "triangles": 52,
+    "sizeKb": 8.2,
+    "width": 1.247,
+    "height": 1.247,
+    "depth": 0.788,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterMid"
+    ],
+    "meshCount": 2,
+    "validGlb": true
+  },
+  "reggae/top.glb": {
+    "triangles": 52,
+    "sizeKb": 8.2,
+    "width": 1.113,
+    "height": 1.113,
+    "depth": 0.464,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "meshCount": 2,
+    "validGlb": true
+  },
+  "freeparty/w-bin.glb": {
+    "triangles": 84,
+    "sizeKb": 13.2,
+    "width": 1.2,
+    "height": 0.9,
+    "depth": 1.13,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 7,
+    "validGlb": true
+  },
+  "freeparty/kick-horn.glb": {
+    "triangles": 76,
+    "sizeKb": 11.9,
+    "width": 1.254,
+    "height": 1.254,
+    "depth": 0.98,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 4,
+    "validGlb": true
+  },
+  "freeparty/mid-horn.glb": {
+    "triangles": 52,
+    "sizeKb": 8.2,
+    "width": 1.002,
+    "height": 1.002,
+    "depth": 0.676,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterMid"
+    ],
+    "meshCount": 2,
+    "validGlb": true
+  },
+  "freeparty/hf-horn.glb": {
+    "triangles": 52,
+    "sizeKb": 8.2,
+    "width": 0.913,
+    "height": 0.913,
+    "depth": 0.505,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "meshCount": 2,
+    "validGlb": true
+  },
+  "modern/club-sub.glb": {
+    "triangles": 572,
+    "sizeKb": 31.5,
+    "width": 1.4,
+    "height": 0.78,
+    "depth": 1.268,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 5,
+    "validGlb": true
+  },
+  "modern/point-source.glb": {
+    "triangles": 336,
+    "sizeKb": 22.8,
+    "width": 1.152,
+    "height": 1.559,
+    "depth": 1.139,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow",
+      "EmitterHigh"
+    ],
+    "meshCount": 3,
+    "validGlb": true
+  },
+  "festival/festival-sub.glb": {
+    "triangles": 560,
+    "sizeKb": 29.6,
+    "width": 1.35,
+    "height": 0.78,
+    "depth": 1.287,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 4,
+    "validGlb": true
+  },
+  "festival/line-array-hang.glb": {
+    "triangles": 156,
+    "sizeKb": 23.7,
+    "width": 0.9,
+    "height": 2.953,
+    "depth": 0.793,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "meshCount": 7,
+    "validGlb": true
+  },
+  "festival/front-fill.glb": {
+    "triangles": 320,
+    "sizeKb": 21,
+    "width": 0.62,
+    "height": 0.36,
+    "depth": 0.526,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow",
+      "EmitterHigh"
+    ],
+    "meshCount": 3,
+    "validGlb": true
+  },
+  "hifi/large-woofer.glb": {
+    "triangles": 292,
+    "sizeKb": 17,
+    "width": 0.92,
+    "height": 1.02,
+    "depth": 0.955,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 3,
+    "validGlb": true
+  },
+  "hifi/wooden-mid-horn.glb": {
+    "triangles": 52,
+    "sizeKb": 8.2,
+    "width": 1.254,
+    "height": 1.254,
+    "depth": 0.566,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterMid"
+    ],
+    "meshCount": 2,
+    "validGlb": true
+  },
+  "hifi/super-tweeter.glb": {
+    "triangles": 52,
+    "sizeKb": 8.2,
+    "width": 0.44,
+    "height": 0.37,
+    "depth": 0.289,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "meshCount": 2,
+    "validGlb": true
+  },
+  "steppers/reflex-sub.glb": {
+    "triangles": 304,
+    "sizeKb": 18.8,
+    "width": 1.12,
+    "height": 0.82,
+    "depth": 1.213,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 4,
+    "validGlb": true
+  },
+  "steppers/kick.glb": {
+    "triangles": 76,
+    "sizeKb": 11.8,
+    "width": 1.163,
+    "height": 1.163,
+    "depth": 0.92,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow"
+    ],
+    "meshCount": 4,
+    "validGlb": true
+  },
+  "steppers/mid-top.glb": {
+    "triangles": 320,
+    "sizeKb": 21,
+    "width": 0.86,
+    "height": 0.911,
+    "depth": 0.784,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterLow",
+      "EmitterMid"
+    ],
+    "meshCount": 3,
+    "validGlb": true
+  },
+  "steppers/hf-top.glb": {
+    "triangles": 52,
+    "sizeKb": 8.2,
+    "width": 0.802,
+    "height": 0.802,
+    "depth": 0.424,
+    "forwardAxis": "+Z",
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "meshCount": 2,
+    "validGlb": true
+  }
+}
