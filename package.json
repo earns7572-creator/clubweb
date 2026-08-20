@@ -16,6 +16,7 @@
     "test:bass": "tsx tests/bassPressure.test.ts",
     "test:stack": "node tests/run-stacking.mjs",
     "test:models": "tsx tests/speakerModels.test.ts",
+    "test:orientation": "tsx tests/speakerOrientation.test.ts",
     "test:motion": "tsx tests/deviceOrientation.test.ts",
     "format": "prettier --write ."
   },
