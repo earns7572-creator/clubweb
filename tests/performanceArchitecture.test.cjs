@@ -99,7 +99,7 @@ assert.match(audio, /panner\.distanceModel = "inverse"; panner\.refDistance = 1\
 assert.match(audio, /const speakerOrientationKey/);
 assert.match(audio, /syncSpeakerOrientations/);
 assert.match(audio, /orientationX/);
-assert.match(floor, /club-craft:speaker-rotate/);
+assert.match(top, /club-craft:speaker-rotate/);
 assert.match(home, /<SpeakerCustomPanel/);
 assert.match(custom, /<SpeakerResponseGraph/);
 assert.match(custom, /Reset EQ/);

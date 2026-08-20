@@ -424,3 +424,12 @@
 - [x] 内蔵音源・local音源、Play / Pause、audio test、build、GitHub main、公開チェックポイントを確認する。
 
 > 再生確認: 開発ブラウザでPlayを押すとPause表示へ遷移し、speaker driver activityとstage markerのactivityが出ることを確認した。sandboxではiOS / Androidの実音出力を直接確認できないため、公開後に実機でPlayを一度タップして確認する。
+
+## Latest Codex Implementation
+
+- [x] Codexの最新remote branch・commit・mainとの差分を特定する。
+- [x] 差分をmainへ安全に統合する。
+- [x] 視覚・音響・操作性、型検査、回帰テスト、production buildを検証する。
+- [x] GitHub mainと公開チェックポイントへ保存する。
+
+> Speaker yaw確認: TOP / SIDE / POVを更新後の開発サーバーでcaptureし、sceneの描画が維持されることを確認した。speaker orientationはAudio PannerNodeのcone orientationへ同期され、TOPの選択Speakerには回転handleが追加される。mobile AudioContext resume修正も統合時に保持した。
