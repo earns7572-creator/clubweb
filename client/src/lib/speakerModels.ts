@@ -10,12 +10,49 @@ export type SpeakerModelId =
   | "steppers-reflex-sub" | "steppers-kick" | "steppers-mid" | "steppers-top";
 
 export type CharacterFilter = { type: BiquadFilterType; frequency: number; q?: number; gainDb?: number };
+export type SpeakerBand = "low" | "kick" | "full" | "mid" | "high";
+export type SpeakerDirectivity = { innerAngle: number; outerAngle: number; outerGain: number; visualRangeMeters: number };
 export type SpeakerVisualVariant = SpeakerFamily;
 export type SpeakerGlbVisual = { renderer: "glb"; variant: SpeakerVisualVariant; plannedGlbPath: string; src: string; emitterMeshes?: { low?: string[]; mid?: string[]; high?: string[] } };
 export type SpeakerProceduralVisual = { renderer: "procedural"; variant: SpeakerVisualVariant; plannedGlbPath: string };
 export type SpeakerVisualDefinition = SpeakerGlbVisual | SpeakerProceduralVisual;
 export type SpeakerFamilyDefinition = { id: SpeakerFamily; label: string; shortLabel: string; description: string; order: number };
-export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; characterFilters: CharacterFilter[]; visual: SpeakerVisualDefinition };
+export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; band: SpeakerBand; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; directivity: SpeakerDirectivity; characterFilters: CharacterFilter[]; visual: SpeakerVisualDefinition };
+
+const BAND_BY_MODEL: Record<SpeakerModelId, SpeakerBand> = {
+  "modern-sub": "low", "modern-woofer": "low", "modern-full": "full", "modern-mid": "mid", "modern-high": "high",
+  "reggae-scoop": "low", "reggae-kick": "kick", "reggae-mid-horn": "mid", "reggae-top": "high",
+  "freeparty-wbin": "low", "freeparty-kick-horn": "kick", "freeparty-mid-horn": "mid", "freeparty-top": "high",
+  "festival-sub": "low", "festival-line-array": "full", "festival-front-fill": "full",
+  "hifi-woofer": "low", "hifi-mid-horn": "mid", "hifi-tweeter": "high",
+  "steppers-reflex-sub": "low", "steppers-kick": "kick", "steppers-mid": "mid", "steppers-top": "high",
+};
+
+const DIRECTIVITY_BY_MODEL: Record<SpeakerModelId, SpeakerDirectivity> = {
+  "modern-sub": { innerAngle: 300, outerAngle: 360, outerGain: .75, visualRangeMeters: 7 },
+  "modern-woofer": { innerAngle: 170, outerAngle: 270, outerGain: .45, visualRangeMeters: 7 },
+  "modern-full": { innerAngle: 100, outerAngle: 170, outerGain: .25, visualRangeMeters: 9 },
+  "modern-mid": { innerAngle: 80, outerAngle: 140, outerGain: .18, visualRangeMeters: 9 },
+  "modern-high": { innerAngle: 60, outerAngle: 110, outerGain: .10, visualRangeMeters: 10 },
+  "reggae-scoop": { innerAngle: 170, outerAngle: 280, outerGain: .55, visualRangeMeters: 8 },
+  "reggae-kick": { innerAngle: 120, outerAngle: 210, outerGain: .35, visualRangeMeters: 8 },
+  "reggae-mid-horn": { innerAngle: 60, outerAngle: 105, outerGain: .12, visualRangeMeters: 10 },
+  "reggae-top": { innerAngle: 45, outerAngle: 90, outerGain: .08, visualRangeMeters: 11 },
+  "freeparty-wbin": { innerAngle: 150, outerAngle: 250, outerGain: .50, visualRangeMeters: 8 },
+  "freeparty-kick-horn": { innerAngle: 100, outerAngle: 180, outerGain: .30, visualRangeMeters: 8 },
+  "freeparty-mid-horn": { innerAngle: 55, outerAngle: 100, outerGain: .12, visualRangeMeters: 10 },
+  "freeparty-top": { innerAngle: 45, outerAngle: 85, outerGain: .08, visualRangeMeters: 11 },
+  "festival-sub": { innerAngle: 300, outerAngle: 360, outerGain: .70, visualRangeMeters: 10 },
+  "festival-line-array": { innerAngle: 90, outerAngle: 140, outerGain: .20, visualRangeMeters: 13 },
+  "festival-front-fill": { innerAngle: 110, outerAngle: 180, outerGain: .25, visualRangeMeters: 8 },
+  "hifi-woofer": { innerAngle: 160, outerAngle: 260, outerGain: .40, visualRangeMeters: 6 },
+  "hifi-mid-horn": { innerAngle: 60, outerAngle: 105, outerGain: .12, visualRangeMeters: 7 },
+  "hifi-tweeter": { innerAngle: 45, outerAngle: 80, outerGain: .06, visualRangeMeters: 7 },
+  "steppers-reflex-sub": { innerAngle: 280, outerAngle: 360, outerGain: .65, visualRangeMeters: 8 },
+  "steppers-kick": { innerAngle: 110, outerAngle: 190, outerGain: .32, visualRangeMeters: 8 },
+  "steppers-mid": { innerAngle: 70, outerAngle: 120, outerGain: .15, visualRangeMeters: 9 },
+  "steppers-top": { innerAngle: 50, outerAngle: 90, outerGain: .08, visualRangeMeters: 10 },
+};
 
 const GLB_ASSET_URLS: Record<string, string> = {
   // Modern and Reggae intentionally have no entry: their approved procedural visuals are protected from bulk GLB replacement.
@@ -33,7 +70,7 @@ const emittersFor = (id: SpeakerModelId): SpeakerGlbVisual["emitterMeshes"] => {
   return { low: ["EmitterLow"] };
 };
 const visual = (variant: SpeakerVisualVariant, plannedGlbPath: string, id: SpeakerModelId): SpeakerVisualDefinition => { const src = GLB_ASSET_URLS[plannedGlbPath]; return src ? { renderer: "glb", variant, plannedGlbPath, src, emitterMeshes: emittersFor(id) } : { renderer: "procedural", variant, plannedGlbPath }; };
-const model = (id: SpeakerModelId, family: SpeakerFamily, kind: SpeakerKind, label: string, shortLabel: string, body: [number, number, number], characterFilters: CharacterFilter[], plannedGlbPath: string): SpeakerModelDefinition => ({ id, family, kind, label, shortLabel, body: { width: body[0], height: body[1], depth: body[2] }, characterFilters, visual: visual(family, plannedGlbPath, id) });
+const model = (id: SpeakerModelId, family: SpeakerFamily, kind: SpeakerKind, label: string, shortLabel: string, body: [number, number, number], characterFilters: CharacterFilter[], plannedGlbPath: string): SpeakerModelDefinition => ({ id, family, kind, band: BAND_BY_MODEL[id], label, shortLabel, body: { width: body[0], height: body[1], depth: body[2] }, directivity: DIRECTIVITY_BY_MODEL[id], characterFilters, visual: visual(family, plannedGlbPath, id) });
 const hp = (frequency: number, q = .7): CharacterFilter => ({ type: "highpass", frequency, q });
 const lp = (frequency: number, q = .7): CharacterFilter => ({ type: "lowpass", frequency, q });
 const peak = (frequency: number, gainDb: number, q = .75): CharacterFilter => ({ type: "peaking", frequency, gainDb, q });

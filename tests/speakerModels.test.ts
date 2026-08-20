@@ -26,6 +26,10 @@ for (const family of orderedSpeakerFamilies()) {
     const model = SPEAKER_MODELS[id];
     assert.equal(model.family, family.id, `${id} belongs to its registered family`);
     assert.ok(model.body.width > 0 && model.body.height > 0 && model.body.depth > 0, `${id} has physical dimensions`);
+    assert.ok(model.directivity.innerAngle > 0 && model.directivity.innerAngle <= 360, `${id} has a valid inner directivity angle`);
+    assert.ok(model.directivity.outerAngle >= model.directivity.innerAngle && model.directivity.outerAngle <= 360, `${id} has a valid outer directivity angle`);
+    assert.ok(model.directivity.outerGain >= 0 && model.directivity.outerGain <= 1, `${id} has a valid outside gain`);
+    assert.ok(model.directivity.visualRangeMeters > 0, `${id} has a positive visual range`);
     assert.ok(model.visual.plannedGlbPath.endsWith(".glb"), `${id} declares its future GLB contract path`);
     if (family.id === "modern" || family.id === "reggae") {
       assert.equal(model.visual.renderer, "procedural", `${id} preserves its approved procedural visual`);
@@ -41,6 +45,9 @@ for (const family of orderedSpeakerFamilies()) {
     }
   });
 }
+assert.ok(SPEAKER_MODELS["modern-sub"].directivity.innerAngle > SPEAKER_MODELS["modern-high"].directivity.innerAngle, "Modern Sub is wider than Modern High");
+assert.ok(SPEAKER_MODELS["reggae-scoop"].directivity.innerAngle > SPEAKER_MODELS["reggae-mid-horn"].directivity.innerAngle, "Reggae Scoop is wider than Reggae Mid Horn");
+assert.ok(SPEAKER_MODELS["freeparty-wbin"].directivity.innerAngle > SPEAKER_MODELS["freeparty-top"].directivity.innerAngle, "Free Party W-Bin is wider than Free Party Top");
 assert.ok(SPEAKER_MODELS["reggae-scoop"].body.height > SPEAKER_MODELS["reggae-kick"].body.height, "scoop physical body is taller than kick");
 assert.equal(REGGAE_WALL.speakers.length, 8, "Reggae Sound System preset has two four-way stacks");
 assert.equal(REGGAE_WALL.speakers.filter((speaker) => !speaker.stackOn).length, 2, "preset has two floor roots");

@@ -100,8 +100,9 @@ function createCharacterFilters(context: AudioContext, modelId: SpeakerModelId) 
 function connectCharacterChain(input: AudioNode, filters: BiquadFilterNode[], destination: AudioNode) { if (!filters.length) { input.connect(destination); return; } input.connect(filters[0]); for (let index = 0; index < filters.length - 1; index += 1) filters[index].connect(filters[index + 1]); filters[filters.length - 1].connect(destination); }
 function createSpeakerNode(context: AudioContext, master: GainNode, modelId: SpeakerModelId): SpeakerNode {
   const input = context.createGain(); const characterFilters = createCharacterFilters(context, modelId); const eq = createSpeakerEqNodes(context); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner();
+  const model = getSpeakerModel(modelId, "sub");
   input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 1024; analyser.smoothingTimeConstant = .35;
-  panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 90; panner.coneOuterAngle = 180; panner.coneOuterGain = .35;
+  panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = model.directivity.innerAngle; panner.coneOuterAngle = model.directivity.outerAngle; panner.coneOuterGain = model.directivity.outerGain;
   connectCharacterChain(input, characterFilters, eq.low); eq.low.connect(eq.lowMid); eq.lowMid.connect(eq.highMid); eq.highMid.connect(eq.high); eq.high.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master);
   return { input, characterFilters, eq, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), frequencyData: new Uint8Array(analyser.frequencyBinCount), panner, cache: { modelId, eq: {} } };
 }
