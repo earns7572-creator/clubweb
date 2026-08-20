@@ -11,6 +11,10 @@ assert.equal(getSpeakerModel("reggae-scoop", "sub").family, "reggae", "scoop rem
 assert.equal(getSpeakerModel("reggae-scoop", "sub").kind, "sub", "scoop uses existing sub acoustic role");
 assert.equal(modelIdsForFamily("modern").length, 5, "all modern models remain available");
 assert.equal(modelIdsForFamily("reggae").length, 4, "all reggae models are available");
+Object.values(SPEAKER_MODELS).forEach((model) => { const directivity = model.directivity; assert.ok(directivity.innerAngle > 0 && directivity.innerAngle <= 360, `${model.id} has a valid inner angle`); assert.ok(directivity.innerAngle <= directivity.outerAngle && directivity.outerAngle <= 360, `${model.id} has ordered cone angles`); assert.ok(directivity.outerGain >= 0 && directivity.outerGain <= 1, `${model.id} has a valid rear gain`); });
+assert.ok(SPEAKER_MODELS["modern-sub"].directivity.innerAngle > SPEAKER_MODELS["modern-high"].directivity.innerAngle, "Modern Sub is wider than Modern High");
+assert.ok(SPEAKER_MODELS["reggae-scoop"].directivity.innerAngle > SPEAKER_MODELS["reggae-mid-horn"].directivity.innerAngle, "Reggae Scoop is wider than Reggae Mid Horn");
+assert.ok(SPEAKER_MODELS["reggae-mid-horn"].directivity.innerAngle < SPEAKER_MODELS["reggae-kick"].directivity.innerAngle, "Reggae Mid Horn is narrower than Reggae Kick");
 assert.ok(SPEAKER_MODELS["reggae-scoop"].body.height > SPEAKER_MODELS["reggae-kick"].body.height, "scoop physical body is taller than kick");
 assert.equal(REGGAE_WALL.speakers.length, 8, "Reggae Sound System preset has two four-way stacks");
 assert.equal(REGGAE_WALL.speakers.filter((speaker) => !speaker.stackOn).length, 2, "preset has two floor roots");
