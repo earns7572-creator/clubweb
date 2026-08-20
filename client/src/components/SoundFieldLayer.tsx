@@ -42,6 +42,14 @@ const BAND_VISIBILITY_GAINS: Record<SpeakerBand, number> = {
   high: 1.55,
 };
 
+const BAND_TINT_STRENGTH: Record<SpeakerBand, number> = {
+  low: 0.48,
+  kick: 0.65,
+  full: 0.50,
+  mid: 0.90,
+  high: 1.00,
+};
+
 const vertexShader = `
 varying vec2 vUv;
 void main() {
@@ -65,6 +73,7 @@ uniform float uStrengths[MAX_SPEAKERS];
 uniform float uRanges[MAX_SPEAKERS];
 uniform vec3 uColors[MAX_SPEAKERS];
 uniform float uColorWeights[MAX_SPEAKERS];
+uniform float uTintStrengths[MAX_SPEAKERS];
 uniform vec3 uHazeColor;
 uniform float uDistanceScale;
 uniform float uDistanceExponent;
@@ -72,7 +81,6 @@ uniform float uRangeFadeStart;
 uniform float uCompression;
 uniform float uAlphaGamma;
 uniform float uMaxOpacity;
-uniform float uTintMix;
 uniform float uEdgeFeatherMeters;
 
 void main() {
@@ -98,7 +106,8 @@ void main() {
         float contributionEnergy = contribution * contribution;
         energy += contributionEnergy;
         float visualColorEnergy = contributionEnergy * uColorWeights[i];
-        weightedColor += uColors[i] * visualColorEnergy;
+        vec3 tintedSpeakerColor = mix(uHazeColor, uColors[i], uTintStrengths[i]);
+        weightedColor += tintedSpeakerColor * visualColorEnergy;
         colorWeight += visualColorEnergy;
       }
     }
@@ -113,8 +122,7 @@ void main() {
   float edgeFade = smoothstep(0.0, uEdgeFeatherMeters, nearestEdge);
   float alpha = pow(clamp(visibleStrength, 0.0, 1.0), uAlphaGamma) * uMaxOpacity * edgeFade;
   if (alpha <= 0.002) discard;
-  vec3 bandColor = colorWeight > 0.000001 ? weightedColor / colorWeight : uHazeColor;
-  vec3 finalColor = mix(uHazeColor, bandColor, uTintMix);
+  vec3 finalColor = colorWeight > 0.000001 ? weightedColor / colorWeight : uHazeColor;
   gl_FragColor = vec4(finalColor, alpha);
 }
 `;
@@ -146,6 +154,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       uRanges: { value: new Float32Array(MAX_SPEAKERS) },
       uColors: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Color()) },
       uColorWeights: { value: new Float32Array(MAX_SPEAKERS) },
+      uTintStrengths: { value: new Float32Array(MAX_SPEAKERS) },
       uHazeColor: { value: new THREE.Color(hazeColor) },
       uDistanceScale: { value: SOUND_FIELD_STYLE.distanceScaleMeters },
       uDistanceExponent: { value: SOUND_FIELD_STYLE.distanceExponent },
@@ -153,7 +162,6 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       uCompression: { value: SOUND_FIELD_STYLE.compression },
       uAlphaGamma: { value: SOUND_FIELD_STYLE.alphaGamma },
       uMaxOpacity: { value: SOUND_FIELD_STYLE.maxOpacity },
-      uTintMix: { value: SOUND_FIELD_STYLE.tintMix },
       uEdgeFeatherMeters: { value: SOUND_FIELD_STYLE.edgeFeatherMeters },
     },
   }), []);
@@ -168,6 +176,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
     const directions = material.uniforms.uDirections.value as THREE.Vector2[];
     const colors = material.uniforms.uColors.value as THREE.Color[];
     const colorWeights = material.uniforms.uColorWeights.value as Float32Array;
+    const tintStrengths = material.uniforms.uTintStrengths.value as Float32Array;
     const innerCos = material.uniforms.uInnerCos.value as Float32Array;
     const outerCos = material.uniforms.uOuterCos.value as Float32Array;
     const outerGains = material.uniforms.uOuterGains.value as Float32Array;
@@ -191,6 +200,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       ranges[i] = model.directivity.visualRangeMeters;
       colors[i].copy(BAND_COLORS[model.band]);
       colorWeights[i] = BAND_COLOR_WEIGHTS[model.band];
+      tintStrengths[i] = BAND_TINT_STRENGTH[model.band];
     }
 
     invalidate();

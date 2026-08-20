@@ -19,7 +19,7 @@ type SpeakerDrag = { type: "speaker"; id: string; offset: Point; snap: SmartSnap
 type RotationDrag = { type: "rotation"; id: string };
 type DragTarget = SpeakerDrag | RotationDrag | { type: "listener"; offset: Point } | null;
 type PendingDrag = { raw: Point; modifiers: ModifierState } | null;
-export type SurfaceTone = "paper" | "sand" | "slate";
+export type SurfaceTone = "paper" | "sand" | "slate" | "night";
 type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; listener: ClubListener; selectedSpeakerId: string; sourceColor?: string; signalActive?: boolean; surfaceTone: SurfaceTone; canRemove: boolean; onSpeakerSelect: (id: string) => void; onSpeakerRemove: (id: string) => void; onSpeakerMove: (id: string, position: Point) => void; onSpeakerRotate?: (id: string, yaw: number) => void; onSpeakerStack: (id: string, parentId: string) => void; onSpeakerDetach: (id: string, position: Point) => void; onListenerMove: (position: Point) => void; onListenerNameChange: (name: string) => void };
 
 const roomWidth = 13;
@@ -35,6 +35,7 @@ const surfacePalette: Record<SurfaceTone, { background: string; floor: string; m
   paper: { background: "#f6f4ee", floor: "#e9e7df", minorGrid: "#d4d2c9", majorGrid: "#aaa9a0", stage: "#706f68", stageTop: "#cbc7ba", sky: "#f4f1e8", ground: "#9e9f98" },
   sand: { background: "#e9e1d4", floor: "#ded4c4", minorGrid: "#cbc0af", majorGrid: "#9d927f", stage: "#6c665c", stageTop: "#c8bda9", sky: "#eee6da", ground: "#a49b8d" },
   slate: { background: "#dde0dd", floor: "#d2d6d2", minorGrid: "#bcc1bc", majorGrid: "#929993", stage: "#616862", stageTop: "#b6bdb6", sky: "#e7eae7", ground: "#8c948d" },
+  night: { background: "#050606", floor: "#0b0d0c", minorGrid: "#242824", majorGrid: "#464d46", stage: "#111310", stageTop: "#282d28", sky: "#111511", ground: "#020302" },
 };
 
 const toWorld = (point: Pick<Position3D, "x" | "y">): [number, number, number] => [(point.x - .5) * roomWidth, 0, (point.y - .5) * roomDepth];

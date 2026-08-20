@@ -29,7 +29,7 @@ const loadListenerName = () => localStorage.getItem(listenerNameKey)?.trim().sli
 const initialListener: ClubListener = { name: loadListenerName(), position: { x: .5, y: .72, z: .5 }, orientation: { yaw: 0, pitch: 0 } };
 const clubTracks: ClubSource[] = [{ id: "pulse", name: "Deep Pulse", category: "official", color: "#e65b4a" }, { id: "rain", name: "Rain Room", category: "official", color: "#d6aa43" }, { id: "bronze", name: "Bronze Air", category: "official", color: "#4bbd92" }, { id: "sweep", name: "20 Hz → 20 kHz · 15 sec", category: "official", color: "#e7d64b" }];
 const gridSpawnPoints = [{ x: .5, y: .5 }, { x: .4167, y: .5 }, { x: .5833, y: .5 }, { x: .5, y: .5833 }, { x: .5, y: .4167 }];
-const surfaceChoices: Array<{ id: SurfaceTone; label: string; color: string }> = [{ id: "paper", label: "Paper", color: "#f6f4ee" }, { id: "sand", label: "Sand", color: "#e9e1d4" }, { id: "slate", label: "Slate", color: "#dde0dd" }];
+const surfaceChoices: Array<{ id: SurfaceTone; label: string; color: string }> = [{ id: "paper", label: "Paper", color: "#f6f4ee" }, { id: "sand", label: "Sand", color: "#e9e1d4" }, { id: "slate", label: "Slate", color: "#dde0dd" }, { id: "night", label: "Night", color: "#050606" }];
 const clamp = (value: number) => Math.max(.07, Math.min(.93, value));
 const clampPitch = (value: number) => Math.max(-1.12, Math.min(1.12, value));
 const initialViewFromUrl = (): SceneView => { const requested = new URLSearchParams(window.location.search).get("view"); return requested === "side" || requested === "pov" ? requested : "top"; };

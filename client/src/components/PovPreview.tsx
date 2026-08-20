@@ -16,6 +16,7 @@ const povPalette: Record<SurfaceTone, { background: string; fog: string; floor: 
   paper: { background: "#f6f4ee", fog: "#f0eee7", floor: "#d9d8d1", gridMajor: "#aaa9a1", gridMinor: "#c8c7bf", ambient: .78, directional: 1.05, light: "#fffaf0" },
   sand: { background: "#e9e1d4", fog: "#e4dbcc", floor: "#d2c7b7", gridMajor: "#9f927e", gridMinor: "#bdb1a0", ambient: .74, directional: 1.02, light: "#fff5e4" },
   slate: { background: "#dde0dd", fog: "#d7dcda", floor: "#c6ccca", gridMajor: "#909894", gridMinor: "#b1b9b5", ambient: .78, directional: 1.06, light: "#f4faf6" },
+  night: { background: "#050606", fog: "#090b09", floor: "#0b0d0c", gridMajor: "#414741", gridMinor: "#202420", ambient: .24, directional: .42, light: "#dfe8df" },
 };
 
 function CameraRig({ listener, vibration, motionPose, onInvalidateReady }: { listener: ClubListener; vibration: number; motionPose: MutableRefObject<DeviceLookPose>; onInvalidateReady: (invalidate: () => void) => void }) {
