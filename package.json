@@ -18,6 +18,7 @@
     "test:models": "tsx tests/speakerModels.test.ts",
     "test:orientation": "tsx tests/speakerOrientation.test.ts",
     "test:glb-assets": "node tools/validate-speaker-glb-assets.mjs",
+    "generate:glb-assets": "node tools/generate-speaker-glb-assets.mjs",
     "test:motion": "tsx tests/deviceOrientation.test.ts",
     "format": "prettier --write ."
   },

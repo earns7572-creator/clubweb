@@ -18,12 +18,11 @@ export type SpeakerFamilyDefinition = { id: SpeakerFamily; label: string; shortL
 export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; characterFilters: CharacterFilter[]; visual: SpeakerVisualDefinition };
 
 const GLB_ASSET_URLS: Record<string, string> = {
-  "modern/sub.glb": "/manus-storage/club-sub_945f551c.glb", "modern/point-source.glb": "/manus-storage/point-source_cf234f10.glb",
-  "reggae/scoop.glb": "/manus-storage/scoop_5fb2dc25.glb", "reggae/kick-bin.glb": "/manus-storage/kick-bin_4ded79f4.glb", "reggae/mid-horn.glb": "/manus-storage/mid-horn_88e26e4b.glb", "reggae/top.glb": "/manus-storage/top_f53d710b.glb",
-  "freeparty/w-bin.glb": "/manus-storage/w-bin_0ce00c0f.glb", "freeparty/kick-horn.glb": "/manus-storage/kick-horn_683764ee.glb", "freeparty/mid-horn.glb": "/manus-storage/mid-horn_913b1365.glb", "freeparty/hf-horn.glb": "/manus-storage/hf-horn_e168a6aa.glb",
-  "festival/sub.glb": "/manus-storage/festival-sub_a42dba39.glb", "festival/line-array-hang.glb": "/manus-storage/line-array-hang_9a71a238.glb", "festival/front-fill.glb": "/manus-storage/front-fill_863b5295.glb",
-  "hifi/large-woofer.glb": "/manus-storage/large-woofer_4221dd9f.glb", "hifi/mid-horn.glb": "/manus-storage/wooden-mid-horn_678136a1.glb", "hifi/tweeter.glb": "/manus-storage/super-tweeter_22afe845.glb",
-  "steppers/reflex-sub.glb": "/manus-storage/reflex-sub_c5d109b8.glb", "steppers/kick.glb": "/manus-storage/kick_08ffe74a.glb", "steppers/mid-top.glb": "/manus-storage/mid-top_8676374e.glb", "steppers/top.glb": "/manus-storage/hf-top_b6c07775.glb",
+  // Modern and Reggae intentionally have no entry: their approved procedural visuals are protected from bulk GLB replacement.
+  "freeparty/w-bin.glb": "/models/speakers/freeparty/w-bin.glb", "freeparty/kick-horn.glb": "/models/speakers/freeparty/kick-horn.glb", "freeparty/mid-horn.glb": "/models/speakers/freeparty/mid-horn.glb", "freeparty/hf-horn.glb": "/models/speakers/freeparty/hf-horn.glb",
+  "festival/sub.glb": "/models/speakers/festival/sub.glb", "festival/line-array-hang.glb": "/models/speakers/festival/line-array-hang.glb", "festival/front-fill.glb": "/models/speakers/festival/front-fill.glb",
+  "hifi/large-woofer.glb": "/models/speakers/hifi/large-woofer.glb", "hifi/mid-horn.glb": "/models/speakers/hifi/mid-horn.glb", "hifi/tweeter.glb": "/models/speakers/hifi/tweeter.glb",
+  "steppers/reflex-sub.glb": "/models/speakers/steppers/reflex-sub.glb", "steppers/kick.glb": "/models/speakers/steppers/kick.glb", "steppers/mid-top.glb": "/models/speakers/steppers/mid-top.glb", "steppers/top.glb": "/models/speakers/steppers/top.glb",
 };
 const emittersFor = (id: SpeakerModelId): SpeakerGlbVisual["emitterMeshes"] => {
   if (id === "modern-full" || id === "festival-front-fill") return { low: ["EmitterLow"], high: ["EmitterHigh"] };

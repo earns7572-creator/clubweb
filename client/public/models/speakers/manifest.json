@@ -1,0 +1,638 @@
+{
+  "freeparty/w-bin.glb": {
+    "family": "freeparty",
+    "body": {
+      "width": 1.2,
+      "height": 0.9,
+      "depth": 1.05
+    },
+    "actualBounds": {
+      "width": 1.2,
+      "height": 0.9,
+      "depth": 1.05
+    },
+    "bounds": {
+      "min": {
+        "x": -0.6,
+        "y": 0,
+        "z": -0.525
+      },
+      "max": {
+        "x": 0.6,
+        "y": 0.9,
+        "z": 0.525
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 228,
+    "meshCount": 19,
+    "vertexCount": 456,
+    "fileSizeKb": 34,
+    "emitters": [
+      "EmitterLow"
+    ],
+    "materialColors": [
+      "#101316",
+      "#42484d",
+      "#50575c",
+      "#64696d"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "freeparty/kick-horn.glb": {
+    "family": "freeparty",
+    "body": {
+      "width": 1.1,
+      "height": 0.72,
+      "depth": 0.9
+    },
+    "actualBounds": {
+      "width": 1.1,
+      "height": 0.72,
+      "depth": 0.9
+    },
+    "bounds": {
+      "min": {
+        "x": -0.55,
+        "y": 0,
+        "z": -0.45
+      },
+      "max": {
+        "x": 0.55,
+        "y": 0.72,
+        "z": 0.45
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 212,
+    "meshCount": 18,
+    "vertexCount": 424,
+    "fileSizeKb": 31.9,
+    "emitters": [
+      "EmitterLow"
+    ],
+    "materialColors": [
+      "#101316",
+      "#353a3e",
+      "#42484d",
+      "#50575c",
+      "#64696d"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "freeparty/mid-horn.glb": {
+    "family": "freeparty",
+    "body": {
+      "width": 0.9,
+      "height": 0.68,
+      "depth": 0.65
+    },
+    "actualBounds": {
+      "width": 0.9,
+      "height": 0.68,
+      "depth": 0.65
+    },
+    "bounds": {
+      "min": {
+        "x": -0.45,
+        "y": 0,
+        "z": -0.325
+      },
+      "max": {
+        "x": 0.45,
+        "y": 0.68,
+        "z": 0.325
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 200,
+    "meshCount": 17,
+    "vertexCount": 400,
+    "fileSizeKb": 30.2,
+    "emitters": [
+      "EmitterMid"
+    ],
+    "materialColors": [
+      "#101316",
+      "#353a3e",
+      "#42484d",
+      "#50575c",
+      "#64696d"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "freeparty/hf-horn.glb": {
+    "family": "freeparty",
+    "body": {
+      "width": 0.82,
+      "height": 0.46,
+      "depth": 0.48
+    },
+    "actualBounds": {
+      "width": 0.82,
+      "height": 0.46,
+      "depth": 0.48
+    },
+    "bounds": {
+      "min": {
+        "x": -0.41,
+        "y": 0,
+        "z": -0.24
+      },
+      "max": {
+        "x": 0.41,
+        "y": 0.46,
+        "z": 0.24
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 200,
+    "meshCount": 17,
+    "vertexCount": 400,
+    "fileSizeKb": 30.1,
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "materialColors": [
+      "#101316",
+      "#353a3e",
+      "#42484d",
+      "#50575c",
+      "#64696d"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "festival/sub.glb": {
+    "family": "festival",
+    "body": {
+      "width": 1.35,
+      "height": 0.78,
+      "depth": 1.05
+    },
+    "actualBounds": {
+      "width": 1.35,
+      "height": 0.78,
+      "depth": 1.05
+    },
+    "bounds": {
+      "min": {
+        "x": -0.675,
+        "y": 0,
+        "z": -0.525
+      },
+      "max": {
+        "x": 0.675,
+        "y": 0.78,
+        "z": 0.525
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 1192,
+    "meshCount": 20,
+    "vertexCount": 1398,
+    "fileSizeKb": 70.5,
+    "emitters": [
+      "EmitterLow"
+    ],
+    "materialColors": [
+      "#101316",
+      "#353b40",
+      "#41474c",
+      "#42484d",
+      "#70767b",
+      "#a2a8ad"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "festival/line-array-hang.glb": {
+    "family": "festival",
+    "body": {
+      "width": 0.9,
+      "height": 3.2,
+      "depth": 0.7
+    },
+    "actualBounds": {
+      "width": 0.9,
+      "height": 3.2,
+      "depth": 0.7
+    },
+    "bounds": {
+      "min": {
+        "x": -0.45,
+        "y": 0,
+        "z": -0.35
+      },
+      "max": {
+        "x": 0.45,
+        "y": 3.2,
+        "z": 0.35
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 468,
+    "meshCount": 39,
+    "vertexCount": 936,
+    "fileSizeKb": 69.9,
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "materialColors": [
+      "#101316",
+      "#41474c",
+      "#5b6268",
+      "#70767b",
+      "#a2a8ad"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "festival/front-fill.glb": {
+    "family": "festival",
+    "body": {
+      "width": 0.62,
+      "height": 0.36,
+      "depth": 0.42
+    },
+    "actualBounds": {
+      "width": 0.62,
+      "height": 0.36,
+      "depth": 0.42
+    },
+    "bounds": {
+      "min": {
+        "x": -0.31,
+        "y": 0,
+        "z": -0.21
+      },
+      "max": {
+        "x": 0.31,
+        "y": 0.36,
+        "z": 0.21
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 712,
+    "meshCount": 20,
+    "vertexCount": 931,
+    "fileSizeKb": 53.1,
+    "emitters": [
+      "EmitterHigh",
+      "EmitterLow"
+    ],
+    "materialColors": [
+      "#101316",
+      "#353b40",
+      "#41474c",
+      "#42484d",
+      "#5b6268",
+      "#70767b",
+      "#a2a8ad"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "hifi/large-woofer.glb": {
+    "family": "hifi",
+    "body": {
+      "width": 0.92,
+      "height": 1.02,
+      "depth": 0.65
+    },
+    "actualBounds": {
+      "width": 0.92,
+      "height": 1.02,
+      "depth": 0.65
+    },
+    "bounds": {
+      "min": {
+        "x": -0.46,
+        "y": 0,
+        "z": -0.325
+      },
+      "max": {
+        "x": 0.46,
+        "y": 1.02,
+        "z": 0.325
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 1032,
+    "meshCount": 17,
+    "vertexCount": 1079,
+    "fileSizeKb": 57,
+    "emitters": [
+      "EmitterLow"
+    ],
+    "materialColors": [
+      "#101316",
+      "#292d30",
+      "#42484d",
+      "#76583c",
+      "#9a9c99",
+      "#b2875b"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "hifi/mid-horn.glb": {
+    "family": "hifi",
+    "body": {
+      "width": 1.05,
+      "height": 0.55,
+      "depth": 0.52
+    },
+    "actualBounds": {
+      "width": 1.05,
+      "height": 0.55,
+      "depth": 0.52
+    },
+    "bounds": {
+      "min": {
+        "x": -0.525,
+        "y": 0,
+        "z": -0.26
+      },
+      "max": {
+        "x": 0.525,
+        "y": 0.55,
+        "z": 0.26
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 296,
+    "meshCount": 25,
+    "vertexCount": 592,
+    "fileSizeKb": 43.7,
+    "emitters": [
+      "EmitterMid"
+    ],
+    "materialColors": [
+      "#101316",
+      "#42484d",
+      "#76583c",
+      "#b2875b"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "hifi/tweeter.glb": {
+    "family": "hifi",
+    "body": {
+      "width": 0.44,
+      "height": 0.24,
+      "depth": 0.28
+    },
+    "actualBounds": {
+      "width": 0.44,
+      "height": 0.24,
+      "depth": 0.28
+    },
+    "bounds": {
+      "min": {
+        "x": -0.22,
+        "y": 0,
+        "z": -0.14
+      },
+      "max": {
+        "x": 0.22,
+        "y": 0.24,
+        "z": 0.14
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 200,
+    "meshCount": 17,
+    "vertexCount": 400,
+    "fileSizeKb": 29.9,
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "materialColors": [
+      "#101316",
+      "#42484d",
+      "#76583c",
+      "#b2875b"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "steppers/reflex-sub.glb": {
+    "family": "steppers",
+    "body": {
+      "width": 1.12,
+      "height": 0.82,
+      "depth": 0.96
+    },
+    "actualBounds": {
+      "width": 1.12,
+      "height": 0.82,
+      "depth": 0.96
+    },
+    "bounds": {
+      "min": {
+        "x": -0.56,
+        "y": 0,
+        "z": -0.48
+      },
+      "max": {
+        "x": 0.56,
+        "y": 0.82,
+        "z": 0.48
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 800,
+    "meshCount": 27,
+    "vertexCount": 1107,
+    "fileSizeKb": 65.3,
+    "emitters": [
+      "EmitterLow"
+    ],
+    "materialColors": [
+      "#101316",
+      "#353b40",
+      "#41474c",
+      "#42484d",
+      "#70767b",
+      "#a2a8ad"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "steppers/kick.glb": {
+    "family": "steppers",
+    "body": {
+      "width": 1.02,
+      "height": 0.66,
+      "depth": 0.84
+    },
+    "actualBounds": {
+      "width": 1.02,
+      "height": 0.66,
+      "depth": 0.84
+    },
+    "bounds": {
+      "min": {
+        "x": -0.51,
+        "y": 0,
+        "z": -0.42
+      },
+      "max": {
+        "x": 0.51,
+        "y": 0.66,
+        "z": 0.42
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 704,
+    "meshCount": 19,
+    "vertexCount": 915,
+    "fileSizeKb": 51.5,
+    "emitters": [
+      "EmitterLow"
+    ],
+    "materialColors": [
+      "#101316",
+      "#353b40",
+      "#41474c",
+      "#42484d",
+      "#5b6268",
+      "#70767b"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "steppers/mid-top.glb": {
+    "family": "steppers",
+    "body": {
+      "width": 0.86,
+      "height": 0.72,
+      "depth": 0.58
+    },
+    "actualBounds": {
+      "width": 0.86,
+      "height": 0.72,
+      "depth": 0.58
+    },
+    "bounds": {
+      "min": {
+        "x": -0.43,
+        "y": 0,
+        "z": -0.29
+      },
+      "max": {
+        "x": 0.43,
+        "y": 0.72,
+        "z": 0.29
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 712,
+    "meshCount": 20,
+    "vertexCount": 931,
+    "fileSizeKb": 52.7,
+    "emitters": [
+      "EmitterLow",
+      "EmitterMid"
+    ],
+    "materialColors": [
+      "#101316",
+      "#353b40",
+      "#41474c",
+      "#42484d",
+      "#5b6268",
+      "#70767b"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  },
+  "steppers/top.glb": {
+    "family": "steppers",
+    "body": {
+      "width": 0.72,
+      "height": 0.4,
+      "depth": 0.4
+    },
+    "actualBounds": {
+      "width": 0.72,
+      "height": 0.4,
+      "depth": 0.4
+    },
+    "bounds": {
+      "min": {
+        "x": -0.36,
+        "y": 0,
+        "z": -0.2
+      },
+      "max": {
+        "x": 0.36,
+        "y": 0.4,
+        "z": 0.2
+      }
+    },
+    "aspectErrorPercent": 0,
+    "bottomY": 0,
+    "centerX": 0,
+    "centerZ": 0,
+    "triangleCount": 200,
+    "meshCount": 17,
+    "vertexCount": 400,
+    "fileSizeKb": 30.2,
+    "emitters": [
+      "EmitterHigh"
+    ],
+    "materialColors": [
+      "#101316",
+      "#41474c",
+      "#42484d",
+      "#5b6268",
+      "#70767b"
+    ],
+    "finiteVertices": true,
+    "validation": "pass"
+  }
+}
