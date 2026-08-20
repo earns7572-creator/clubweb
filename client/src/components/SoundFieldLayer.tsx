@@ -1,0 +1,172 @@
+import * as THREE from "three";
+import { useEffect, useMemo } from "react";
+import { useThree } from "@react-three/fiber";
+import type { ClubSpeaker } from "@/hooks/useClubAudio";
+import { getSpeakerModel, type SpeakerBand } from "@/lib/speakerModels";
+import { createStackResolver } from "@/lib/speakerStacking";
+import { speakerOrientationToAudioOrientation } from "@/lib/speakerOrientation";
+import { SOUND_FIELD_STYLE } from "@/lib/soundFieldMath";
+
+const MAX_SPEAKERS = 16;
+
+type Props = {
+  speakers: ClubSpeaker[];
+  activityBySpeaker: Readonly<Record<string, number>>;
+  roomWidth: number;
+  roomDepth: number;
+  hazeColor?: string;
+};
+
+const BAND_COLORS: Record<SpeakerBand, THREE.Color> = {
+  low: new THREE.Color("#ff3b30"),
+  kick: new THREE.Color("#ff8a24"),
+  full: new THREE.Color("#b9b6a7"),
+  mid: new THREE.Color("#ffd60a"),
+  high: new THREE.Color("#32d05b"),
+};
+
+const vertexShader = `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+const fragmentShader = `
+#define MAX_SPEAKERS 16
+varying vec2 vUv;
+uniform int uCount;
+uniform vec2 uRoomSize;
+uniform vec2 uPositions[MAX_SPEAKERS];
+uniform vec2 uDirections[MAX_SPEAKERS];
+uniform float uInnerCos[MAX_SPEAKERS];
+uniform float uOuterCos[MAX_SPEAKERS];
+uniform float uOuterGains[MAX_SPEAKERS];
+uniform float uStrengths[MAX_SPEAKERS];
+uniform float uRanges[MAX_SPEAKERS];
+uniform vec3 uColors[MAX_SPEAKERS];
+uniform vec3 uHazeColor;
+uniform float uDistanceScale;
+uniform float uDistanceExponent;
+uniform float uRangeFadeStart;
+uniform float uCompression;
+uniform float uAlphaGamma;
+uniform float uMaxOpacity;
+uniform float uTintMix;
+
+void main() {
+  vec2 point = vec2((vUv.x - 0.5) * uRoomSize.x, (0.5 - vUv.y) * uRoomSize.y);
+  float energy = 0.0;
+  float colorWeight = 0.0;
+  vec3 weightedColor = vec3(0.0);
+
+  for (int i = 0; i < MAX_SPEAKERS; i++) {
+    if (i < uCount) {
+      float strength = uStrengths[i];
+      if (strength > 0.0001) {
+        vec2 delta = point - uPositions[i];
+        float distanceMeters = length(delta);
+        vec2 rayDirection = distanceMeters > 0.0001 ? delta / distanceMeters : normalize(uDirections[i]);
+        float cosTheta = dot(normalize(uDirections[i]), rayDirection);
+        float transition = smoothstep(uOuterCos[i], uInnerCos[i], cosTheta);
+        float angular = mix(uOuterGains[i], 1.0, transition);
+        float distanceFade = 1.0 / (1.0 + pow(distanceMeters / uDistanceScale, uDistanceExponent));
+        float rangeMeters = max(uRanges[i], 0.001);
+        float rangeFade = 1.0 - smoothstep(rangeMeters * uRangeFadeStart, rangeMeters, distanceMeters);
+        float contribution = strength * angular * distanceFade * rangeFade;
+        float contributionEnergy = contribution * contribution;
+        energy += contributionEnergy;
+        weightedColor += uColors[i] * contributionEnergy;
+        colorWeight += contributionEnergy;
+      }
+    }
+  }
+
+  if (energy <= 0.000001) discard;
+  float combined = sqrt(energy);
+  float visibleStrength = 1.0 - exp(-uCompression * combined);
+  float alpha = pow(clamp(visibleStrength, 0.0, 1.0), uAlphaGamma) * uMaxOpacity;
+  if (alpha <= 0.002) discard;
+  vec3 bandColor = colorWeight > 0.000001 ? weightedColor / colorWeight : uHazeColor;
+  vec3 finalColor = mix(uHazeColor, bandColor, uTintMix);
+  gl_FragColor = vec4(finalColor, alpha);
+}
+`;
+
+export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth, roomDepth, hazeColor = "#777870" }: Props) {
+  const { invalidate } = useThree();
+  const resolver = useMemo(() => createStackResolver(speakers), [speakers]);
+  const material = useMemo(() => new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    transparent: true,
+    depthWrite: false,
+    depthTest: true,
+    blending: THREE.NormalBlending,
+    toneMapped: false,
+    side: THREE.DoubleSide,
+    uniforms: {
+      uCount: { value: 0 },
+      uRoomSize: { value: new THREE.Vector2(roomWidth, roomDepth) },
+      uPositions: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Vector2()) },
+      uDirections: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Vector2(0, 1)) },
+      uInnerCos: { value: new Float32Array(MAX_SPEAKERS) },
+      uOuterCos: { value: new Float32Array(MAX_SPEAKERS) },
+      uOuterGains: { value: new Float32Array(MAX_SPEAKERS) },
+      uStrengths: { value: new Float32Array(MAX_SPEAKERS) },
+      uRanges: { value: new Float32Array(MAX_SPEAKERS) },
+      uColors: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Color()) },
+      uHazeColor: { value: new THREE.Color(hazeColor) },
+      uDistanceScale: { value: SOUND_FIELD_STYLE.distanceScaleMeters },
+      uDistanceExponent: { value: SOUND_FIELD_STYLE.distanceExponent },
+      uRangeFadeStart: { value: SOUND_FIELD_STYLE.rangeFadeStart },
+      uCompression: { value: SOUND_FIELD_STYLE.compression },
+      uAlphaGamma: { value: SOUND_FIELD_STYLE.alphaGamma },
+      uMaxOpacity: { value: SOUND_FIELD_STYLE.maxOpacity },
+      uTintMix: { value: SOUND_FIELD_STYLE.tintMix },
+    },
+  }), []);
+
+  useEffect(() => {
+    material.uniforms.uRoomSize.value.set(roomWidth, roomDepth);
+    material.uniforms.uHazeColor.value.set(hazeColor);
+    const activeSpeakers = speakers.slice(0, MAX_SPEAKERS);
+    material.uniforms.uCount.value = activeSpeakers.length;
+    const positions = material.uniforms.uPositions.value as THREE.Vector2[];
+    const directions = material.uniforms.uDirections.value as THREE.Vector2[];
+    const colors = material.uniforms.uColors.value as THREE.Color[];
+    const innerCos = material.uniforms.uInnerCos.value as Float32Array;
+    const outerCos = material.uniforms.uOuterCos.value as Float32Array;
+    const outerGains = material.uniforms.uOuterGains.value as Float32Array;
+    const strengths = material.uniforms.uStrengths.value as Float32Array;
+    const ranges = material.uniforms.uRanges.value as Float32Array;
+
+    for (let i = 0; i < MAX_SPEAKERS; i += 1) {
+      strengths[i] = 0;
+      if (i >= activeSpeakers.length) continue;
+      const speaker = activeSpeakers[i];
+      const model = getSpeakerModel(speaker.modelId, speaker.kind);
+      const xy = resolver.getXY(speaker);
+      positions[i].set((xy.x - 0.5) * roomWidth, (xy.y - 0.5) * roomDepth);
+      const orientation = speakerOrientationToAudioOrientation(speaker.orientation?.yaw ?? 0);
+      directions[i].set(orientation.x, orientation.z);
+      innerCos[i] = Math.cos(model.directivity.innerAngle * 0.5 * Math.PI / 180);
+      outerCos[i] = Math.cos(model.directivity.outerAngle * 0.5 * Math.PI / 180);
+      outerGains[i] = model.directivity.outerGain;
+      const rawActivity = speaker.muted ? 0 : activityBySpeaker[speaker.id] ?? 0;
+      strengths[i] = Math.pow(THREE.MathUtils.clamp(rawActivity, 0, 1), SOUND_FIELD_STYLE.activityGamma);
+      ranges[i] = model.directivity.visualRangeMeters;
+      colors[i].copy(BAND_COLORS[model.band]);
+    }
+
+    invalidate();
+  }, [speakers, activityBySpeaker, resolver, roomWidth, roomDepth, hazeColor, material, invalidate]);
+
+  useEffect(() => () => material.dispose(), [material]);
+
+  return <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]} renderOrder={0}>
+    <planeGeometry args={[roomWidth, roomDepth, 1, 1]} />
+    <primitive object={material} attach="material" />
+  </mesh>;
+}
