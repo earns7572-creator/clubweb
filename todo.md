@@ -385,3 +385,12 @@
 - [x] GitHub mainと公開チェックポイントへ保存する。
 
 > Codex refresh確認: TOP / SIDE / POVで新しいspeaker geometryが表示され、Speaker model・stack・bass・audioの既存testとproduction buildがすべて成功した。音響DSP、stack解決、camera motionの変更は含まれない。
+
+## Latest Codex Integration
+
+- [x] Codexの最新remote branch・commit・mainとの差分を特定する。
+- [x] 差分をmainへ安全に統合する。
+- [x] 型検査、関連回帰テスト、production build、主要viewを検証する。
+- [x] GitHub mainと公開チェックポイントへ保存する。
+
+> Bright finish確認: TOPではcabinet・frame・hornの階調がoff-white floor上で分離し、POVでもspeaker silhouetteとdriver / hornの奥行きが読み取れる。Speaker geometry以外の音響・stack・motion変更はない。
