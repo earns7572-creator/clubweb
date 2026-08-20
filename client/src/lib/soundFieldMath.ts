@@ -1,15 +1,16 @@
 import type { SpeakerDirectivity } from "./speakerModels";
 
 export const SOUND_FIELD_STYLE = {
-  activityGamma: 0.84,
+  activityGamma: 0.80,
   distanceScaleMeters: 4,
   distanceExponent: 1.7,
   rangeFadeStart: 0.72,
   compression: 1.35,
-  alphaGamma: 1.05,
-  maxOpacity: 0.36,
-  tintMix: 0.46,
-  edgeFeatherMeters: 0.65,
+  alphaGamma: 1.02,
+  maxOpacity: 0.40,
+  tintMix: 0.78,
+  edgeFeatherMeters: 1.5,
+  fieldExtentScale: 4,
 } as const;
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, value));

@@ -34,6 +34,14 @@ const BAND_COLOR_WEIGHTS: Record<SpeakerBand, number> = {
   high: 1.45,
 };
 
+const BAND_VISIBILITY_GAINS: Record<SpeakerBand, number> = {
+  low: 0.88,
+  kick: 1.0,
+  full: 1.0,
+  mid: 1.35,
+  high: 1.55,
+};
+
 const vertexShader = `
 varying vec2 vUv;
 void main() {
@@ -47,6 +55,7 @@ const fragmentShader = `
 varying vec2 vUv;
 uniform int uCount;
 uniform vec2 uRoomSize;
+uniform vec2 uFieldSize;
 uniform vec2 uPositions[MAX_SPEAKERS];
 uniform vec2 uDirections[MAX_SPEAKERS];
 uniform float uInnerCos[MAX_SPEAKERS];
@@ -67,7 +76,7 @@ uniform float uTintMix;
 uniform float uEdgeFeatherMeters;
 
 void main() {
-  vec2 point = vec2((vUv.x - 0.5) * uRoomSize.x, (0.5 - vUv.y) * uRoomSize.y);
+  vec2 point = vec2((vUv.x - 0.5) * uFieldSize.x, (0.5 - vUv.y) * uFieldSize.y);
   float energy = 0.0;
   float colorWeight = 0.0;
   vec3 weightedColor = vec3(0.0);
@@ -98,8 +107,8 @@ void main() {
   if (energy <= 0.000001) discard;
   float combined = sqrt(energy);
   float visibleStrength = 1.0 - exp(-uCompression * combined);
-  vec2 halfRoom = uRoomSize * 0.5;
-  vec2 distanceToEdge = halfRoom - abs(point);
+  vec2 halfField = uFieldSize * 0.5;
+  vec2 distanceToEdge = halfField - abs(point);
   float nearestEdge = min(distanceToEdge.x, distanceToEdge.y);
   float edgeFade = smoothstep(0.0, uEdgeFeatherMeters, nearestEdge);
   float alpha = pow(clamp(visibleStrength, 0.0, 1.0), uAlphaGamma) * uMaxOpacity * edgeFade;
@@ -113,6 +122,8 @@ void main() {
 export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth, roomDepth, hazeColor = "#777870" }: Props) {
   const { invalidate } = useThree();
   const resolver = useMemo(() => createStackResolver(speakers), [speakers]);
+  const fieldWidth = roomWidth * SOUND_FIELD_STYLE.fieldExtentScale;
+  const fieldDepth = roomDepth * SOUND_FIELD_STYLE.fieldExtentScale;
   const material = useMemo(() => new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
@@ -125,6 +136,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
     uniforms: {
       uCount: { value: 0 },
       uRoomSize: { value: new THREE.Vector2(roomWidth, roomDepth) },
+      uFieldSize: { value: new THREE.Vector2(fieldWidth, fieldDepth) },
       uPositions: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Vector2()) },
       uDirections: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Vector2(0, 1)) },
       uInnerCos: { value: new Float32Array(MAX_SPEAKERS) },
@@ -148,6 +160,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
 
   useEffect(() => {
     material.uniforms.uRoomSize.value.set(roomWidth, roomDepth);
+    material.uniforms.uFieldSize.value.set(fieldWidth, fieldDepth);
     material.uniforms.uHazeColor.value.set(hazeColor);
     const activeSpeakers = speakers.slice(0, MAX_SPEAKERS);
     material.uniforms.uCount.value = activeSpeakers.length;
@@ -174,19 +187,19 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       outerCos[i] = Math.cos(model.directivity.outerAngle * 0.5 * Math.PI / 180);
       outerGains[i] = model.directivity.outerGain;
       const rawActivity = speaker.muted ? 0 : activityBySpeaker[speaker.id] ?? 0;
-      strengths[i] = Math.pow(THREE.MathUtils.clamp(rawActivity, 0, 1), SOUND_FIELD_STYLE.activityGamma);
+      strengths[i] = Math.min(1.6, Math.pow(THREE.MathUtils.clamp(rawActivity, 0, 1), SOUND_FIELD_STYLE.activityGamma) * BAND_VISIBILITY_GAINS[model.band]);
       ranges[i] = model.directivity.visualRangeMeters;
       colors[i].copy(BAND_COLORS[model.band]);
       colorWeights[i] = BAND_COLOR_WEIGHTS[model.band];
     }
 
     invalidate();
-  }, [speakers, activityBySpeaker, resolver, roomWidth, roomDepth, hazeColor, material, invalidate]);
+  }, [speakers, activityBySpeaker, resolver, roomWidth, roomDepth, fieldWidth, fieldDepth, hazeColor, material, invalidate]);
 
   useEffect(() => () => material.dispose(), [material]);
 
   return <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]} renderOrder={0} raycast={ignoreRaycast}>
-    <planeGeometry args={[roomWidth, roomDepth, 1, 1]} />
+    <planeGeometry args={[fieldWidth, fieldDepth, 1, 1]} />
     <primitive object={material} attach="material" />
   </mesh>;
 }
