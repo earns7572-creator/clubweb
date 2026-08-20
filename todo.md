@@ -376,3 +376,12 @@
 - [x] 現在のGit SHA・主要構成・test script・公開状態・既知の実機確認項目を確認する。
 - [x] Codex向け引き継ぎ書を作成し、変更してはいけない制約と最初の確認手順を記載する。
 - [x] 引き継ぎ書をGitHub mainへcommit・pushする。
+
+## Codex Speaker Model Refresh
+
+- [x] `codex/speaker-model-refresh`の差分・親commit・mainとの競合を確認する。
+- [x] `009e438`のspeaker model refreshをmainへ統合する。
+- [x] 3 view、speaker selection、model test、audio・stack・buildを検証する。
+- [x] GitHub mainと公開チェックポイントへ保存する。
+
+> Codex refresh確認: TOP / SIDE / POVで新しいspeaker geometryが表示され、Speaker model・stack・bass・audioの既存testとproduction buildがすべて成功した。音響DSP、stack解決、camera motionの変更は含まれない。
