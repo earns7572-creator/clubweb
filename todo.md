@@ -394,3 +394,13 @@
 - [x] GitHub mainと公開チェックポイントへ保存する。
 
 > Bright finish確認: TOPではcabinet・frame・hornの階調がoff-white floor上で分離し、POVでもspeaker silhouetteとdriver / hornの奥行きが読み取れる。Speaker geometry以外の音響・stack・motion変更はない。
+
+## Preview-Canonical View Switcher
+
+- [x] 管理プレビューを基準にTOP / SIDE / POVの形・位置・active stateを再確認する。
+- [x] 公開サイトのview switcherを管理プレビュー仕様へ統一する。
+- [x] desktop / mobileの表示、型検査、production build、GitHub main、公開チェックポイントを確認する。
+
+> mobile確認: TOP / SIDE / POVいずれも、管理プレビューと同じ非カード型のTOP・SIDE・POV文字ボタン、12px間隔、active dot、scene上部中央配置になった。従来のmobile専用glass pillとbottom配置は除去した。
+
+> 比較確認: 管理プレビュー相当（`?from_webdev=1`）と公開URLをdesktop幅で取得した。いずれもscene上部中央にTOP / SIDE / POVを置いているが、ユーザーが見ている管理プレビューを正として、公開側のCSS条件・button box・active stateを明示的に固定する。
