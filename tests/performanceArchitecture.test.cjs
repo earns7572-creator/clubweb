@@ -23,6 +23,7 @@ const avatar = read("client/src/components/SimpleHumanAvatar.tsx");
 const djBooth = read("client/src/components/DjBooth.tsx");
 const deviceOrientation = read("client/src/lib/deviceOrientation.ts");
 const deviceLook = read("client/src/hooks/useDeviceLook.ts");
+const mobileCss = read("client/src/mobile.css");
 
 assert.match(audio, /syncTopology/);
 assert.match(audio, /syncSpeakerDsp/);
@@ -188,5 +189,11 @@ assert.match(pov, /useDeviceLook/);
 assert.match(pov, /onLookAbsolute/);
 assert.match(pov, /<button className=\{`motion-toggle/);
 assert.match(pov, /RECENTER/);
+assert.match(home, /mobileInspectorOpen, setMobileInspectorOpen\] = useState\(false\)/);
+assert.match(home, /const selectSpeaker = \(id: string\) => \{ setSelectedSpeakerId\(id\); setMobileInspectorOpen\(false\); \}/);
+assert.match(home, /className=\{`spatial-inspector \$\{mobileInspectorOpen \? "mobile-open" : ""\}`\}/);
+assert.match(home, /className="mobile-speaker-edit" onClick=\{\(\) => setMobileInspectorOpen\(true\)\}/);
+assert.match(mobileCss, /\.spatial-inspector \{ display: none;/);
+assert.match(mobileCss, /\.spatial-inspector\.mobile-open \{ display: block;/);
 
 console.log("performance architecture tests passed");

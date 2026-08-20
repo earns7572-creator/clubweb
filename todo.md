@@ -404,3 +404,9 @@
 > mobile確認: TOP / SIDE / POVいずれも、管理プレビューと同じ非カード型のTOP・SIDE・POV文字ボタン、12px間隔、active dot、scene上部中央配置になった。従来のmobile専用glass pillとbottom配置は除去した。
 
 > 比較確認: 管理プレビュー相当（`?from_webdev=1`）と公開URLをdesktop幅で取得した。いずれもscene上部中央にTOP / SIDE / POVを置いているが、ユーザーが見ている管理プレビューを正として、公開側のCSS条件・button box・active stateを明示的に固定する。
+
+## Mobile Speaker Drag vs Inspector
+
+- [x] mobileでSpeaker選択時にInspectorがdrag領域を覆う原因を確認する。
+- [x] Speaker tap選択とdragを共存させ、Inspectorがpointer操作を妨げないようにする。
+- [x] mobile TOPの選択・drag・選択解除、型検査、build、GitHub main、公開チェックポイントを確認する。
