@@ -8,6 +8,7 @@ import { speakerOrientationToAudioOrientation } from "@/lib/speakerOrientation";
 import { SOUND_FIELD_STYLE } from "@/lib/soundFieldMath";
 
 const MAX_SPEAKERS = 16;
+const ignoreRaycast: THREE.Mesh["raycast"] = () => {};
 
 type Props = {
   speakers: ClubSpeaker[];
@@ -23,6 +24,14 @@ const BAND_COLORS: Record<SpeakerBand, THREE.Color> = {
   full: new THREE.Color("#b9b6a7"),
   mid: new THREE.Color("#ffd60a"),
   high: new THREE.Color("#32d05b"),
+};
+
+const BAND_COLOR_WEIGHTS: Record<SpeakerBand, number> = {
+  low: 0.75,
+  kick: 0.9,
+  full: 0.8,
+  mid: 1.3,
+  high: 1.45,
 };
 
 const vertexShader = `
@@ -46,6 +55,7 @@ uniform float uOuterGains[MAX_SPEAKERS];
 uniform float uStrengths[MAX_SPEAKERS];
 uniform float uRanges[MAX_SPEAKERS];
 uniform vec3 uColors[MAX_SPEAKERS];
+uniform float uColorWeights[MAX_SPEAKERS];
 uniform vec3 uHazeColor;
 uniform float uDistanceScale;
 uniform float uDistanceExponent;
@@ -54,6 +64,7 @@ uniform float uCompression;
 uniform float uAlphaGamma;
 uniform float uMaxOpacity;
 uniform float uTintMix;
+uniform float uEdgeFeatherMeters;
 
 void main() {
   vec2 point = vec2((vUv.x - 0.5) * uRoomSize.x, (0.5 - vUv.y) * uRoomSize.y);
@@ -77,8 +88,9 @@ void main() {
         float contribution = strength * angular * distanceFade * rangeFade;
         float contributionEnergy = contribution * contribution;
         energy += contributionEnergy;
-        weightedColor += uColors[i] * contributionEnergy;
-        colorWeight += contributionEnergy;
+        float visualColorEnergy = contributionEnergy * uColorWeights[i];
+        weightedColor += uColors[i] * visualColorEnergy;
+        colorWeight += visualColorEnergy;
       }
     }
   }
@@ -86,7 +98,11 @@ void main() {
   if (energy <= 0.000001) discard;
   float combined = sqrt(energy);
   float visibleStrength = 1.0 - exp(-uCompression * combined);
-  float alpha = pow(clamp(visibleStrength, 0.0, 1.0), uAlphaGamma) * uMaxOpacity;
+  vec2 halfRoom = uRoomSize * 0.5;
+  vec2 distanceToEdge = halfRoom - abs(point);
+  float nearestEdge = min(distanceToEdge.x, distanceToEdge.y);
+  float edgeFade = smoothstep(0.0, uEdgeFeatherMeters, nearestEdge);
+  float alpha = pow(clamp(visibleStrength, 0.0, 1.0), uAlphaGamma) * uMaxOpacity * edgeFade;
   if (alpha <= 0.002) discard;
   vec3 bandColor = colorWeight > 0.000001 ? weightedColor / colorWeight : uHazeColor;
   vec3 finalColor = mix(uHazeColor, bandColor, uTintMix);
@@ -117,6 +133,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       uStrengths: { value: new Float32Array(MAX_SPEAKERS) },
       uRanges: { value: new Float32Array(MAX_SPEAKERS) },
       uColors: { value: Array.from({ length: MAX_SPEAKERS }, () => new THREE.Color()) },
+      uColorWeights: { value: new Float32Array(MAX_SPEAKERS) },
       uHazeColor: { value: new THREE.Color(hazeColor) },
       uDistanceScale: { value: SOUND_FIELD_STYLE.distanceScaleMeters },
       uDistanceExponent: { value: SOUND_FIELD_STYLE.distanceExponent },
@@ -125,6 +142,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       uAlphaGamma: { value: SOUND_FIELD_STYLE.alphaGamma },
       uMaxOpacity: { value: SOUND_FIELD_STYLE.maxOpacity },
       uTintMix: { value: SOUND_FIELD_STYLE.tintMix },
+      uEdgeFeatherMeters: { value: SOUND_FIELD_STYLE.edgeFeatherMeters },
     },
   }), []);
 
@@ -136,6 +154,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
     const positions = material.uniforms.uPositions.value as THREE.Vector2[];
     const directions = material.uniforms.uDirections.value as THREE.Vector2[];
     const colors = material.uniforms.uColors.value as THREE.Color[];
+    const colorWeights = material.uniforms.uColorWeights.value as Float32Array;
     const innerCos = material.uniforms.uInnerCos.value as Float32Array;
     const outerCos = material.uniforms.uOuterCos.value as Float32Array;
     const outerGains = material.uniforms.uOuterGains.value as Float32Array;
@@ -158,6 +177,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
       strengths[i] = Math.pow(THREE.MathUtils.clamp(rawActivity, 0, 1), SOUND_FIELD_STYLE.activityGamma);
       ranges[i] = model.directivity.visualRangeMeters;
       colors[i].copy(BAND_COLORS[model.band]);
+      colorWeights[i] = BAND_COLOR_WEIGHTS[model.band];
     }
 
     invalidate();
@@ -165,7 +185,7 @@ export default function SoundFieldLayer({ speakers, activityBySpeaker, roomWidth
 
   useEffect(() => () => material.dispose(), [material]);
 
-  return <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]} renderOrder={0}>
+  return <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.008, 0]} renderOrder={0} raycast={ignoreRaycast}>
     <planeGeometry args={[roomWidth, roomDepth, 1, 1]} />
     <primitive object={material} attach="material" />
   </mesh>;
