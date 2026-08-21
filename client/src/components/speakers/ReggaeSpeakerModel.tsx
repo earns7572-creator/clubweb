@@ -113,6 +113,43 @@ function MidHorn({ activity, glowStrength }: { activity: number; glowStrength: n
     <WoodenMidHorn x={.265} front={front} materials={materials} activity={activity} glowStrength={glowStrength} />
   </group>;
 }
-function Top({ materials, activity, glowStrength }: { materials: ReturnType<typeof useReggaeMaterials>; activity: number; glowStrength: number }) { const body = getSpeakerModel("reggae-top", "high").body; const front = body.depth / 2 + .02; return <><mesh geometry={box} scale={[body.width, body.height, body.depth]} material={materials.cabinet} /><HornBack width={.44} height={.24} x={-.23} y={0} front={front} materials={materials} /><HornBack width={.44} height={.24} x={.23} y={0} front={front} materials={materials} /><CabinetFrame width={body.width * .91} height={body.height * .76} front={front} /><Horn geometry={topHorn} emitterGeometry={topGlow} x={-.23} y={0} frontZ={front + .04} mouthWidth={.42} mouthHeight={.22} depth={.24} throatWidth={.055} throatHeight={.032} materials={materials} activity={activity} glowBand="high" glowStrength={glowStrength} /><Horn geometry={topHorn} emitterGeometry={topGlow} x={.23} y={0} frontZ={front + .04} mouthWidth={.42} mouthHeight={.22} depth={.24} throatWidth={.055} throatHeight={.032} materials={materials} activity={activity} glowBand="high" glowStrength={glowStrength} /><HornBraces xs={[0]} y={0} height={.26} front={front + .045} horizontal={false} /></>; }
+function TopDriver({ x, y, front, materials }: { x: number; y: number; front: number; materials: ReturnType<typeof useScoopMaterials> }) {
+  return <group position={[x, y, 0]}>
+    <mesh geometry={box} position={[0, 0, front - .035]} scale={[.115, .115, .04]} material={materials.recess} />
+    <mesh position={[0, 0, front + .01]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[.043, .043, .03, 12]} /><primitive object={materials.hardware} attach="material" /></mesh>
+    <mesh position={[0, 0, front + .029]}><torusGeometry args={[.03, .008, 5, 12]} /><primitive object={materials.surround} attach="material" /></mesh>
+    <mesh position={[0, 0, front + .025]} scale={[1, 1, .4]}><sphereGeometry args={[.025, 10, 5]} /><primitive object={materials.dustCap} attach="material" /></mesh>
+  </group>;
+}
+function Top({ activity, glowStrength }: { activity: number; glowStrength: number }) {
+  const materials = useScoopMaterials(); const body = getSpeakerModel("reggae-top", "high").body; const front = body.depth / 2 - .045; const rail = .06; const hornWidth = .48; const hornHeight = .19; const throatZ = front - .245;
+  return <group>
+    <mesh geometry={box} position={[0, 0, -body.depth / 2 + .032]} scale={[body.width, body.height, .064]} material={materials.cabinet} />
+    <mesh geometry={box} position={[-body.width / 2 + .032, 0, 0]} scale={[.064, body.height, body.depth]} material={materials.cabinet} />
+    <mesh geometry={box} position={[body.width / 2 - .032, 0, 0]} scale={[.064, body.height, body.depth]} material={materials.cabinet} />
+    <mesh geometry={box} position={[0, body.height / 2 - .032, 0]} scale={[body.width, .064, body.depth]} material={materials.cabinet} />
+    <mesh geometry={box} position={[0, -body.height / 2 + .032, 0]} scale={[body.width, .064, body.depth]} material={materials.cabinet} />
+    <mesh geometry={box} position={[0, body.height / 2 - rail / 2, front + .024]} scale={[body.width, rail, .065]} material={materials.frame} />
+    <mesh geometry={box} position={[0, -body.height / 2 + rail / 2, front + .024]} scale={[body.width, rail, .065]} material={materials.frame} />
+    <mesh geometry={box} position={[-body.width / 2 + rail / 2, 0, front + .024]} scale={[rail, body.height, .065]} material={materials.frame} />
+    <mesh geometry={box} position={[body.width / 2 - rail / 2, 0, front + .024]} scale={[rail, body.height, .065]} material={materials.frame} />
+    <mesh geometry={box} position={[0, 0, front - .025]} scale={[.55, .26, .045]} material={materials.cavity} />
+    <mesh geometry={box} position={[0, hornHeight * .34, front - .07]} rotation={[-.2, 0, 0]} scale={[hornWidth, .028, .15]} material={materials.horn} />
+    <mesh geometry={box} position={[0, -hornHeight * .34, front - .07]} rotation={[.2, 0, 0]} scale={[hornWidth, .028, .15]} material={materials.horn} />
+    <mesh geometry={box} position={[-hornWidth * .36, 0, front - .07]} rotation={[0, .22, 0]} scale={[.028, hornHeight * .72, .15]} material={materials.horn} />
+    <mesh geometry={box} position={[hornWidth * .36, 0, front - .07]} rotation={[0, -.22, 0]} scale={[.028, hornHeight * .72, .15]} material={materials.horn} />
+    <mesh geometry={box} position={[0, .045, front - .175]} rotation={[-.16, 0, 0]} scale={[.25, .024, .11]} material={materials.recess} />
+    <mesh geometry={box} position={[0, -.045, front - .175]} rotation={[.16, 0, 0]} scale={[.25, .024, .11]} material={materials.recess} />
+    <mesh geometry={box} position={[-.135, 0, front - .175]} rotation={[0, .18, 0]} scale={[.024, .105, .11]} material={materials.recess} />
+    <mesh geometry={box} position={[.135, 0, front - .175]} rotation={[0, -.18, 0]} scale={[.024, .105, .11]} material={materials.recess} />
+    <mesh geometry={box} position={[0, 0, throatZ]} scale={[.07, .035, .04]} material={materials.cavity} />
+    <mesh geometry={box} position={[0, 0, throatZ + .023]} scale={[.04, .022, .025]} material={materials.hardware} />
+    <TopDriver x={-.38} y={.09} front={front} materials={materials} />
+    <TopDriver x={-.38} y={-.09} front={front} materials={materials} />
+    <TopDriver x={.38} y={.09} front={front} materials={materials} />
+    <TopDriver x={.38} y={-.09} front={front} materials={materials} />
+    <SpeakerEmitterGlow band="high" activity={activity} position={[0, 0, throatZ + .06]} size={.17} strength={glowStrength} />
+  </group>;
+}
 
-export default function ReggaeSpeakerModel({ modelId, kind, activity, selected = false, glowStrength = .8 }: Props) { const materials = useReggaeMaterials(); const model = getSpeakerModel(modelId, kind); return <group>{modelId === "reggae-scoop" && <Scoop activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-kick" && <Kick activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-mid-horn" && <MidHorn activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-top" && <Top materials={materials} activity={activity} glowStrength={glowStrength} />}{selected && <mesh geometry={box} scale={[model.body.width * 1.018, model.body.height * 1.018, model.body.depth * 1.018]} material={selection} />}</group>; }
+export default function ReggaeSpeakerModel({ modelId, kind, activity, selected = false, glowStrength = .8 }: Props) { const materials = useReggaeMaterials(); const model = getSpeakerModel(modelId, kind); return <group>{modelId === "reggae-scoop" && <Scoop activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-kick" && <Kick activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-mid-horn" && <MidHorn activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-top" && <Top activity={activity} glowStrength={glowStrength} />}{selected && <mesh geometry={box} scale={[model.body.width * 1.018, model.body.height * 1.018, model.body.depth * 1.018]} material={selection} />}</group>; }
