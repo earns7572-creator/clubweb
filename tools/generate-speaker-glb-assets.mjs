@@ -39,6 +39,11 @@ const kickHorn = {
   flare: makeMaterial("KickHornFlare", "#20262a", .9, .01), cavity: makeMaterial("KickHornCavity", "#090b0c", .97), hardware: makeMaterial("KickHornHardware", "#252b2f", .72, .18),
 };
 kickHorn.flare.side = THREE.DoubleSide;
+const midHornMaterials = {
+  cabinet: makeMaterial("MidHornCabinet", "#242423", .9, .01), frame: makeMaterial("MidHornFrame", "#36434a", .82, .04),
+  flare: makeMaterial("MidHornFlare", "#20262a", .9, .01), cavity: makeMaterial("MidHornCavity", "#090b0c", .97), hardware: makeMaterial("MidHornHardware", "#252b2f", .72, .18),
+};
+midHornMaterials.flare.side = THREE.DoubleSide;
 const hifi = { ...shared, cabinet: makeMaterial("WoodCabinet", "#76583c", .72, .01), horn: makeMaterial("WoodHorn", "#b2875b", .66, .01), woofer: makeMaterial("HiFiWoofer", "#292d30", .8, .01), metal: makeMaterial("HiFiMetal", "#9a9c99", .5, .22) };
 
 function add(root, geometry, material, name, position = [0, 0, 0], rotation = [0, 0, 0]) {
@@ -203,7 +208,42 @@ const builders = {
     for (const x of [-w*.38,w*.38]) roundedBox(root,[w*.13,.045,d*.13],kickHorn.hardware,"CabinetFoot",[x,.0225,-d*.27],[0,0,0],1,.007);
     for (const x of [-w*.475,w*.475]) for (const y of [h*.1,h*.9]) for (const z of [-d*.475,d*.475]) roundedBox(root,[.045,.045,.045],kickHorn.hardware,"CornerProtector",[x,y,z],[0,0,0],1,.008);
   },
-  midHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.77,front-.025,h*.5,freeparty.baffle); horn(root,{width:w*.76,height:h*.6,depth:d*.55,y:h*.52,front,emitter:"EmitterMid",materials:freeparty,throatScale:.13}); },
+  midHorn(root, body) {
+    const [w,h,d] = body, wall = .04, front = d / 2 - .014, floor = .038;
+    roundedBox(root,[w,wall,d],midHornMaterials.cabinet,"Cabinet",[0,floor+wall/2,0],[0,0,0],2,.011);
+    roundedBox(root,[w,wall,d],midHornMaterials.cabinet,"CabinetTop",[0,h-wall/2,0],[0,0,0],2,.011);
+    roundedBox(root,[wall,h-floor-wall,d],midHornMaterials.cabinet,"CabinetLeft",[-w/2+wall/2,(h+floor)/2,0],[0,0,0],2,.011);
+    roundedBox(root,[wall,h-floor-wall,d],midHornMaterials.cabinet,"CabinetRight",[w/2-wall/2,(h+floor)/2,0],[0,0,0],2,.011);
+    roundedBox(root,[w-2*wall,h-floor-2*wall,wall],midHornMaterials.cabinet,"CabinetBack",[0,(h+floor)/2,-d/2+wall/2],[0,0,0],2,.01);
+
+    const mouthWidth = w*.885, mouthHeight = h*.86, mouthY = h*.51, hornDepth = d*.78, frameThickness = .038;
+    roundedBox(root,[mouthWidth,frameThickness,.055],midHornMaterials.frame,"FrontFrameTop",[0,mouthY+mouthHeight/2-frameThickness/2,front],[0,0,0],1,.007);
+    roundedBox(root,[mouthWidth,frameThickness,.055],midHornMaterials.frame,"FrontFrameBottom",[0,mouthY-mouthHeight/2+frameThickness/2,front],[0,0,0],1,.007);
+    roundedBox(root,[frameThickness,mouthHeight-2*frameThickness,.055],midHornMaterials.frame,"FrontFrameLeft",[-mouthWidth/2+frameThickness/2,mouthY,front],[0,0,0],1,.007);
+    roundedBox(root,[frameThickness,mouthHeight-2*frameThickness,.055],midHornMaterials.frame,"FrontFrameRight",[mouthWidth/2-frameThickness/2,mouthY,front],[0,0,0],1,.007);
+
+    const sections = [
+      { w: mouthWidth*.48, h: mouthHeight*.47, z: 0 },
+      { w: mouthWidth*.39, h: mouthHeight*.38, z: -hornDepth*.25 },
+      { w: mouthWidth*.27, h: mouthHeight*.265, z: -hornDepth*.53 },
+      { w: mouthWidth*.14, h: mouthHeight*.145, z: -hornDepth*.78 },
+      { w: mouthWidth*.057, h: mouthHeight*.062, z: -hornDepth },
+    ];
+    add(root,facetedHornGeometry(sections),midHornMaterials.flare,"FacetedMidHornFlare",[0,mouthY,front-.028]);
+    roundedBox(root,[mouthWidth*.125,mouthHeight*.14,.048],midHornMaterials.cavity,"HornThroat",[0,mouthY,front-hornDepth-.016],[0,0,0],1,.009);
+    roundedBox(root,[mouthWidth*.18,mouthHeight*.22,d*.13],midHornMaterials.cabinet,"RearCompressionChamber",[0,mouthY,-d*.5+d*.065],[0,0,0],1,.01);
+    roundedBox(root,[mouthWidth*.05,mouthHeight*.052,.024],midHornMaterials.cavity,"EmitterMid",[0,mouthY,front-hornDepth-.04],[0,0,0],1,.005);
+
+    roundedBox(root,[.026,mouthHeight*.76,d*.18],midHornMaterials.frame,"VerticalSplitter",[0,mouthY,front-d*.10],[0,0,0],1,.005);
+    roundedBox(root,[mouthWidth*.74,.024,d*.12],midHornMaterials.frame,"HorizontalBrace",[0,mouthY+h*.05,front-d*.075],[0,0,0],1,.005);
+    for (const side of [-1,1]) {
+      const x = side*(w/2-.007);
+      roundedBox(root,[.016,h*.18,d*.17],midHornMaterials.cavity,side < 0 ? "SideHandleLeft" : "SideHandleRight",[x,h*.53,-d*.07],[0,0,0],1,.007);
+      roundedBox(root,[.021,h*.023,d*.10],midHornMaterials.hardware,side < 0 ? "SideGripLeft" : "SideGripRight",[x+side*.005,h*.53,-d*.07],[0,0,0],1,.005);
+    }
+    for (const x of [-w*.34,w*.34]) roundedBox(root,[w*.12,.04,d*.12],midHornMaterials.hardware,"CabinetFoot",[x,.02,-d*.22],[0,0,0],1,.006);
+    for (const x of [-w*.47,w*.47]) for (const y of [h*.11,h*.89]) for (const z of [-d*.47,d*.47]) roundedBox(root,[.04,.04,.04],midHornMaterials.hardware,"CornerProtector",[x,y,z],[0,0,0],1,.007);
+  },
   topHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.74,front-.022,h*.5,freeparty.baffle); horn(root,{width:w*.75,height:h*.55,depth:d*.5,y:h*.5,front,emitter:"EmitterHigh",materials:freeparty,throatScale:.1}); },
   festivalSub(root, body) { const [w,h]=body,{front}=shell(root,body,shared.cabinet,shared.metal); baffle(root,w*.9,h*.76,front-.025,h*.5,shared.baffle); woofer(root,h*.285,-w*.235,h*.52,front,"EmitterLow"); woofer(root,h*.285,w*.235,h*.52,front,"DriverLow"); frame(root,w*.91,h*.78,front+.002,h*.5,shared.metal,.025); },
   lineArray(root, body) {
