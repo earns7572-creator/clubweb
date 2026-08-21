@@ -31,22 +31,22 @@ const shared = {
 };
 const freeparty = { ...shared, cabinet: makeMaterial("FreePartyCabinet", "#64696d", .88, .02), baffle: makeMaterial("FreePartyBaffle", "#353a3e", .9, .01), horn: makeMaterial("FreePartyHorn", "#50575c", .84, .02) };
 const wBin = {
-  cabinet: makeMaterial("WBinCabinet", "#242423", .9, .01), frame: makeMaterial("WBinFrame", "#36434a", .82, .04),
-  horn: makeMaterial("WBinHornInside", "#111416", .94, .01), cavity: makeMaterial("WBinCavity", "#090b0c", .97), hardware: makeMaterial("WBinHardware", "#252b2f", .72, .18),
+  cabinet: makeMaterial("WBinCabinet", "#555555", .9, .01), frame: makeMaterial("WBinFrame", "#36434a", .82, .04),
+  horn: makeMaterial("WBinHornInside", "#303030", .94, .01), cavity: makeMaterial("WBinCavity", "#181818", .97), hardware: makeMaterial("WBinHardware", "#444444", .72, .18),
 };
 const kickHorn = {
-  cabinet: makeMaterial("KickHornCabinet", "#242423", .9, .01), frame: makeMaterial("KickHornFrame", "#36434a", .82, .04),
-  flare: makeMaterial("KickHornFlare", "#20262a", .9, .01), cavity: makeMaterial("KickHornCavity", "#090b0c", .97), hardware: makeMaterial("KickHornHardware", "#252b2f", .72, .18),
+  cabinet: makeMaterial("KickHornCabinet", "#555555", .9, .01), frame: makeMaterial("KickHornFrame", "#36434a", .82, .04),
+  flare: makeMaterial("KickHornFlare", "#3d3d3d", .9, .01), cavity: makeMaterial("KickHornCavity", "#181818", .97), hardware: makeMaterial("KickHornHardware", "#444444", .72, .18),
 };
 kickHorn.flare.side = THREE.DoubleSide;
 const midHornMaterials = {
-  cabinet: makeMaterial("MidHornCabinet", "#242423", .9, .01), frame: makeMaterial("MidHornFrame", "#36434a", .82, .04),
-  flare: makeMaterial("MidHornFlare", "#20262a", .9, .01), cavity: makeMaterial("MidHornCavity", "#090b0c", .97), hardware: makeMaterial("MidHornHardware", "#252b2f", .72, .18),
+  cabinet: makeMaterial("MidHornCabinet", "#555555", .9, .01), frame: makeMaterial("MidHornFrame", "#36434a", .82, .04),
+  flare: makeMaterial("MidHornFlare", "#3d3d3d", .9, .01), cavity: makeMaterial("MidHornCavity", "#181818", .97), hardware: makeMaterial("MidHornHardware", "#444444", .72, .18),
 };
 midHornMaterials.flare.side = THREE.DoubleSide;
 const hfHornMaterials = {
-  cabinet: makeMaterial("HfHornCabinet", "#242423", .9, .01), frame: makeMaterial("HfHornFrame", "#36434a", .82, .04),
-  flare: makeMaterial("HfHornFlare", "#20262a", .9, .01), cavity: makeMaterial("HfHornCavity", "#090b0c", .97), hardware: makeMaterial("HfHornHardware", "#252b2f", .72, .18),
+  cabinet: makeMaterial("HfHornCabinet", "#555555", .9, .01), frame: makeMaterial("HfHornFrame", "#36434a", .82, .04),
+  flare: makeMaterial("HfHornFlare", "#3d3d3d", .9, .01), cavity: makeMaterial("HfHornCavity", "#181818", .97), hardware: makeMaterial("HfHornHardware", "#444444", .72, .18),
 };
 hfHornMaterials.flare.side = THREE.DoubleSide;
 const hifi = { ...shared, cabinet: makeMaterial("WoodCabinet", "#76583c", .72, .01), horn: makeMaterial("WoodHorn", "#b2875b", .66, .01), woofer: makeMaterial("HiFiWoofer", "#292d30", .8, .01), metal: makeMaterial("HiFiMetal", "#9a9c99", .5, .22) };
@@ -138,7 +138,7 @@ function makeScene(label, body, builder) { const scene = new THREE.Scene(); scen
 
 const builders = {
   wBin(root, body) {
-    const [w,h,d] = body, wall = .045, front = d / 2 - .014, floor = .055;
+    const [w,h,d] = body, wall = .045, front = d / 2 - .014, floor = 0;
     roundedBox(root,[w,wall,d],wBin.cabinet,"Cabinet",[0,floor + wall / 2,0],[0,0,0],2,.014);
     roundedBox(root,[w,wall,d],wBin.cabinet,"CabinetTop",[0,h - wall / 2,0],[0,0,0],2,.014);
     roundedBox(root,[wall,h - floor - wall,d],wBin.cabinet,"CabinetLeft",[-w / 2 + wall / 2,(h + floor) / 2,0],[0,0,0],2,.014);
@@ -170,13 +170,12 @@ const builders = {
       roundedBox(root,[.018,h*.2,d*.22],wBin.cavity,side < 0 ? "SideHandleLeft" : "SideHandleRight",[x,h*.56,-d*.07],[0,0,0],1,.008);
       roundedBox(root,[.024,h*.025,d*.13],wBin.hardware,side < 0 ? "SideGripLeft" : "SideGripRight",[x + side*.006,h*.56,-d*.07],[0,0,0],1,.006);
     }
-    for (const x of [-w*.43,w*.43]) for (const z of [-d*.34,d*.34]) roundedBox(root,[w*.12,.055,d*.14],wBin.hardware,"PalletFoot",[x,.0275,z],[0,0,0],1,.008);
     for (const x of [-w*.475,w*.475]) for (const y of [h*.09,h*.91]) for (const z of [-d*.475,d*.475]) roundedBox(root,[.05,.05,.05],wBin.hardware,"CornerProtector",[x,y,z],[0,0,0],1,.009);
 
     roundedBox(root,[w*.085,h*.075,.026],wBin.cavity,"EmitterLow",[0,mouthY,-d*.43],[0,0,0],1,.006);
   },
   kickHorn(root, body) {
-    const [w,h,d] = body, wall = .042, front = d / 2 - .014, floor = .045;
+    const [w,h,d] = body, wall = .042, front = d / 2 - .014, floor = 0;
     roundedBox(root,[w,wall,d],kickHorn.cabinet,"Cabinet",[0,floor + wall / 2,0],[0,0,0],2,.012);
     roundedBox(root,[w,wall,d],kickHorn.cabinet,"CabinetTop",[0,h - wall / 2,0],[0,0,0],2,.012);
     roundedBox(root,[wall,h - floor - wall,d],kickHorn.cabinet,"CabinetLeft",[-w / 2 + wall / 2,(h + floor) / 2,0],[0,0,0],2,.012);
@@ -210,11 +209,10 @@ const builders = {
       roundedBox(root,[.017,h*.21,d*.2],kickHorn.cavity,side < 0 ? "SideHandleLeft" : "SideHandleRight",[x,h*.53,-d*.08],[0,0,0],1,.008);
       roundedBox(root,[.023,h*.025,d*.12],kickHorn.hardware,side < 0 ? "SideGripLeft" : "SideGripRight",[x+side*.005,h*.53,-d*.08],[0,0,0],1,.006);
     }
-    for (const x of [-w*.38,w*.38]) roundedBox(root,[w*.13,.045,d*.13],kickHorn.hardware,"CabinetFoot",[x,.0225,-d*.27],[0,0,0],1,.007);
     for (const x of [-w*.475,w*.475]) for (const y of [h*.1,h*.9]) for (const z of [-d*.475,d*.475]) roundedBox(root,[.045,.045,.045],kickHorn.hardware,"CornerProtector",[x,y,z],[0,0,0],1,.008);
   },
   midHorn(root, body) {
-    const [w,h,d] = body, wall = .04, front = d / 2 - .014, floor = .038;
+    const [w,h,d] = body, wall = .04, front = d / 2 - .014, floor = 0;
     roundedBox(root,[w,wall,d],midHornMaterials.cabinet,"Cabinet",[0,floor+wall/2,0],[0,0,0],2,.011);
     roundedBox(root,[w,wall,d],midHornMaterials.cabinet,"CabinetTop",[0,h-wall/2,0],[0,0,0],2,.011);
     roundedBox(root,[wall,h-floor-wall,d],midHornMaterials.cabinet,"CabinetLeft",[-w/2+wall/2,(h+floor)/2,0],[0,0,0],2,.011);
@@ -246,11 +244,10 @@ const builders = {
       roundedBox(root,[.016,h*.18,d*.17],midHornMaterials.cavity,side < 0 ? "SideHandleLeft" : "SideHandleRight",[x,h*.53,-d*.07],[0,0,0],1,.007);
       roundedBox(root,[.021,h*.023,d*.10],midHornMaterials.hardware,side < 0 ? "SideGripLeft" : "SideGripRight",[x+side*.005,h*.53,-d*.07],[0,0,0],1,.005);
     }
-    for (const x of [-w*.34,w*.34]) roundedBox(root,[w*.12,.04,d*.12],midHornMaterials.hardware,"CabinetFoot",[x,.02,-d*.22],[0,0,0],1,.006);
     for (const x of [-w*.47,w*.47]) for (const y of [h*.11,h*.89]) for (const z of [-d*.47,d*.47]) roundedBox(root,[.04,.04,.04],midHornMaterials.hardware,"CornerProtector",[x,y,z],[0,0,0],1,.007);
   },
   topHorn(root, body) {
-    const [w,h,d] = body, wall = .035, front = d / 2 - .012, floor = .03;
+    const [w,h,d] = body, wall = .035, front = d / 2 - .012, floor = 0;
     roundedBox(root,[w,wall,d],hfHornMaterials.cabinet,"Cabinet",[0,floor+wall/2,0],[0,0,0],1,.009);
     roundedBox(root,[w,wall,d],hfHornMaterials.cabinet,"CabinetTop",[0,h-wall/2,0],[0,0,0],1,.009);
     roundedBox(root,[wall,h-floor-wall,d],hfHornMaterials.cabinet,"CabinetLeft",[-w/2+wall/2,(h+floor)/2,0],[0,0,0],1,.009);
@@ -278,7 +275,6 @@ const builders = {
       const x = side*(w/2-.006);
       roundedBox(root,[.015,h*.16,d*.15],hfHornMaterials.cavity,side < 0 ? "SideHandleLeft" : "SideHandleRight",[x,h*.52,-d*.05],[0,0,0],1,.006);
     }
-    for (const x of [-w*.31,w*.31]) roundedBox(root,[w*.12,.034,d*.10],hfHornMaterials.hardware,"CabinetFoot",[x,.017,-d*.19],[0,0,0],1,.005);
     for (const x of [-w*.47,w*.47]) for (const y of [h*.12,h*.88]) roundedBox(root,[.035,.035,.035],hfHornMaterials.hardware,"CornerProtector",[x,y,front-.01],[0,0,0],1,.006);
   },
   festivalSub(root, body) { const [w,h]=body,{front}=shell(root,body,shared.cabinet,shared.metal); baffle(root,w*.9,h*.76,front-.025,h*.5,shared.baffle); woofer(root,h*.285,-w*.235,h*.52,front,"EmitterLow"); woofer(root,h*.285,w*.235,h*.52,front,"DriverLow"); frame(root,w*.91,h*.78,front+.002,h*.5,shared.metal,.025); },

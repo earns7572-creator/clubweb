@@ -72,8 +72,14 @@ async function validate(spec) {
   if (Math.abs(center.x) > .005) errors.push(`center X ${round(center.x)} is not zero`);
   if (Math.abs(center.z) > .005) errors.push(`center Z ${round(center.z)} is not zero`);
   if (Math.abs(bounds.min.x) > spec.body[0]/2+.01 || Math.abs(bounds.max.x) > spec.body[0]/2+.01 || bounds.min.y < -.01 || bounds.max.y > spec.body[1]+.01 || Math.abs(bounds.min.z) > spec.body[2]/2+.01 || Math.abs(bounds.max.z) > spec.body[2]/2+.01) errors.push("outlier geometry exceeds target envelope");
-  const allowedCabinets = ["freeparty-wbin","freeparty-kick-horn","freeparty-mid-horn","freeparty-top"].includes(spec.id) ? new Set(["#242423"]) : spec.family === "hifi" ? new Set(["#76583c"]) : spec.family === "freeparty" ? new Set(["#64696d"]) : new Set(["#70767b"]);
+  const freePartyIds = new Set(["freeparty-wbin","freeparty-kick-horn","freeparty-mid-horn","freeparty-top"]);
+  const allowedCabinets = freePartyIds.has(spec.id) ? new Set(["#555555"]) : spec.family === "hifi" ? new Set(["#76583c"]) : spec.family === "freeparty" ? new Set(["#64696d"]) : new Set(["#70767b"]);
   if (![...cabinetColors].some((color) => allowedCabinets.has(color))) errors.push(`cabinet palette invalid: ${[...cabinetColors].join(", ") || "missing"}`);
+  if (freePartyIds.has(spec.id)) {
+    const expectedColors = spec.id === "freeparty-wbin" ? ["#181818", "#303030", "#36434a", "#444444", "#555555"] : ["#181818", "#36434a", "#3d3d3d", "#444444", "#555555"];
+    if (expectedColors.some((color) => !materialColors.has(color)) || materialColors.size !== expectedColors.length) errors.push("Free Party monochrome palette invalid");
+    if ([...names].some((name) => name === "PalletFoot" || name === "CabinetFoot")) errors.push("Free Party feet must be absent");
+  }
 
   return { errors, data: {
     family: spec.family, body: { width: spec.body[0], height: spec.body[1], depth: spec.body[2] },

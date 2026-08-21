@@ -27,19 +27,19 @@
     "bottomY": 0,
     "centerX": 0,
     "centerZ": 0,
-    "triangleCount": 4968,
-    "meshCount": 38,
-    "vertexCount": 14892,
-    "fileSizeKb": 496.1,
+    "triangleCount": 4536,
+    "meshCount": 34,
+    "vertexCount": 13596,
+    "fileSizeKb": 452.7,
     "emitters": [
       "EmitterLow"
     ],
     "materialColors": [
-      "#090b0c",
-      "#111416",
-      "#242423",
-      "#252b2f",
-      "#36434a"
+      "#181818",
+      "#303030",
+      "#36434a",
+      "#444444",
+      "#555555"
     ],
     "finiteVertices": true,
     "validation": "pass"
@@ -72,19 +72,19 @@
     "bottomY": 0,
     "centerX": 0,
     "centerZ": 0,
-    "triangleCount": 4124,
-    "meshCount": 30,
-    "vertexCount": 12340,
-    "fileSizeKb": 409.4,
+    "triangleCount": 3908,
+    "meshCount": 28,
+    "vertexCount": 11692,
+    "fileSizeKb": 387.6,
     "emitters": [
       "EmitterLow"
     ],
     "materialColors": [
-      "#090b0c",
-      "#20262a",
-      "#242423",
-      "#252b2f",
-      "#36434a"
+      "#181818",
+      "#36434a",
+      "#3d3d3d",
+      "#444444",
+      "#555555"
     ],
     "finiteVertices": true,
     "validation": "pass"
@@ -117,19 +117,19 @@
     "bottomY": 0,
     "centerX": 0,
     "centerZ": 0,
-    "triangleCount": 4016,
-    "meshCount": 29,
-    "vertexCount": 12016,
-    "fileSizeKb": 398.5,
+    "triangleCount": 3800,
+    "meshCount": 27,
+    "vertexCount": 11368,
+    "fileSizeKb": 376.8,
     "emitters": [
       "EmitterMid"
     ],
     "materialColors": [
-      "#090b0c",
-      "#20262a",
-      "#242423",
-      "#252b2f",
-      "#36434a"
+      "#181818",
+      "#36434a",
+      "#3d3d3d",
+      "#444444",
+      "#555555"
     ],
     "finiteVertices": true,
     "validation": "pass"
@@ -162,19 +162,19 @@
     "bottomY": 0,
     "centerX": 0,
     "centerZ": 0,
-    "triangleCount": 2184,
-    "meshCount": 21,
-    "vertexCount": 6528,
-    "fileSizeKb": 221,
+    "triangleCount": 1968,
+    "meshCount": 19,
+    "vertexCount": 5880,
+    "fileSizeKb": 199.3,
     "emitters": [
       "EmitterHigh"
     ],
     "materialColors": [
-      "#090b0c",
-      "#20262a",
-      "#242423",
-      "#252b2f",
-      "#36434a"
+      "#181818",
+      "#36434a",
+      "#3d3d3d",
+      "#444444",
+      "#555555"
     ],
     "finiteVertices": true,
     "validation": "pass"
