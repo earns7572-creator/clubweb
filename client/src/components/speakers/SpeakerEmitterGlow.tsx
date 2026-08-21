@@ -42,10 +42,12 @@ function createAlphaTexture(alphaAt: (x: number, y: number) => number) {
 }
 
 const CORE_TEXTURE = createAlphaTexture((x, y) => Math.pow(Math.max(0, 1 - Math.hypot(x, y)), 4.5));
-const POLYGON_RING_TEXTURE = createAlphaTexture((x, y) => {
-  const sx = x + y * .055; const sy = y - x * .035; const distance = Math.abs(sx) + Math.abs(sy); const radius = Math.hypot(sx, sy);
-  const ring = Math.exp(-Math.pow((distance - .56) / .065, 2));
-  return ring * smoothstep(.22, .31, radius) * (1 - smoothstep(.85, 1.1, distance));
+const CONCAVE_FLARE_TEXTURE = createAlphaTexture((x, y) => {
+  const sx = x + y * .055; const sy = y - x * .035; const ax = Math.abs(sx); const ay = Math.abs(sy); const radius = Math.hypot(sx, sy);
+  const astroid = Math.pow(ax + .0001, 2 / 3) + Math.pow(ay + .0001, 2 / 3);
+  const flareRing = Math.exp(-Math.pow((astroid - .92) / .075, 2));
+  const innerMask = smoothstep(.2, .3, radius);
+  return flareRing * innerMask * (1 - smoothstep(1.08, 1.28, astroid));
 });
 const SPIKE_TEXTURE = createAlphaTexture((x, y) => {
   const sx = x + y * .055; const sy = y - x * .035; const radius = Math.hypot(sx, sy); const sqrtTwo = Math.SQRT2;
@@ -53,13 +55,14 @@ const SPIKE_TEXTURE = createAlphaTexture((x, y) => {
   const vertical = Math.exp(-Math.pow(sx / .028, 2)) * Math.exp(-Math.abs(sy) * 1.5);
   const diagonal1 = Math.exp(-Math.pow(Math.abs(sy - sx) / sqrtTwo / .035, 2)) * Math.exp(-radius * 2.4);
   const diagonal2 = Math.exp(-Math.pow(Math.abs(sy + sx) / sqrtTwo / .035, 2)) * Math.exp(-radius * 2.4);
-  return horizontal * .85 + vertical + diagonal1 * .28 + diagonal2 * .22;
+  return horizontal * .85 + vertical + diagonal1 * .15 + diagonal2 * .11;
 });
 const ANGULAR_HAZE_TEXTURE = createAlphaTexture((x, y) => {
-  const sx = x + y * .055; const sy = y - x * .035; const distance = Math.abs(sx) + Math.abs(sy); const radius = Math.hypot(sx, sy);
-  const polygonField = Math.exp(-Math.pow(distance / .92, 2.4));
+  const sx = x + y * .055; const sy = y - x * .035; const ax = Math.abs(sx); const ay = Math.abs(sy); const radius = Math.hypot(sx, sy);
+  const astroid = Math.pow(ax + .0001, 2 / 3) + Math.pow(ay + .0001, 2 / 3);
+  const concaveField = Math.exp(-Math.pow(astroid / 1.06, 2.2));
   const axes = Math.exp(-Math.pow(sy / .22, 2)) * .12 + Math.exp(-Math.pow(sx / .2, 2)) * .16;
-  return polygonField * (.76 + axes) * smoothstep(.3, .52, radius) * (1 - smoothstep(1.05, 1.55, distance));
+  return concaveField * (.76 + axes) * smoothstep(.28, .48, radius) * (1 - smoothstep(1.12, 1.48, astroid));
 });
 
 const BAND_COLORS: Record<SpeakerEmitterBand, THREE.Color> = {
@@ -78,7 +81,7 @@ const materialFor = (map: THREE.Texture) => new THREE.SpriteMaterial({ map, tran
 export default function SpeakerEmitterGlow({ band, activity, position = [0, 0, 0], size, strength = .8 }: Props) {
   const { invalidate } = useThree();
   const profile = PROFILES[band];
-  const materials = useMemo(() => ({ core: materialFor(CORE_TEXTURE), ring: materialFor(POLYGON_RING_TEXTURE), spikes: materialFor(SPIKE_TEXTURE), haze: materialFor(ANGULAR_HAZE_TEXTURE) }), []);
+  const materials = useMemo(() => ({ core: materialFor(CORE_TEXTURE), ring: materialFor(CONCAVE_FLARE_TEXTURE), spikes: materialFor(SPIKE_TEXTURE), haze: materialFor(ANGULAR_HAZE_TEXTURE) }), []);
   const a = THREE.MathUtils.clamp(activity, 0, 1);
   const growth = 1 + a * .06;
 
