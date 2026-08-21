@@ -34,6 +34,11 @@ const wBin = {
   cabinet: makeMaterial("WBinCabinet", "#242423", .9, .01), frame: makeMaterial("WBinFrame", "#36434a", .82, .04),
   horn: makeMaterial("WBinHornInside", "#111416", .94, .01), cavity: makeMaterial("WBinCavity", "#090b0c", .97), hardware: makeMaterial("WBinHardware", "#252b2f", .72, .18),
 };
+const kickHorn = {
+  cabinet: makeMaterial("KickHornCabinet", "#242423", .9, .01), frame: makeMaterial("KickHornFrame", "#36434a", .82, .04),
+  flare: makeMaterial("KickHornFlare", "#20262a", .9, .01), cavity: makeMaterial("KickHornCavity", "#090b0c", .97), hardware: makeMaterial("KickHornHardware", "#252b2f", .72, .18),
+};
+kickHorn.flare.side = THREE.DoubleSide;
 const hifi = { ...shared, cabinet: makeMaterial("WoodCabinet", "#76583c", .72, .01), horn: makeMaterial("WoodHorn", "#b2875b", .66, .01), woofer: makeMaterial("HiFiWoofer", "#292d30", .8, .01), metal: makeMaterial("HiFiMetal", "#9a9c99", .5, .22) };
 
 function add(root, geometry, material, name, position = [0, 0, 0], rotation = [0, 0, 0]) {
@@ -93,6 +98,24 @@ function roundedPanelXZ(root, start, end, height, y, material, name) {
   const dx = end[0] - start[0], dz = end[1] - start[1]; const length = Math.hypot(dx, dz);
   roundedBox(root, [length, height, .038], material, name, [(start[0]+end[0])/2, y, (start[1]+end[1])/2], [0, -Math.atan2(dz, dx), 0], 1, .008);
 }
+function facetedHornGeometry(sections) {
+  const positions = [], indices = [];
+  const addQuad = (a, b, c, d) => {
+    const offset = positions.length / 3;
+    for (const point of [a,b,c,d]) positions.push(...point);
+    indices.push(offset,offset+1,offset+2,offset,offset+2,offset+3);
+  };
+  for (let index = 0; index < sections.length - 1; index += 1) {
+    const a = sections[index], b = sections[index + 1];
+    addQuad([-a.w,-a.h,a.z],[a.w,-a.h,a.z],[b.w,-b.h,b.z],[-b.w,-b.h,b.z]);
+    addQuad([a.w,-a.h,a.z],[a.w,a.h,a.z],[b.w,b.h,b.z],[b.w,-b.h,b.z]);
+    addQuad([a.w,a.h,a.z],[-a.w,a.h,a.z],[-b.w,b.h,b.z],[b.w,b.h,b.z]);
+    addQuad([-a.w,a.h,a.z],[-a.w,-a.h,a.z],[-b.w,-b.h,b.z],[-b.w,b.h,b.z]);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position",new THREE.Float32BufferAttribute(positions,3));
+  geometry.setIndex(indices); geometry.computeVertexNormals(); return geometry;
+}
 function normalizeAndBake(scene, [targetWidth, targetHeight, targetDepth]) {
   scene.updateMatrixWorld(true); const bounds = new THREE.Box3().setFromObject(scene); const size = bounds.getSize(new THREE.Vector3()); const center = bounds.getCenter(new THREE.Vector3());
   if ([size.x,size.y,size.z].some((value) => !Number.isFinite(value) || value <= 0)) throw new Error("Invalid generated bounds");
@@ -142,7 +165,44 @@ const builders = {
 
     roundedBox(root,[w*.085,h*.075,.026],wBin.cavity,"EmitterLow",[0,mouthY,-d*.43],[0,0,0],1,.006);
   },
-  kickHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.77,front-.025,h*.5,freeparty.baffle); horn(root,{width:w*.78,height:h*.58,depth:d*.48,y:h*.5,front,emitter:"EmitterLow",materials:freeparty,throatScale:.16}); box(root,[.035,h*.53,d*.28],freeparty.trim,"HornBrace",[0,h*.5,front-d*.14]); },
+  kickHorn(root, body) {
+    const [w,h,d] = body, wall = .042, front = d / 2 - .014, floor = .045;
+    roundedBox(root,[w,wall,d],kickHorn.cabinet,"Cabinet",[0,floor + wall / 2,0],[0,0,0],2,.012);
+    roundedBox(root,[w,wall,d],kickHorn.cabinet,"CabinetTop",[0,h - wall / 2,0],[0,0,0],2,.012);
+    roundedBox(root,[wall,h - floor - wall,d],kickHorn.cabinet,"CabinetLeft",[-w / 2 + wall / 2,(h + floor) / 2,0],[0,0,0],2,.012);
+    roundedBox(root,[wall,h - floor - wall,d],kickHorn.cabinet,"CabinetRight",[w / 2 - wall / 2,(h + floor) / 2,0],[0,0,0],2,.012);
+    roundedBox(root,[w - 2 * wall,h - floor - 2 * wall,wall],kickHorn.cabinet,"CabinetBack",[0,(h + floor) / 2,-d / 2 + wall / 2],[0,0,0],2,.01);
+
+    const mouthWidth = w * .91, mouthHeight = h * .82, mouthY = h * .5, hornDepth = d * .72;
+    const frameThickness = .042;
+    roundedBox(root,[mouthWidth,frameThickness,.06],kickHorn.frame,"FrontFrameTop",[0,mouthY+mouthHeight/2-frameThickness/2,front],[0,0,0],1,.008);
+    roundedBox(root,[mouthWidth,frameThickness,.06],kickHorn.frame,"FrontFrameBottom",[0,mouthY-mouthHeight/2+frameThickness/2,front],[0,0,0],1,.008);
+    roundedBox(root,[frameThickness,mouthHeight-2*frameThickness,.06],kickHorn.frame,"FrontFrameLeft",[-mouthWidth/2+frameThickness/2,mouthY,front],[0,0,0],1,.008);
+    roundedBox(root,[frameThickness,mouthHeight-2*frameThickness,.06],kickHorn.frame,"FrontFrameRight",[mouthWidth/2-frameThickness/2,mouthY,front],[0,0,0],1,.008);
+
+    const sections = [
+      { w: mouthWidth*.48, h: mouthHeight*.47, z: 0 },
+      { w: mouthWidth*.405, h: mouthHeight*.39, z: -hornDepth*.22 },
+      { w: mouthWidth*.30, h: mouthHeight*.295, z: -hornDepth*.46 },
+      { w: mouthWidth*.19, h: mouthHeight*.205, z: -hornDepth*.69 },
+      { w: mouthWidth*.09, h: mouthHeight*.105, z: -hornDepth },
+    ];
+    add(root,facetedHornGeometry(sections),kickHorn.flare,"FacetedHornFlare",[0,mouthY,front-.03]);
+    roundedBox(root,[mouthWidth*.185,mouthHeight*.22,.055],kickHorn.cavity,"HornThroat",[0,mouthY,front-hornDepth-.018],[0,0,0],1,.01);
+    roundedBox(root,[mouthWidth*.27,mouthHeight*.34,d*.16],kickHorn.cabinet,"RearDriverChamber",[0,mouthY,-d*.5+d*.08],[0,0,0],1,.012);
+    roundedBox(root,[mouthWidth*.09,mouthHeight*.10,.026],kickHorn.cavity,"EmitterLow",[0,mouthY,front-hornDepth-.045],[0,0,0],1,.006);
+
+    roundedBox(root,[mouthWidth*.91,.032,d*.34],kickHorn.frame,"HorizontalBrace",[0,mouthY,front-d*.17],[0,0,0],1,.006);
+    for (const side of [-1,1]) roundedBox(root,[.03,mouthHeight*.86,d*.23],kickHorn.frame,side < 0 ? "VerticalBraceLeft" : "VerticalBraceRight",[side*mouthWidth*.255,mouthY,front-d*.115],[0,0,0],1,.006);
+
+    for (const side of [-1,1]) {
+      const x = side * (w / 2 - .007);
+      roundedBox(root,[.017,h*.21,d*.2],kickHorn.cavity,side < 0 ? "SideHandleLeft" : "SideHandleRight",[x,h*.53,-d*.08],[0,0,0],1,.008);
+      roundedBox(root,[.023,h*.025,d*.12],kickHorn.hardware,side < 0 ? "SideGripLeft" : "SideGripRight",[x+side*.005,h*.53,-d*.08],[0,0,0],1,.006);
+    }
+    for (const x of [-w*.38,w*.38]) roundedBox(root,[w*.13,.045,d*.13],kickHorn.hardware,"CabinetFoot",[x,.0225,-d*.27],[0,0,0],1,.007);
+    for (const x of [-w*.475,w*.475]) for (const y of [h*.1,h*.9]) for (const z of [-d*.475,d*.475]) roundedBox(root,[.045,.045,.045],kickHorn.hardware,"CornerProtector",[x,y,z],[0,0,0],1,.008);
+  },
   midHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.77,front-.025,h*.5,freeparty.baffle); horn(root,{width:w*.76,height:h*.6,depth:d*.55,y:h*.52,front,emitter:"EmitterMid",materials:freeparty,throatScale:.13}); },
   topHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.74,front-.022,h*.5,freeparty.baffle); horn(root,{width:w*.75,height:h*.55,depth:d*.5,y:h*.5,front,emitter:"EmitterHigh",materials:freeparty,throatScale:.1}); },
   festivalSub(root, body) { const [w,h]=body,{front}=shell(root,body,shared.cabinet,shared.metal); baffle(root,w*.9,h*.76,front-.025,h*.5,shared.baffle); woofer(root,h*.285,-w*.235,h*.52,front,"EmitterLow"); woofer(root,h*.285,w*.235,h*.52,front,"DriverLow"); frame(root,w*.91,h*.78,front+.002,h*.5,shared.metal,.025); },
