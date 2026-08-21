@@ -76,7 +76,7 @@ function Kick({ activity, glowStrength }: { activity: number; glowStrength: numb
   </group>;
 }
 function WoodenMidHorn({ x, front, materials, activity, glowStrength }: { x: number; front: number; materials: ReturnType<typeof useScoopMaterials>; activity: number; glowStrength: number }) {
-  const mouthWidth = .47; const mouthHeight = .52; const throatZ = front - .43;
+  const mouthWidth = .4; const mouthHeight = .52; const throatZ = front - .43;
   return <group position={[x, 0, 0]}>
     <mesh geometry={box} position={[0, 0, throatZ]} scale={[.09, .07, .045]} material={materials.cavity} />
     <mesh geometry={box} position={[0, 0, throatZ + .025]} scale={[.055, .042, .026]} material={materials.hardware} />
@@ -84,14 +84,14 @@ function WoodenMidHorn({ x, front, materials, activity, glowStrength }: { x: num
     <mesh geometry={box} position={[0, -mouthHeight * .34, front - .105]} rotation={[.24, 0, 0]} scale={[mouthWidth, .038, .24]} material={materials.horn} />
     <mesh geometry={box} position={[-mouthWidth * .36, 0, front - .105]} rotation={[0, .27, 0]} scale={[.038, mouthHeight * .72, .24]} material={materials.horn} />
     <mesh geometry={box} position={[mouthWidth * .36, 0, front - .105]} rotation={[0, -.27, 0]} scale={[.038, mouthHeight * .72, .24]} material={materials.horn} />
-    <mesh geometry={box} position={[0, .115, front - .285]} rotation={[-.22, 0, 0]} scale={[.255, .033, .19]} material={materials.recess} />
-    <mesh geometry={box} position={[0, -.115, front - .285]} rotation={[.22, 0, 0]} scale={[.255, .033, .19]} material={materials.recess} />
-    <mesh geometry={box} position={[-.14, 0, front - .285]} rotation={[0, .25, 0]} scale={[.033, .25, .19]} material={materials.recess} />
-    <mesh geometry={box} position={[.14, 0, front - .285]} rotation={[0, -.25, 0]} scale={[.033, .25, .19]} material={materials.recess} />
-    <mesh geometry={box} position={[0, .047, front - .385]} rotation={[-.18, 0, 0]} scale={[.13, .028, .105]} material={materials.horn} />
-    <mesh geometry={box} position={[0, -.047, front - .385]} rotation={[.18, 0, 0]} scale={[.13, .028, .105]} material={materials.horn} />
-    <mesh geometry={box} position={[-.07, 0, front - .385]} rotation={[0, .2, 0]} scale={[.028, .13, .105]} material={materials.horn} />
-    <mesh geometry={box} position={[.07, 0, front - .385]} rotation={[0, -.2, 0]} scale={[.028, .13, .105]} material={materials.horn} />
+    <mesh geometry={box} position={[0, .115, front - .285]} rotation={[-.22, 0, 0]} scale={[.218, .033, .19]} material={materials.recess} />
+    <mesh geometry={box} position={[0, -.115, front - .285]} rotation={[.22, 0, 0]} scale={[.218, .033, .19]} material={materials.recess} />
+    <mesh geometry={box} position={[-.12, 0, front - .285]} rotation={[0, .25, 0]} scale={[.033, .25, .19]} material={materials.recess} />
+    <mesh geometry={box} position={[.12, 0, front - .285]} rotation={[0, -.25, 0]} scale={[.033, .25, .19]} material={materials.recess} />
+    <mesh geometry={box} position={[0, .047, front - .385]} rotation={[-.18, 0, 0]} scale={[.112, .028, .105]} material={materials.horn} />
+    <mesh geometry={box} position={[0, -.047, front - .385]} rotation={[.18, 0, 0]} scale={[.112, .028, .105]} material={materials.horn} />
+    <mesh geometry={box} position={[-.06, 0, front - .385]} rotation={[0, .2, 0]} scale={[.028, .13, .105]} material={materials.horn} />
+    <mesh geometry={box} position={[.06, 0, front - .385]} rotation={[0, -.2, 0]} scale={[.028, .13, .105]} material={materials.horn} />
     <SpeakerEmitterGlow band="mid" activity={activity} position={[0, 0, throatZ + .055]} size={.16} strength={glowStrength} />
   </group>;
 }
@@ -109,20 +109,20 @@ function MidHorn({ activity, glowStrength }: { activity: number; glowStrength: n
     <mesh geometry={box} position={[body.width / 2 - rail / 2, 0, front + .025]} scale={[rail, body.height, .07]} material={materials.frame} />
     <mesh geometry={box} position={[0, 0, front + .026]} scale={[.07, body.height - rail * 2, .07]} material={materials.frame} />
     <mesh geometry={box} position={[0, 0, front - .035]} scale={[innerWidth, body.height - rail * 2, .045]} material={materials.cavity} />
-    <WoodenMidHorn x={-.265} front={front} materials={materials} activity={activity} glowStrength={glowStrength} />
-    <WoodenMidHorn x={.265} front={front} materials={materials} activity={activity} glowStrength={glowStrength} />
+    <WoodenMidHorn x={-.223} front={front} materials={materials} activity={activity} glowStrength={glowStrength} />
+    <WoodenMidHorn x={.223} front={front} materials={materials} activity={activity} glowStrength={glowStrength} />
   </group>;
 }
 function TopDriver({ x, y, front, materials }: { x: number; y: number; front: number; materials: ReturnType<typeof useScoopMaterials> }) {
   return <group position={[x, y, 0]}>
-    <mesh geometry={box} position={[0, 0, front - .035]} scale={[.115, .115, .04]} material={materials.recess} />
-    <mesh position={[0, 0, front + .01]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[.043, .043, .03, 12]} /><primitive object={materials.hardware} attach="material" /></mesh>
-    <mesh position={[0, 0, front + .029]}><torusGeometry args={[.03, .008, 5, 12]} /><primitive object={materials.surround} attach="material" /></mesh>
-    <mesh position={[0, 0, front + .025]} scale={[1, 1, .4]}><sphereGeometry args={[.025, 10, 5]} /><primitive object={materials.dustCap} attach="material" /></mesh>
+    <mesh geometry={box} position={[0, 0, front - .035]} scale={[.104, .104, .04]} material={materials.recess} />
+    <mesh position={[0, 0, front + .01]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[.039, .039, .03, 12]} /><primitive object={materials.hardware} attach="material" /></mesh>
+    <mesh position={[0, 0, front + .029]}><torusGeometry args={[.027, .007, 5, 12]} /><primitive object={materials.surround} attach="material" /></mesh>
+    <mesh position={[0, 0, front + .025]} scale={[1, 1, .4]}><sphereGeometry args={[.023, 10, 5]} /><primitive object={materials.dustCap} attach="material" /></mesh>
   </group>;
 }
 function Top({ activity, glowStrength }: { activity: number; glowStrength: number }) {
-  const materials = useScoopMaterials(); const body = getSpeakerModel("reggae-top", "high").body; const front = body.depth / 2 - .045; const rail = .06; const hornWidth = .48; const hornHeight = .19; const throatZ = front - .245;
+  const materials = useScoopMaterials(); const body = getSpeakerModel("reggae-top", "high").body; const front = body.depth / 2 - .045; const rail = .06; const hornWidth = .41; const hornHeight = .19; const throatZ = front - .245;
   return <group>
     <mesh geometry={box} position={[0, 0, -body.depth / 2 + .032]} scale={[body.width, body.height, .064]} material={materials.cabinet} />
     <mesh geometry={box} position={[-body.width / 2 + .032, 0, 0]} scale={[.064, body.height, body.depth]} material={materials.cabinet} />
@@ -133,21 +133,21 @@ function Top({ activity, glowStrength }: { activity: number; glowStrength: numbe
     <mesh geometry={box} position={[0, -body.height / 2 + rail / 2, front + .024]} scale={[body.width, rail, .065]} material={materials.frame} />
     <mesh geometry={box} position={[-body.width / 2 + rail / 2, 0, front + .024]} scale={[rail, body.height, .065]} material={materials.frame} />
     <mesh geometry={box} position={[body.width / 2 - rail / 2, 0, front + .024]} scale={[rail, body.height, .065]} material={materials.frame} />
-    <mesh geometry={box} position={[0, 0, front - .025]} scale={[.55, .26, .045]} material={materials.cavity} />
+    <mesh geometry={box} position={[0, 0, front - .025]} scale={[.47, .26, .045]} material={materials.cavity} />
     <mesh geometry={box} position={[0, hornHeight * .34, front - .07]} rotation={[-.2, 0, 0]} scale={[hornWidth, .028, .15]} material={materials.horn} />
     <mesh geometry={box} position={[0, -hornHeight * .34, front - .07]} rotation={[.2, 0, 0]} scale={[hornWidth, .028, .15]} material={materials.horn} />
     <mesh geometry={box} position={[-hornWidth * .36, 0, front - .07]} rotation={[0, .22, 0]} scale={[.028, hornHeight * .72, .15]} material={materials.horn} />
     <mesh geometry={box} position={[hornWidth * .36, 0, front - .07]} rotation={[0, -.22, 0]} scale={[.028, hornHeight * .72, .15]} material={materials.horn} />
-    <mesh geometry={box} position={[0, .045, front - .175]} rotation={[-.16, 0, 0]} scale={[.25, .024, .11]} material={materials.recess} />
-    <mesh geometry={box} position={[0, -.045, front - .175]} rotation={[.16, 0, 0]} scale={[.25, .024, .11]} material={materials.recess} />
-    <mesh geometry={box} position={[-.135, 0, front - .175]} rotation={[0, .18, 0]} scale={[.024, .105, .11]} material={materials.recess} />
-    <mesh geometry={box} position={[.135, 0, front - .175]} rotation={[0, -.18, 0]} scale={[.024, .105, .11]} material={materials.recess} />
+    <mesh geometry={box} position={[0, .045, front - .175]} rotation={[-.16, 0, 0]} scale={[.215, .024, .11]} material={materials.recess} />
+    <mesh geometry={box} position={[0, -.045, front - .175]} rotation={[.16, 0, 0]} scale={[.215, .024, .11]} material={materials.recess} />
+    <mesh geometry={box} position={[-.115, 0, front - .175]} rotation={[0, .18, 0]} scale={[.024, .105, .11]} material={materials.recess} />
+    <mesh geometry={box} position={[.115, 0, front - .175]} rotation={[0, -.18, 0]} scale={[.024, .105, .11]} material={materials.recess} />
     <mesh geometry={box} position={[0, 0, throatZ]} scale={[.07, .035, .04]} material={materials.cavity} />
     <mesh geometry={box} position={[0, 0, throatZ + .023]} scale={[.04, .022, .025]} material={materials.hardware} />
-    <TopDriver x={-.38} y={.09} front={front} materials={materials} />
-    <TopDriver x={-.38} y={-.09} front={front} materials={materials} />
-    <TopDriver x={.38} y={.09} front={front} materials={materials} />
-    <TopDriver x={.38} y={-.09} front={front} materials={materials} />
+    <TopDriver x={-.315} y={.09} front={front} materials={materials} />
+    <TopDriver x={-.315} y={-.09} front={front} materials={materials} />
+    <TopDriver x={.315} y={.09} front={front} materials={materials} />
+    <TopDriver x={.315} y={-.09} front={front} materials={materials} />
     <SpeakerEmitterGlow band="high" activity={activity} position={[0, 0, throatZ + .06]} size={.17} strength={glowStrength} />
   </group>;
 }
