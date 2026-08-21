@@ -1,6 +1,7 @@
 import type { SpeakerFamily, SpeakerModelId } from "@/lib/speakerModels";
+import type { StackAlignment } from "@/lib/speakerStacking";
 
-export type PresetSpeaker = { key: string; modelId: SpeakerModelId; x: number; y: number; z?: number; yaw?: number; level: number; stackOn?: string };
+export type PresetSpeaker = { key: string; modelId: SpeakerModelId; x: number; y: number; z?: number; yaw?: number; level: number; stackOn?: string; stackAlign?: StackAlignment };
 export type SystemPreset = { id: string; label: string; family: SpeakerFamily; description: string; speakers: PresetSpeaker[] };
 const p = (key: string, modelId: SpeakerModelId, x: number, y: number, level: number, stackOn?: string, yaw?: number): PresetSpeaker => ({ key, modelId, x, y, level, ...(stackOn ? { stackOn } : {}), ...(yaw === undefined ? {} : { yaw }) });
 

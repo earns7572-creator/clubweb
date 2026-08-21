@@ -9,11 +9,12 @@ import { getSpeakerModel, resolveModelId, type CharacterFilter, type SpeakerMode
 import { bassEnergy } from "@/lib/bassPressure";
 import { sceneToAudioPosition, speakerToAudioPosition } from "@/lib/spatialCoordinates";
 import { speakerOrientationToAudioOrientation } from "@/lib/speakerOrientation";
+import type { StackAlignment } from "@/lib/speakerStacking";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
 export type ClubListener = { name: string; position: Position3D; orientation: { yaw: number; pitch: number } };
-export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; orientation?: { yaw: number }; stackParentId?: string | null; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
+export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; orientation?: { yaw: number }; stackParentId?: string | null; stackAlign?: StackAlignment; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
 type Voice = { output: GainNode; stop?: () => void; media?: HTMLAudioElement; dispose?: () => void };
@@ -123,7 +124,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null);
   const topologyKey = useMemo(() => `${activeSourceId}:${sources.map((source) => `${source.id}:${source.category}:${source.localUrl ?? ""}`).join("|")}:${speakers.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}`).sort().join("|")}`, [activeSourceId, sources, speakers]);
   const speakerDspKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}:${speaker.level}:${speaker.muted}:${speaker.eq.low.frequency}:${speaker.eq.low.gainDb}:${speaker.eq.lowMid.frequency}:${speaker.eq.lowMid.gainDb}:${speaker.eq.lowMid.q}:${speaker.eq.highMid.frequency}:${speaker.eq.highMid.gainDb}:${speaker.eq.highMid.q}:${speaker.eq.high.frequency}:${speaker.eq.high.gainDb}`).join("|"), [speakers]);
-  const speakerPositionKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.position.x}:${speaker.position.y}:${speaker.position.z}:${speaker.stackParentId ?? "floor"}`).join("|"), [speakers]);
+  const speakerPositionKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.position.x}:${speaker.position.y}:${speaker.position.z}:${speaker.stackParentId ?? "floor"}:${speaker.stackAlign ?? "center"}`).join("|"), [speakers]);
   const speakerOrientationKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.orientation?.yaw ?? 0}`).join("|"), [speakers]);
   const listenerPositionKey = `${listener.position.x}:${listener.position.y}:${listener.position.z}`;
   const listenerOrientationKey = `${listener.orientation.yaw}:${listener.orientation.pitch}`;
