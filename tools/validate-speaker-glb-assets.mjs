@@ -72,7 +72,7 @@ async function validate(spec) {
   if (Math.abs(center.x) > .005) errors.push(`center X ${round(center.x)} is not zero`);
   if (Math.abs(center.z) > .005) errors.push(`center Z ${round(center.z)} is not zero`);
   if (Math.abs(bounds.min.x) > spec.body[0]/2+.01 || Math.abs(bounds.max.x) > spec.body[0]/2+.01 || bounds.min.y < -.01 || bounds.max.y > spec.body[1]+.01 || Math.abs(bounds.min.z) > spec.body[2]/2+.01 || Math.abs(bounds.max.z) > spec.body[2]/2+.01) errors.push("outlier geometry exceeds target envelope");
-  const allowedCabinets = spec.family === "hifi" ? new Set(["#76583c"]) : spec.family === "freeparty" ? new Set(["#64696d"]) : new Set(["#70767b"]);
+  const allowedCabinets = spec.id === "freeparty-wbin" ? new Set(["#242423"]) : spec.family === "hifi" ? new Set(["#76583c"]) : spec.family === "freeparty" ? new Set(["#64696d"]) : new Set(["#70767b"]);
   if (![...cabinetColors].some((color) => allowedCabinets.has(color))) errors.push(`cabinet palette invalid: ${[...cabinetColors].join(", ") || "missing"}`);
 
   return { errors, data: {

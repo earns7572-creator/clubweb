@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import * as THREE from "three";
 import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
 import { PROTECTED_FAMILIES, REPRESENTATIVE_IDS, SPEAKER_GLB_SPECS } from "./speaker-glb-specs.mjs";
 
 globalThis.FileReader ??= class FileReader {
@@ -14,6 +15,7 @@ globalThis.FileReader ??= class FileReader {
 const rootDirectory = path.resolve(import.meta.dirname, "..");
 const outputDirectory = path.join(rootDirectory, "client/public/models/speakers");
 const representativeOnly = process.argv.includes("--representative");
+const requestedId = process.argv.find((argument) => argument.startsWith("--id="))?.slice(5);
 if (process.argv.includes("--force-protected")) throw new Error("Protected-family generation is intentionally unavailable in this repair pipeline.");
 if (SPEAKER_GLB_SPECS.some((spec) => PROTECTED_FAMILIES.has(spec.family))) throw new Error("Protected Reggae/Modern family found in generation specs.");
 
@@ -28,6 +30,10 @@ const shared = {
   trim: makeMaterial("DarkTrim", "#42484d", .86, .02),
 };
 const freeparty = { ...shared, cabinet: makeMaterial("FreePartyCabinet", "#64696d", .88, .02), baffle: makeMaterial("FreePartyBaffle", "#353a3e", .9, .01), horn: makeMaterial("FreePartyHorn", "#50575c", .84, .02) };
+const wBin = {
+  cabinet: makeMaterial("WBinCabinet", "#242423", .9, .01), frame: makeMaterial("WBinFrame", "#36434a", .82, .04),
+  horn: makeMaterial("WBinHornInside", "#111416", .94, .01), cavity: makeMaterial("WBinCavity", "#090b0c", .97), hardware: makeMaterial("WBinHardware", "#252b2f", .72, .18),
+};
 const hifi = { ...shared, cabinet: makeMaterial("WoodCabinet", "#76583c", .72, .01), horn: makeMaterial("WoodHorn", "#b2875b", .66, .01), woofer: makeMaterial("HiFiWoofer", "#292d30", .8, .01), metal: makeMaterial("HiFiMetal", "#9a9c99", .5, .22) };
 
 function add(root, geometry, material, name, position = [0, 0, 0], rotation = [0, 0, 0]) {
@@ -35,6 +41,7 @@ function add(root, geometry, material, name, position = [0, 0, 0], rotation = [0
   mesh.position.set(...position); mesh.rotation.set(...rotation); root.add(mesh); return mesh;
 }
 const box = (root, size, material, name, position, rotation) => add(root, new THREE.BoxGeometry(...size), material, name, position, rotation);
+const roundedBox = (root, size, material, name, position, rotation = [0, 0, 0], segments = 1, radius = .01) => add(root, new RoundedBoxGeometry(...size, segments, radius), material, name, position, rotation);
 function shell(root, [width, height, depth], material, trim = shared.trim) {
   const t = Math.min(width, height, depth) * .045;
   box(root, [width, t, depth], material, "Cabinet", [0, t / 2, 0]);
@@ -86,6 +93,10 @@ function brace(root, start, end, depth, material, name = "HornBrace") {
   const dx = end[0] - start[0], dy = end[1] - start[1]; const length = Math.hypot(dx, dy);
   box(root, [length, Math.min(.035, length * .08), depth], material, name, [(start[0]+end[0])/2, (start[1]+end[1])/2, start[2]], [0, 0, Math.atan2(dy, dx)]);
 }
+function roundedBrace(root, start, end, depth, material, name) {
+  const dx = end[0] - start[0], dy = end[1] - start[1]; const length = Math.hypot(dx, dy);
+  roundedBox(root, [length, .038, depth], material, name, [(start[0]+end[0])/2, (start[1]+end[1])/2, start[2]], [0, 0, Math.atan2(dy, dx)], 1, .008);
+}
 function normalizeAndBake(scene, [targetWidth, targetHeight, targetDepth]) {
   scene.updateMatrixWorld(true); const bounds = new THREE.Box3().setFromObject(scene); const size = bounds.getSize(new THREE.Vector3()); const center = bounds.getCenter(new THREE.Vector3());
   if ([size.x,size.y,size.z].some((value) => !Number.isFinite(value) || value <= 0)) throw new Error("Invalid generated bounds");
@@ -98,10 +109,37 @@ function makeScene(label, body, builder) { const scene = new THREE.Scene(); scen
 
 const builders = {
   wBin(root, body) {
-    const [w,h,d] = body, { front } = shell(root, body, freeparty.cabinet, freeparty.trim); baffle(root,w*.88,h*.76,front-d*.34,h*.5,freeparty.cavity);
-    const points = [[-w*.42,h*.76],[-w*.22,h*.18],[0,h*.57],[w*.22,h*.18],[w*.42,h*.76]];
-    for (let i=0;i<4;i++) brace(root,[...points[i],front-d*.19],[...points[i+1],front-d*.19],d*.48,freeparty.horn,"WHornPath");
-    frame(root,w*.88,h*.76,front,h*.5,freeparty.trim,.035); box(root,[w*.1,h*.1,.025],freeparty.cavity,"EmitterLow",[0,h*.51,front-d*.47]);
+    const [w,h,d] = body, wall = .045, front = d / 2 - .014, floor = .055;
+    roundedBox(root,[w,wall,d],wBin.cabinet,"Cabinet",[0,floor + wall / 2,0],[0,0,0],2,.014);
+    roundedBox(root,[w,wall,d],wBin.cabinet,"CabinetTop",[0,h - wall / 2,0],[0,0,0],2,.014);
+    roundedBox(root,[wall,h - floor - wall,d],wBin.cabinet,"CabinetLeft",[-w / 2 + wall / 2,(h + floor) / 2,0],[0,0,0],2,.014);
+    roundedBox(root,[wall,h - floor - wall,d],wBin.cabinet,"CabinetRight",[w / 2 - wall / 2,(h + floor) / 2,0],[0,0,0],2,.014);
+    roundedBox(root,[w - 2 * wall,h - floor - 2 * wall,wall],wBin.cabinet,"CabinetBack",[0,(h + floor) / 2,-d / 2 + wall / 2],[0,0,0],2,.012);
+
+    box(root,[w * .89,h * .76,.026],wBin.cavity,"HornMouthVoid",[0,h * .5,front - d * .39]);
+    const frameWidth = w * .92, frameHeight = h * .82, frameThickness = .043;
+    roundedBox(root,[frameWidth,frameThickness,.06],wBin.frame,"FrontFrameTop",[0,h * .5 + frameHeight / 2 - frameThickness / 2,front],[0,0,0],1,.009);
+    roundedBox(root,[frameWidth,frameThickness,.06],wBin.frame,"FrontFrameBottom",[0,h * .5 - frameHeight / 2 + frameThickness / 2,front],[0,0,0],1,.009);
+    roundedBox(root,[frameThickness,frameHeight - 2 * frameThickness,.06],wBin.frame,"FrontFrameLeft",[-frameWidth / 2 + frameThickness / 2,h * .5,front],[0,0,0],1,.009);
+    roundedBox(root,[frameThickness,frameHeight - 2 * frameThickness,.06],wBin.frame,"FrontFrameRight",[frameWidth / 2 - frameThickness / 2,h * .5,front],[0,0,0],1,.009);
+
+    const pathZ = front - d * .25, pathDepth = d * .54;
+    const points = [[-w*.41,h*.79],[-w*.23,h*.2],[0,h*.58],[w*.23,h*.2],[w*.41,h*.79]];
+    for (let index = 0; index < 4; index += 1) roundedBrace(root,[...points[index],pathZ],[...points[index + 1],pathZ],pathDepth,wBin.horn,`HornPathPanel${index + 1}`);
+    roundedBox(root,[.042,h*.68,pathDepth],wBin.frame,"CentralSplitter",[0,h*.5,pathZ],[0,0,0],1,.008);
+    roundedBox(root,[w*.34,.032,d*.42],wBin.horn,"InternalBraceLeft",[-w*.27,h*.48,front-d*.27],[0,0,-.12],1,.007);
+    roundedBox(root,[w*.34,.032,d*.42],wBin.horn,"InternalBraceRight",[w*.27,h*.48,front-d*.27],[0,0,.12],1,.007);
+    roundedBox(root,[w*.82,.048,.075],wBin.frame,"FrontLowerReinforcement",[0,h*.13,front+.002],[0,0,0],1,.01);
+
+    for (const side of [-1,1]) {
+      const x = side * (w / 2 - .008);
+      roundedBox(root,[.018,h*.2,d*.22],wBin.cavity,side < 0 ? "SideHandleLeft" : "SideHandleRight",[x,h*.56,-d*.07],[0,0,0],1,.008);
+      roundedBox(root,[.024,h*.025,d*.13],wBin.hardware,side < 0 ? "SideGripLeft" : "SideGripRight",[x + side*.006,h*.56,-d*.07],[0,0,0],1,.006);
+    }
+    for (const x of [-w*.43,w*.43]) for (const z of [-d*.34,d*.34]) roundedBox(root,[w*.12,.055,d*.14],wBin.hardware,"PalletFoot",[x,.0275,z],[0,0,0],1,.008);
+    for (const x of [-w*.475,w*.475]) for (const y of [h*.09,h*.91]) for (const z of [-d*.475,d*.475]) roundedBox(root,[.05,.05,.05],wBin.hardware,"CornerProtector",[x,y,z],[0,0,0],1,.009);
+
+    roundedBox(root,[w*.085,h*.075,.026],wBin.cavity,"EmitterLow",[0,h*.57,-d*.43],[0,0,0],1,.006);
   },
   kickHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.77,front-.025,h*.5,freeparty.baffle); horn(root,{width:w*.78,height:h*.58,depth:d*.48,y:h*.5,front,emitter:"EmitterLow",materials:freeparty,throatScale:.16}); box(root,[.035,h*.53,d*.28],freeparty.trim,"HornBrace",[0,h*.5,front-d*.14]); },
   midHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.77,front-.025,h*.5,freeparty.baffle); horn(root,{width:w*.76,height:h*.6,depth:d*.55,y:h*.52,front,emitter:"EmitterMid",materials:freeparty,throatScale:.13}); },
@@ -125,7 +163,8 @@ const builders = {
   steppersTop(root, body) { const [w,h,d]=body,{front}=shell(root,body,shared.cabinet,shared.trim); baffle(root,w*.87,h*.74,front-.018,h*.5,shared.baffle); horn(root,{width:w*.7,height:h*.53,depth:d*.48,y:h*.5,front,emitter:"EmitterHigh",throatScale:.1}); },
 };
 
-const specs = representativeOnly ? SPEAKER_GLB_SPECS.filter((spec) => REPRESENTATIVE_IDS.has(spec.id)) : SPEAKER_GLB_SPECS;
+const specs = requestedId ? SPEAKER_GLB_SPECS.filter((spec) => spec.id === requestedId) : representativeOnly ? SPEAKER_GLB_SPECS.filter((spec) => REPRESENTATIVE_IDS.has(spec.id)) : SPEAKER_GLB_SPECS;
+if (requestedId && specs.length !== 1) throw new Error(`Unknown speaker model id: ${requestedId}`);
 await fs.mkdir(outputDirectory,{recursive:true});
 for(const spec of specs){ if(PROTECTED_FAMILIES.has(spec.family)) throw new Error(`Refusing protected family: ${spec.family}`); const scene=makeScene(spec.id,spec.body,builders[spec.build]); const destination=path.join(outputDirectory,spec.path); await fs.mkdir(path.dirname(destination),{recursive:true}); const glb=await new GLTFExporter().parseAsync(scene,{binary:true,onlyVisible:true,trs:true}); await fs.writeFile(destination,Buffer.from(glb)); console.log(`generated ${spec.path}`); }
 console.log(`Generated ${specs.length} protected-safe GLB speaker assets${representativeOnly?" (representatives)":""}.`);

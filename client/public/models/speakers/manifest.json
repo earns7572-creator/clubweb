@@ -27,18 +27,19 @@
     "bottomY": 0,
     "centerX": 0,
     "centerZ": 0,
-    "triangleCount": 228,
-    "meshCount": 19,
-    "vertexCount": 456,
-    "fileSizeKb": 34,
+    "triangleCount": 4644,
+    "meshCount": 35,
+    "vertexCount": 13920,
+    "fileSizeKb": 463.6,
     "emitters": [
       "EmitterLow"
     ],
     "materialColors": [
-      "#101316",
-      "#42484d",
-      "#50575c",
-      "#64696d"
+      "#090b0c",
+      "#111416",
+      "#242423",
+      "#252b2f",
+      "#36434a"
     ],
     "finiteVertices": true,
     "validation": "pass"
