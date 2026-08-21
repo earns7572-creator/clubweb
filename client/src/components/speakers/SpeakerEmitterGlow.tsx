@@ -66,14 +66,15 @@ const ANGULAR_HAZE_TEXTURE = createAlphaTexture((x, y) => {
 });
 
 const BAND_COLORS: Record<SpeakerEmitterBand, THREE.Color> = {
-  low: new THREE.Color("#ff3b30"), kick: new THREE.Color("#ff8a24"), mid: new THREE.Color("#ffd60a"), high: new THREE.Color("#32d05b"),
+  low: new THREE.Color("#ff3b30"), kick: new THREE.Color("#ff8a24"), mid: new THREE.Color("#ffd60a"), high: new THREE.Color("#20ef63"),
 };
+const CORE_WHITE_START: Record<SpeakerEmitterBand, number> = { low: .62, kick: .56, mid: .46, high: .34 };
 const WARM_WHITE = new THREE.Color("#fff8ee");
 const PROFILES: Record<SpeakerEmitterBand, GlowProfile> = {
-  low: { coreScale: .22, ringScale: 1, spikeScale: 1.42, hazeScale: 1.95, coreOpacity: .82, ringOpacity: .18, spikeOpacity: .10, hazeOpacity: .014, whiteMix: .40 },
-  kick: { coreScale: .21, ringScale: .98, spikeScale: 1.46, hazeScale: 2, coreOpacity: .90, ringOpacity: .22, spikeOpacity: .14, hazeOpacity: .016, whiteMix: .48 },
-  mid: { coreScale: .19, ringScale: .94, spikeScale: 1.52, hazeScale: 2.05, coreOpacity: .96, ringOpacity: .28, spikeOpacity: .18, hazeOpacity: .019, whiteMix: .58 },
-  high: { coreScale: .18, ringScale: .92, spikeScale: 1.62, hazeScale: 2.12, coreOpacity: 1, ringOpacity: .34, spikeOpacity: .24, hazeOpacity: .023, whiteMix: .72 },
+  low: { coreScale: .22, ringScale: 1.28, spikeScale: 1.85, hazeScale: 2.35, coreOpacity: .82, ringOpacity: .30, spikeOpacity: .18, hazeOpacity: .020, whiteMix: .40 },
+  kick: { coreScale: .21, ringScale: 1.30, spikeScale: 1.95, hazeScale: 2.45, coreOpacity: .90, ringOpacity: .38, spikeOpacity: .24, hazeOpacity: .024, whiteMix: .48 },
+  mid: { coreScale: .20, ringScale: 1.36, spikeScale: 2.10, hazeScale: 2.55, coreOpacity: .96, ringOpacity: .50, spikeOpacity: .34, hazeOpacity: .030, whiteMix: .58 },
+  high: { coreScale: .20, ringScale: 1.42, spikeScale: 2.30, hazeScale: 2.70, coreOpacity: 1, ringOpacity: .64, spikeOpacity: .46, hazeOpacity: .038, whiteMix: .78 },
 };
 const ignoreRaycast: THREE.Sprite["raycast"] = () => {};
 const materialFor = (map: THREE.Texture) => new THREE.SpriteMaterial({ map, transparent: true, opacity: 0, depthWrite: false, depthTest: true, blending: THREE.AdditiveBlending, toneMapped: false });
@@ -88,13 +89,14 @@ export default function SpeakerEmitterGlow({ band, activity, position = [0, 0, 0
   useEffect(() => () => { materials.core.dispose(); materials.ring.dispose(); materials.spikes.dispose(); materials.haze.dispose(); }, [materials]);
   useEffect(() => {
     const color = BAND_COLORS[band];
-    const whiteAmount = THREE.MathUtils.clamp((a - .55) / .45, 0, 1) * profile.whiteMix;
+    const whiteStart = CORE_WHITE_START[band];
+    const whiteAmount = THREE.MathUtils.clamp((a - whiteStart) / (1 - whiteStart), 0, 1) * profile.whiteMix;
     materials.core.color.copy(color).lerp(WARM_WHITE, whiteAmount);
     materials.ring.color.copy(color); materials.spikes.color.copy(color); materials.haze.color.copy(color);
-    materials.core.opacity = profile.coreOpacity * Math.pow(a, .72) * strength;
-    materials.ring.opacity = profile.ringOpacity * Math.pow(a, .95) * strength;
-    materials.spikes.opacity = profile.spikeOpacity * Math.pow(a, 1.10) * strength;
-    materials.haze.opacity = profile.hazeOpacity * Math.pow(a, 1.28) * strength;
+    materials.core.opacity = profile.coreOpacity * Math.pow(a, .68) * strength;
+    materials.ring.opacity = profile.ringOpacity * Math.pow(a, .72) * strength;
+    materials.spikes.opacity = profile.spikeOpacity * Math.pow(a, .76) * strength;
+    materials.haze.opacity = profile.hazeOpacity * Math.pow(a, .98) * strength;
     invalidate();
   }, [a, band, invalidate, materials, profile, strength]);
 
