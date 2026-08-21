@@ -27,10 +27,10 @@
     "bottomY": 0,
     "centerX": 0,
     "centerZ": 0,
-    "triangleCount": 4644,
-    "meshCount": 35,
-    "vertexCount": 13920,
-    "fileSizeKb": 463.6,
+    "triangleCount": 4968,
+    "meshCount": 38,
+    "vertexCount": 14892,
+    "fileSizeKb": 496.1,
     "emitters": [
       "EmitterLow"
     ],

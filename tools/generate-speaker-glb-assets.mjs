@@ -89,13 +89,9 @@ function horn(root, { width, height, depth, x = 0, y, front, emitter, materials 
   box(root, [width * throatScale * 1.05, height * throatScale * 1.05, .022], materials.cavity, "HornThroat", [x, y, front - depth + .012]);
   box(root, [width * throatScale * .68, height * throatScale * .68, .024], materials.cavity, emitter, [x, y, front - depth + .026]);
 }
-function brace(root, start, end, depth, material, name = "HornBrace") {
-  const dx = end[0] - start[0], dy = end[1] - start[1]; const length = Math.hypot(dx, dy);
-  box(root, [length, Math.min(.035, length * .08), depth], material, name, [(start[0]+end[0])/2, (start[1]+end[1])/2, start[2]], [0, 0, Math.atan2(dy, dx)]);
-}
-function roundedBrace(root, start, end, depth, material, name) {
-  const dx = end[0] - start[0], dy = end[1] - start[1]; const length = Math.hypot(dx, dy);
-  roundedBox(root, [length, .038, depth], material, name, [(start[0]+end[0])/2, (start[1]+end[1])/2, start[2]], [0, 0, Math.atan2(dy, dx)], 1, .008);
+function roundedPanelXZ(root, start, end, height, y, material, name) {
+  const dx = end[0] - start[0], dz = end[1] - start[1]; const length = Math.hypot(dx, dz);
+  roundedBox(root, [length, height, .038], material, name, [(start[0]+end[0])/2, y, (start[1]+end[1])/2], [0, -Math.atan2(dz, dx), 0], 1, .008);
 }
 function normalizeAndBake(scene, [targetWidth, targetHeight, targetDepth]) {
   scene.updateMatrixWorld(true); const bounds = new THREE.Box3().setFromObject(scene); const size = bounds.getSize(new THREE.Vector3()); const center = bounds.getCenter(new THREE.Vector3());
@@ -116,19 +112,24 @@ const builders = {
     roundedBox(root,[wall,h - floor - wall,d],wBin.cabinet,"CabinetRight",[w / 2 - wall / 2,(h + floor) / 2,0],[0,0,0],2,.014);
     roundedBox(root,[w - 2 * wall,h - floor - 2 * wall,wall],wBin.cabinet,"CabinetBack",[0,(h + floor) / 2,-d / 2 + wall / 2],[0,0,0],2,.012);
 
-    box(root,[w * .89,h * .76,.026],wBin.cavity,"HornMouthVoid",[0,h * .5,front - d * .39]);
+    box(root,[w * .89,h * .76,.026],wBin.cavity,"HornMouthVoid",[0,h * .5,front - d * .42]);
     const frameWidth = w * .92, frameHeight = h * .82, frameThickness = .043;
     roundedBox(root,[frameWidth,frameThickness,.06],wBin.frame,"FrontFrameTop",[0,h * .5 + frameHeight / 2 - frameThickness / 2,front],[0,0,0],1,.009);
     roundedBox(root,[frameWidth,frameThickness,.06],wBin.frame,"FrontFrameBottom",[0,h * .5 - frameHeight / 2 + frameThickness / 2,front],[0,0,0],1,.009);
     roundedBox(root,[frameThickness,frameHeight - 2 * frameThickness,.06],wBin.frame,"FrontFrameLeft",[-frameWidth / 2 + frameThickness / 2,h * .5,front],[0,0,0],1,.009);
     roundedBox(root,[frameThickness,frameHeight - 2 * frameThickness,.06],wBin.frame,"FrontFrameRight",[frameWidth / 2 - frameThickness / 2,h * .5,front],[0,0,0],1,.009);
 
-    const pathZ = front - d * .25, pathDepth = d * .54;
-    const points = [[-w*.41,h*.79],[-w*.23,h*.2],[0,h*.58],[w*.23,h*.2],[w*.41,h*.79]];
-    for (let index = 0; index < 4; index += 1) roundedBrace(root,[...points[index],pathZ],[...points[index + 1],pathZ],pathDepth,wBin.horn,`HornPathPanel${index + 1}`);
-    roundedBox(root,[.042,h*.68,pathDepth],wBin.frame,"CentralSplitter",[0,h*.5,pathZ],[0,0,0],1,.008);
-    roundedBox(root,[w*.34,.032,d*.42],wBin.horn,"InternalBraceLeft",[-w*.27,h*.48,front-d*.27],[0,0,-.12],1,.007);
-    roundedBox(root,[w*.34,.032,d*.42],wBin.horn,"InternalBraceRight",[w*.27,h*.48,front-d*.27],[0,0,.12],1,.007);
+    const mouthHeight = h * .7, mouthY = h * .5, mouthDepth = d * .48, openingWidth = w * .3;
+    roundedBox(root,[w*.19,mouthHeight,.07],wBin.frame,"CentralBaffle",[0,mouthY,front-.018],[0,0,0],1,.012);
+    for (const side of [-1,1]) {
+      roundedBox(root,[.034,mouthHeight*.92,mouthDepth],wBin.horn,side < 0 ? "VerticalPartitionLeft" : "VerticalPartitionRight",[side*w*.31,mouthY,front-mouthDepth/2],[0,0,0],1,.007);
+      roundedBox(root,[openingWidth,.034,mouthDepth],wBin.horn,side < 0 ? "HorizontalShelfLeft" : "HorizontalShelfRight",[side*w*.285,mouthY,front-mouthDepth/2],[0,0,0],1,.007);
+    }
+
+    const pathHeight = h * .62;
+    const path = [[-w*.43,front-d*.05],[-w*.12,-d*.36],[0,-d*.08],[w*.12,-d*.36],[w*.43,front-d*.05]];
+    for (let index = 0; index < 4; index += 1) roundedPanelXZ(root,path[index],path[index+1],pathHeight,mouthY,wBin.horn,`FoldedPathPanel${index+1}`);
+    roundedBox(root,[.038,pathHeight,d*.34],wBin.frame,"InternalCenterDivider",[0,mouthY,-d*.23],[0,0,0],1,.007);
     roundedBox(root,[w*.82,.048,.075],wBin.frame,"FrontLowerReinforcement",[0,h*.13,front+.002],[0,0,0],1,.01);
 
     for (const side of [-1,1]) {
@@ -139,7 +140,7 @@ const builders = {
     for (const x of [-w*.43,w*.43]) for (const z of [-d*.34,d*.34]) roundedBox(root,[w*.12,.055,d*.14],wBin.hardware,"PalletFoot",[x,.0275,z],[0,0,0],1,.008);
     for (const x of [-w*.475,w*.475]) for (const y of [h*.09,h*.91]) for (const z of [-d*.475,d*.475]) roundedBox(root,[.05,.05,.05],wBin.hardware,"CornerProtector",[x,y,z],[0,0,0],1,.009);
 
-    roundedBox(root,[w*.085,h*.075,.026],wBin.cavity,"EmitterLow",[0,h*.57,-d*.43],[0,0,0],1,.006);
+    roundedBox(root,[w*.085,h*.075,.026],wBin.cavity,"EmitterLow",[0,mouthY,-d*.43],[0,0,0],1,.006);
   },
   kickHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.77,front-.025,h*.5,freeparty.baffle); horn(root,{width:w*.78,height:h*.58,depth:d*.48,y:h*.5,front,emitter:"EmitterLow",materials:freeparty,throatScale:.16}); box(root,[.035,h*.53,d*.28],freeparty.trim,"HornBrace",[0,h*.5,front-d*.14]); },
   midHorn(root, body) { const [w,h,d]=body,{front}=shell(root,body,freeparty.cabinet,freeparty.trim); baffle(root,w*.88,h*.77,front-.025,h*.5,freeparty.baffle); horn(root,{width:w*.76,height:h*.6,depth:d*.55,y:h*.52,front,emitter:"EmitterMid",materials:freeparty,throatScale:.13}); },
