@@ -75,7 +75,44 @@ function Kick({ activity, glowStrength }: { activity: number; glowStrength: numb
     <SpeakerEmitterGlow band="kick" activity={activity} position={[0, wooferY, front + .035]} size={.3} strength={glowStrength} />
   </group>;
 }
-function MidHorn({ materials, activity, glowStrength }: { materials: ReturnType<typeof useReggaeMaterials>; activity: number; glowStrength: number }) { const body = getSpeakerModel("reggae-mid-horn", "mid").body; const front = body.depth / 2 + .014; return <><mesh geometry={box} scale={[body.width, body.height, body.depth]} material={materials.cabinet} /><HornBack width={.5} height={.48} x={-.25} y={.01} front={front} materials={materials} /><HornBack width={.5} height={.48} x={.25} y={.01} front={front} materials={materials} /><CabinetFrame width={body.width * .91} height={body.height * .82} front={front} /><Horn geometry={midHorn} emitterGeometry={midGlow} x={-.25} y={.01} frontZ={front + .04} mouthWidth={.48} mouthHeight={.46} depth={.38} throatWidth={.08} throatHeight={.06} materials={materials} activity={activity} glowBand="mid" glowStrength={glowStrength} /><Horn geometry={midHorn} emitterGeometry={midGlow} x={.25} y={.01} frontZ={front + .04} mouthWidth={.48} mouthHeight={.46} depth={.38} throatWidth={.08} throatHeight={.06} materials={materials} activity={activity} glowBand="mid" glowStrength={glowStrength} /><HornBraces xs={[0]} y={.01} height={.5} front={front + .045} horizontal={false} /></>; }
+function WoodenMidHorn({ x, front, materials, activity, glowStrength }: { x: number; front: number; materials: ReturnType<typeof useScoopMaterials>; activity: number; glowStrength: number }) {
+  const mouthWidth = .47; const mouthHeight = .52; const throatZ = front - .43;
+  return <group position={[x, 0, 0]}>
+    <mesh geometry={box} position={[0, 0, throatZ]} scale={[.09, .07, .045]} material={materials.cavity} />
+    <mesh geometry={box} position={[0, 0, throatZ + .025]} scale={[.055, .042, .026]} material={materials.hardware} />
+    <mesh geometry={box} position={[0, mouthHeight * .34, front - .105]} rotation={[-.24, 0, 0]} scale={[mouthWidth, .038, .24]} material={materials.horn} />
+    <mesh geometry={box} position={[0, -mouthHeight * .34, front - .105]} rotation={[.24, 0, 0]} scale={[mouthWidth, .038, .24]} material={materials.horn} />
+    <mesh geometry={box} position={[-mouthWidth * .36, 0, front - .105]} rotation={[0, .27, 0]} scale={[.038, mouthHeight * .72, .24]} material={materials.horn} />
+    <mesh geometry={box} position={[mouthWidth * .36, 0, front - .105]} rotation={[0, -.27, 0]} scale={[.038, mouthHeight * .72, .24]} material={materials.horn} />
+    <mesh geometry={box} position={[0, .115, front - .285]} rotation={[-.22, 0, 0]} scale={[.255, .033, .19]} material={materials.recess} />
+    <mesh geometry={box} position={[0, -.115, front - .285]} rotation={[.22, 0, 0]} scale={[.255, .033, .19]} material={materials.recess} />
+    <mesh geometry={box} position={[-.14, 0, front - .285]} rotation={[0, .25, 0]} scale={[.033, .25, .19]} material={materials.recess} />
+    <mesh geometry={box} position={[.14, 0, front - .285]} rotation={[0, -.25, 0]} scale={[.033, .25, .19]} material={materials.recess} />
+    <mesh geometry={box} position={[0, .047, front - .385]} rotation={[-.18, 0, 0]} scale={[.13, .028, .105]} material={materials.horn} />
+    <mesh geometry={box} position={[0, -.047, front - .385]} rotation={[.18, 0, 0]} scale={[.13, .028, .105]} material={materials.horn} />
+    <mesh geometry={box} position={[-.07, 0, front - .385]} rotation={[0, .2, 0]} scale={[.028, .13, .105]} material={materials.horn} />
+    <mesh geometry={box} position={[.07, 0, front - .385]} rotation={[0, -.2, 0]} scale={[.028, .13, .105]} material={materials.horn} />
+    <SpeakerEmitterGlow band="mid" activity={activity} position={[0, 0, throatZ + .055]} size={.16} strength={glowStrength} />
+  </group>;
+}
+function MidHorn({ activity, glowStrength }: { activity: number; glowStrength: number }) {
+  const materials = useScoopMaterials(); const body = getSpeakerModel("reggae-mid-horn", "mid").body; const front = body.depth / 2 - .055; const rail = .065; const innerWidth = body.width - rail * 2;
+  return <group>
+    <mesh geometry={box} position={[0, 0, -body.depth / 2 + .035]} scale={[body.width, body.height, .07]} material={materials.cabinet} />
+    <mesh geometry={box} position={[-body.width / 2 + .035, 0, 0]} scale={[.07, body.height, body.depth]} material={materials.cabinet} />
+    <mesh geometry={box} position={[body.width / 2 - .035, 0, 0]} scale={[.07, body.height, body.depth]} material={materials.cabinet} />
+    <mesh geometry={box} position={[0, body.height / 2 - .035, 0]} scale={[body.width, .07, body.depth]} material={materials.cabinet} />
+    <mesh geometry={box} position={[0, -body.height / 2 + .035, 0]} scale={[body.width, .07, body.depth]} material={materials.cabinet} />
+    <mesh geometry={box} position={[0, body.height / 2 - rail / 2, front + .025]} scale={[body.width, rail, .07]} material={materials.frame} />
+    <mesh geometry={box} position={[0, -body.height / 2 + rail / 2, front + .025]} scale={[body.width, rail, .07]} material={materials.frame} />
+    <mesh geometry={box} position={[-body.width / 2 + rail / 2, 0, front + .025]} scale={[rail, body.height, .07]} material={materials.frame} />
+    <mesh geometry={box} position={[body.width / 2 - rail / 2, 0, front + .025]} scale={[rail, body.height, .07]} material={materials.frame} />
+    <mesh geometry={box} position={[0, 0, front + .026]} scale={[.07, body.height - rail * 2, .07]} material={materials.frame} />
+    <mesh geometry={box} position={[0, 0, front - .035]} scale={[innerWidth, body.height - rail * 2, .045]} material={materials.cavity} />
+    <WoodenMidHorn x={-.265} front={front} materials={materials} activity={activity} glowStrength={glowStrength} />
+    <WoodenMidHorn x={.265} front={front} materials={materials} activity={activity} glowStrength={glowStrength} />
+  </group>;
+}
 function Top({ materials, activity, glowStrength }: { materials: ReturnType<typeof useReggaeMaterials>; activity: number; glowStrength: number }) { const body = getSpeakerModel("reggae-top", "high").body; const front = body.depth / 2 + .02; return <><mesh geometry={box} scale={[body.width, body.height, body.depth]} material={materials.cabinet} /><HornBack width={.44} height={.24} x={-.23} y={0} front={front} materials={materials} /><HornBack width={.44} height={.24} x={.23} y={0} front={front} materials={materials} /><CabinetFrame width={body.width * .91} height={body.height * .76} front={front} /><Horn geometry={topHorn} emitterGeometry={topGlow} x={-.23} y={0} frontZ={front + .04} mouthWidth={.42} mouthHeight={.22} depth={.24} throatWidth={.055} throatHeight={.032} materials={materials} activity={activity} glowBand="high" glowStrength={glowStrength} /><Horn geometry={topHorn} emitterGeometry={topGlow} x={.23} y={0} frontZ={front + .04} mouthWidth={.42} mouthHeight={.22} depth={.24} throatWidth={.055} throatHeight={.032} materials={materials} activity={activity} glowBand="high" glowStrength={glowStrength} /><HornBraces xs={[0]} y={0} height={.26} front={front + .045} horizontal={false} /></>; }
 
-export default function ReggaeSpeakerModel({ modelId, kind, activity, selected = false, glowStrength = .8 }: Props) { const materials = useReggaeMaterials(); const model = getSpeakerModel(modelId, kind); return <group>{modelId === "reggae-scoop" && <Scoop activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-kick" && <Kick activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-mid-horn" && <MidHorn materials={materials} activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-top" && <Top materials={materials} activity={activity} glowStrength={glowStrength} />}{selected && <mesh geometry={box} scale={[model.body.width * 1.018, model.body.height * 1.018, model.body.depth * 1.018]} material={selection} />}</group>; }
+export default function ReggaeSpeakerModel({ modelId, kind, activity, selected = false, glowStrength = .8 }: Props) { const materials = useReggaeMaterials(); const model = getSpeakerModel(modelId, kind); return <group>{modelId === "reggae-scoop" && <Scoop activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-kick" && <Kick activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-mid-horn" && <MidHorn activity={activity} glowStrength={glowStrength} />}{modelId === "reggae-top" && <Top materials={materials} activity={activity} glowStrength={glowStrength} />}{selected && <mesh geometry={box} scale={[model.body.width * 1.018, model.body.height * 1.018, model.body.depth * 1.018]} material={selection} />}</group>; }
