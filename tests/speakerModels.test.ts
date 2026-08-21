@@ -2,9 +2,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createDefaultEq } from "../client/src/lib/speakerEq";
 import { getSpeakerModel, modelIdsForFamily, orderedSpeakerFamilies, resolveModelId, SPEAKER_FAMILIES, SPEAKER_MODELS } from "../client/src/lib/speakerModels";
-import { REGGAE_WALL, SYSTEM_PRESETS } from "../client/src/lib/systemPresets";
+import { FREEPARTY_WALL, REGGAE_WALL, SYSTEM_PRESETS } from "../client/src/lib/systemPresets";
 import { speakerFilters } from "../client/src/lib/responseCurve";
-import { createStackResolver } from "../client/src/lib/speakerStacking";
+import { createStackResolver, STACK_ROOM_METERS } from "../client/src/lib/speakerStacking";
 import { speakerBodyForSpeaker } from "../client/src/lib/speakerDimensions";
 
 assert.equal(resolveModelId(undefined, "full"), "modern-full", "legacy speaker without modelId falls back to modern kind");
@@ -56,6 +56,10 @@ assert.equal(REGGAE_WALL.speakers.length, 8, "Reggae Sound System preset has two
 assert.equal(REGGAE_WALL.speakers.filter((speaker) => !speaker.stackOn).length, 2, "preset has two floor roots");
 assert.equal(REGGAE_WALL.speakers.filter((speaker) => speaker.stackOn).length, 6, "preset defines six stacked cabinets");
 const eq = createDefaultEq();
+const frontPlane = (speaker: typeof presetScene[number], referenceYaw: number, resolver: ReturnType<typeof createStackResolver>) => {
+  const point = resolver.getXY(speaker); const yaw = speaker.orientation?.yaw ?? 0; const body = speakerBodyForSpeaker(speaker);
+  return point.x * STACK_ROOM_METERS.width * Math.sin(referenceYaw) + point.y * STACK_ROOM_METERS.depth * Math.cos(referenceYaw) + body.depth / 2 * Math.cos(yaw - referenceYaw);
+};
 const presetIds = new Map(REGGAE_WALL.speakers.map((item) => [item.key, `preset-${item.key}`]));
 const presetScene = REGGAE_WALL.speakers.map((item) => ({ id: presetIds.get(item.key)!, kind: SPEAKER_MODELS[item.modelId].kind, modelId: item.modelId, label: item.key, position: { x: item.x, y: item.y, z: 0 }, stackParentId: item.stackOn ? presetIds.get(item.stackOn) : null, level: item.level, muted: false, responseProfileId: item.modelId, activity: 0, eq }));
 const presetResolver = createStackResolver(presetScene);
@@ -64,7 +68,12 @@ const leftKick = presetScene.find((speaker) => speaker.id === presetIds.get("lef
 const leftTop = presetScene.find((speaker) => speaker.id === presetIds.get("left-top"))!;
 assert.equal(presetResolver.getBottomMeters(leftKick), speakerBodyForSpeaker(leftScoop).height, "kick rests on scoop model height");
 assert.equal(presetResolver.getBottomMeters(leftTop), speakerBodyForSpeaker(leftScoop).height + speakerBodyForSpeaker(leftKick).height + speakerBodyForSpeaker(presetScene.find((speaker) => speaker.id === presetIds.get("left-mid"))!).height, "top inherits full physical reggae stack height");
-assert.deepEqual(presetResolver.getXY(leftTop), { x: .36, y: .36 }, "top inherits root column XY");
+assert.equal(presetResolver.getXY(leftTop).x, .36, "top keeps its centered horizontal column coordinate");
+assert.ok(presetResolver.getXY(leftTop).y > .36, "top derives its front-flush depth from the stack chain");
+for (const child of [leftKick, presetScene.find((speaker) => speaker.id === presetIds.get("left-mid"))!, leftTop]) {
+  const parent = presetResolver.byId.get(child.stackParentId!)!;
+  assert.ok(Math.abs(frontPlane(child, parent.orientation?.yaw ?? 0, presetResolver) - frontPlane(parent, parent.orientation?.yaw ?? 0, presetResolver)) < 1e-9, `Reggae ${child.label} front plane flushes with its parent`);
+}
 
 assert.equal(SYSTEM_PRESETS.length, 6, "one preset is available for every sound system scene");
 SYSTEM_PRESETS.forEach((preset) => {
@@ -93,8 +102,10 @@ SYSTEM_PRESETS.forEach((preset) => {
     const parent = resolver.byId.get(speaker.stackParentId)!;
     const gap = resolver.getBottomMeters(speaker) - (resolver.getBottomMeters(parent) + speakerBodyForSpeaker(parent).height);
     assert.ok(Math.abs(gap) < 1e-9, `${preset.label}: ${speaker.label} rests directly on its parent`);
+    assert.ok(Math.abs(frontPlane(speaker, parent.orientation?.yaw ?? 0, resolver) - frontPlane(parent, parent.orientation?.yaw ?? 0, resolver)) < 1e-9, `${preset.label}: ${speaker.label} front flushes with its parent`);
   });
 });
+assert.equal(FREEPARTY_WALL.speakers.filter((speaker) => Boolean(speaker.stackOn)).length, 6, "Free Party keeps its stack chain data without schema changes");
 
 const modernFull = { id: "modern", kind: "full" as const, modelId: "modern-full" as const, label: "Full", position: { x: .5, y: .5, z: 0 }, level: 1, muted: false, responseProfileId: "modern-full", activity: 0, eq };
 const scoop = { ...modernFull, id: "scoop", kind: "sub" as const, modelId: "reggae-scoop" as const, responseProfileId: "reggae-scoop" };

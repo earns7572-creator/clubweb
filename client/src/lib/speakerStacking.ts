@@ -17,9 +17,17 @@ function stackAlignmentOffsetMeters(parent: ClubSpeaker, child: ClubSpeaker, ali
   return 0;
 }
 
+export function stackFrontFlushOffsetMeters(parent: ClubSpeaker, child: ClubSpeaker) {
+  const parentDepth = speakerBodyForSpeaker(parent).depth; const childDepth = speakerBodyForSpeaker(child).depth; const parentYaw = parent.orientation?.yaw ?? 0; const childYaw = child.orientation?.yaw ?? 0;
+  return parentDepth / 2 - childDepth / 2 * Math.cos(childYaw - parentYaw);
+}
+
 export function stackAlignmentPoint(parent: ClubSpeaker, child: ClubSpeaker, parentPoint: StackPoint, alignment: StackAlignment): StackPoint {
-  const offset = stackAlignmentOffsetMeters(parent, child, alignment); const yaw = parent.orientation?.yaw ?? 0;
-  return { x: parentPoint.x + Math.cos(yaw) * offset / STACK_ROOM_METERS.width, y: parentPoint.y - Math.sin(yaw) * offset / STACK_ROOM_METERS.depth };
+  const lateralOffset = stackAlignmentOffsetMeters(parent, child, alignment); const frontOffset = stackFrontFlushOffsetMeters(parent, child); const yaw = parent.orientation?.yaw ?? 0;
+  return {
+    x: parentPoint.x + (Math.cos(yaw) * lateralOffset + Math.sin(yaw) * frontOffset) / STACK_ROOM_METERS.width,
+    y: parentPoint.y + (-Math.sin(yaw) * lateralOffset + Math.cos(yaw) * frontOffset) / STACK_ROOM_METERS.depth,
+  };
 }
 
 export function findStackAlignment(parent: ClubSpeaker, child: ClubSpeaker, parentPoint: StackPoint, point: StackPoint): StackAlignment {

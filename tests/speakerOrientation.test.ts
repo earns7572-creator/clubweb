@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createStackResolver } from "../client/src/lib/speakerStacking";
+import { createStackResolver, stackFrontFlushOffsetMeters } from "../client/src/lib/speakerStacking";
 import { degreesToYaw, snapYaw, speakerOrientationToAudioOrientation, yawToDegrees } from "../client/src/lib/speakerOrientation";
 import { REGGAE_WALL } from "../client/src/lib/systemPresets";
 
@@ -16,7 +16,9 @@ const speaker = (id: string, parent: string | null, yaw?: number) => ({ id, kind
 const base = speaker("base", null); const stacked = speaker("stacked", "base", Math.PI / 2);
 const before = createStackResolver([base, stacked]).getXY(stacked);
 const rotated = { ...stacked, orientation: { yaw: Math.PI } };
-assert.deepEqual(createStackResolver([base, rotated]).getXY(rotated), before, "yaw updates preserve stack relationship and resolved position");
+const after = createStackResolver([base, rotated]).getXY(rotated);
+assert.notDeepEqual(after, before, "child yaw updates the derived front-flush center while preserving the stack relationship");
+close((after.y - .6) * 8, stackFrontFlushOffsetMeters(base, rotated), "rotated child front-center remains aligned to its parent front plane");
 assert.ok(REGGAE_WALL.speakers.every((item) => (item.yaw ?? 0) === 0), "legacy preset entries without yaw resolve to zero");
 
 console.log("speaker orientation tests passed");
