@@ -116,7 +116,7 @@ export const SPEAKER_MODELS: Record<SpeakerModelId, SpeakerModelDefinition> = {
   "modern-mid": model("modern-mid", "modern", "mid", "Mid", "Mid", [.84, .88, .58], [{ type: "bandpass", frequency: 1600, q: .6 }], "modern/point-source.glb"),
   "modern-high": model("modern-high", "modern", "high", "High", "High", [1.08, .62, .72], [hp(3600)], "modern/point-source.glb"),
   "reggae-scoop": model("reggae-scoop", "reggae", "sub", "Reggae Scoop", "Scoop", [1.2, 1.65, 1.15], [hp(28), peak(55, 2.5, .8), lp(100, .85)], "reggae/scoop.glb"),
-  "reggae-kick": model("reggae-kick", "reggae", "woofer", "Reggae Kick", "Kick", [1.35, .85, 1.05], [hp(75), peak(125, 2), lp(240, .72)], "reggae/kick-bin.glb"),
+  "reggae-kick": model("reggae-kick", "reggae", "woofer", "Reggae Kick", "Kick", [1.05, .88, .9], [hp(75), peak(125, 2), lp(240, .72)], "reggae/kick-bin.glb"),
   "reggae-mid-horn": model("reggae-mid-horn", "reggae", "mid", "Reggae Mid Horn", "Mid Horn", [1.12, .72, .76], [hp(190), peak(1100, 1.5, .65), lp(4200)], "reggae/mid-horn.glb"),
   "reggae-top": model("reggae-top", "reggae", "high", "Reggae Top", "Top", [1, .42, .44], [hp(4000, .72), peak(8500, 1.5, .65)], "reggae/top.glb"),
   "freeparty-wbin": model("freeparty-wbin", "freeparty", "sub", "W-Bin Bass", "W-Bin", [1.2, .9, 1.05], [hp(35), lp(105, .8)], "freeparty/w-bin.glb"),
