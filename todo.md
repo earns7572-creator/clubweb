@@ -1,5 +1,14 @@
 # Club Craft Web — Signal Color Update
 
+## SYSTM product UI/UX migration
+
+- [x] 承認済みSYSTM仕様、提供済みの正式ロゴ、既存UIと保持対象の3D・音響・操作を照合する。
+- [x] SYSTMブランド、ロゴ、色・type・signal pixel motifの基盤を整える。
+- [x] desktopのheader、view control、SYSTEM LIBRARY、inspector、mixerを仕様に沿って再設計する。
+- [x] mobileのheader、touch target、library、bottom sheet、safe areaを再設計する。
+- [x] 3D・audio・speaker操作を回帰検証し、desktop/mobileの画面品質を確認する。
+- [ ] GitHub対象branchと公開checkpointへ保存し、結果を報告する。
+
 - [x] グレー基調を保った信号機カラーの役割を定義する。
 - [x] Floor View、Route、Speaker、音源カードへ赤・黄・緑の状態色を適用する。
 - [x] Inspectorと再生状態のコントラストを調整する。

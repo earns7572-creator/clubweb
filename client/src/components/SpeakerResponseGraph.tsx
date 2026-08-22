@@ -6,7 +6,7 @@ import { calculateCombinedMagnitudeDb, clamp, dbToY, findIntersections, frequenc
 
 type Props = { speakers: ClubSpeaker[]; selectedSpeakerId: string; onSpeakerSelect: (id: string) => void; onEqChange: (id: string, eq: SpeakerEq) => void };
 const WIDTH = 1000; const HEIGHT = 420; const PAD = { left: 54, right: 18, top: 18, bottom: 38 }; const PLOT_WIDTH = WIDTH - PAD.left - PAD.right; const PLOT_HEIGHT = HEIGHT - PAD.top - PAD.bottom;
-const colors: Record<ClubSpeaker["kind"], string> = { sub: "#d94e42", woofer: "#d2813d", full: "#8b7a61", mid: "#c1a63e", high: "#4f9b66" };
+const colors: Record<ClubSpeaker["kind"], string> = { sub: "#2f9564", woofer: "#3da66b", full: "#e6b82c", mid: "#e6b82c", high: "#e13b2b" };
 const labels: Record<ClubSpeaker["kind"], string> = { sub: "SUB", woofer: "WOOFER", full: "FULL", mid: "MID", high: "HIGH" };
 const x = (frequency: number) => PAD.left + frequencyToX(frequency, PLOT_WIDTH); const y = (db: number) => PAD.top + dbToY(db, PLOT_HEIGHT); const path = (response: ResponsePoint[]) => responseToPath(response.map((point) => ({ ...point, db: point.db })), PLOT_WIDTH, PLOT_HEIGHT).replaceAll(/([ML])([\d.]+),([\d.]+)/g, (_, command, px, py) => `${command}${Number(px) + PAD.left},${Number(py) + PAD.top}`);
 

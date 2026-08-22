@@ -1,4 +1,4 @@
-/* Club Craft scene rule: the named Listener is a tactile spatial anchor; its name must never affect the audio graph. */
+/* SYSTM UI rule: approved horn signal brand, large direct commands and equipment shelf must never alter the audio graph or 3D scene state. */
 import { memo, useEffect, useRef, useState } from "react";
 import { ChevronDown, Headphones, Music2, Palette, Pause, Play, Plus, RotateCcw, SlidersHorizontal, Volume2, VolumeX, X } from "lucide-react";
 import { type ClubListener, type ClubSource, type ClubSpeaker, useClubAudio } from "@/hooks/useClubAudio";
@@ -7,6 +7,7 @@ import SideScene from "@/components/SideScene";
 import PovPreview from "@/components/PovPreview";
 import SpeakerMixer from "@/components/SpeakerMixer";
 import SpeakerCustomPanel from "@/components/SpeakerCustomPanel";
+import SystmLogo from "@/components/SystmLogo";
 import FirstUseOnboarding from "@/components/FirstUseOnboarding";
 import { useSpeakerActivity, type ActivityStore } from "@/lib/activityStore";
 import { createDefaultEq, type SpeakerEq } from "@/lib/speakerEq";
@@ -21,10 +22,11 @@ import "../spatial-installation.css";
 import "../three-views.css";
 import "../dark-club.css";
 import "../mobile.css";
+import "../systm.css";
 
 type SceneView = "top" | "side" | "pov";
 type Point = { x: number; y: number };
-const logoMark = "/manus-storage/clubcraft-mark_066a01b1.png";
+const logoMark = "/manus-storage/systm-approved-mark-header_7226c6b0.png";
 const makeSpeaker = (id: string, modelId: SpeakerModelId, x: number, y: number, level: number): ClubSpeaker => { const model = getSpeakerModel(modelId, "sub"); return { id, modelId, kind: model.kind, label: model.label, position: { x, y, z: 0 }, orientation: { yaw: 0 }, stackParentId: null, level, muted: false, responseProfileId: modelId, activity: 0, eq: createDefaultEq() }; };
 const initialSpeakers: ClubSpeaker[] = [];
 const listenerNameKey = "club-craft-listener-name";
@@ -42,7 +44,15 @@ const SceneProjection = memo(function SceneProjection({ view, surfaceTone, speak
 
 function FamilyLibrary({ family, onFamilyChange, onAdd }: { family: SpeakerFamily; onFamilyChange: (family: SpeakerFamily) => void; onAdd: (id: SpeakerModelId) => void }) {
   const models = modelIdsForFamily(family);
-  return <div className="speaker-composer speaker-library" aria-label="Sound system library"><div className="family-switch scene-family-switch">{orderedSpeakerFamilies().map((definition) => <button key={definition.id} className={family === definition.id ? "active" : ""} onClick={() => onFamilyChange(definition.id)} title={definition.description}>{definition.shortLabel}</button>)}</div><div className="model-choices">{models.map((modelId) => { const model = getSpeakerModel(modelId, "sub"); return <button key={modelId} className={`speaker-type-icon ${model.family} ${model.kind}`} onClick={() => onAdd(modelId)} aria-label={`Add ${model.label}`} title={`Add ${model.label}`}><i /><span>{model.shortLabel}</span></button>; })}</div></div>;
+  return <section className="speaker-composer speaker-library systm-library" aria-label="System library">
+    <div className="systm-library-title"><span>SYSTEM LIBRARY</span><small>ADD A CABINET</small></div>
+    <div className="family-switch scene-family-switch" role="tablist" aria-label="Speaker family">
+      {orderedSpeakerFamilies().map((definition) => <button key={definition.id} role="tab" aria-selected={family === definition.id} className={family === definition.id ? "active" : ""} onClick={() => onFamilyChange(definition.id)} title={definition.description}>{definition.shortLabel}</button>)}
+    </div>
+    <div className="model-choices">
+      {models.map((modelId) => { const model = getSpeakerModel(modelId, "sub"); return <button key={modelId} className={`speaker-type-icon systm-equipment-item ${model.family} ${model.kind}`} onClick={() => onAdd(modelId)} aria-label={`Add ${model.label}`} title={`Add ${model.label}`}><i /><span><b>{model.shortLabel}</b><small>{model.kind}</small></span><Plus size={14} aria-hidden="true" /></button>; })}
+    </div>
+  </section>;
 }
 
 export default function Home() {

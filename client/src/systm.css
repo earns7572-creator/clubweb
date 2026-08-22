@@ -1,0 +1,274 @@
+/* SYSTM design system: warm off-white canvas, graphite command surfaces, and red/yellow/green reserved for sound and signal. */
+:root {
+  --systm-bg: #f3f2ed;
+  --systm-panel: #fbfaf5;
+  --systm-ink: #2e302d;
+  --systm-muted: #70736d;
+  --systm-speaker: #8a8d87;
+  --systm-line: rgba(46, 48, 45, .16);
+  --systm-signal-red: #e13b2b;
+  --systm-signal-yellow: #e6b82c;
+  --systm-signal-green: #2f9564;
+  --systm-ease: cubic-bezier(.23, 1, .32, 1);
+}
+
+.instrument-app.spatial-installation {
+  min-height: 100dvh;
+  padding: 0;
+  background: var(--systm-bg);
+  color: var(--systm-ink);
+}
+
+.spatial-installation .instrument-header {
+  position: relative;
+  z-index: 24;
+  height: 62px;
+  padding: 0 22px;
+  border-bottom: 1px solid var(--systm-line);
+  background: rgba(243, 242, 237, .94);
+  grid-template-columns: minmax(170px, 1fr) auto minmax(170px, 1fr);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+}
+
+.spatial-brand { min-width: 0; gap: 10px; }
+.spatial-brand img {
+  width: 38px;
+  height: 30px;
+  border: 0;
+  border-radius: 3px;
+  object-fit: cover;
+  object-position: 50% 50%;
+  filter: none;
+  opacity: 1;
+}
+.instrument-app.dark-club .spatial-brand img { filter: none; opacity: 1; }
+.spatial-word { min-width: 62px; gap: 0; font: 600 15px/1 "Space Grotesk", sans-serif; letter-spacing: .14em; }
+.spatial-word b, .spatial-word em { display: none; }
+.spatial-word::after { content: "SYSTM"; color: var(--systm-ink); }
+.spatial-brand small { padding-left: 10px; color: var(--systm-muted); font-size: 10px; letter-spacing: .06em; }
+
+.header-controls { gap: 4px; }
+.surface-trigger-wrap, .layout-trigger-wrap { display: block; }
+.surface-trigger-wrap .surface-trigger, .layout-trigger-wrap .surface-trigger { min-width: 42px; padding-inline: 9px; color: var(--systm-muted); font-size: 10px; }
+.spatial-installation .source-trigger,
+.surface-trigger {
+  min-height: 42px;
+  padding: 0 13px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--systm-ink);
+  background: transparent;
+  font: 600 12px/1 "Space Grotesk", "Noto Sans JP", sans-serif;
+  letter-spacing: .06em;
+}
+.spatial-installation .source-trigger { min-width: 152px; justify-content: center; }
+.spatial-installation .source-trigger::before { content: "SOUND /"; color: var(--systm-muted); font: 600 10px/1 "JetBrains Mono", monospace; letter-spacing: .05em; }
+.spatial-installation .source-trigger i { width: 7px; height: 7px; background: var(--systm-signal-yellow) !important; box-shadow: none; }
+.spatial-installation .source-trigger:hover,
+.surface-trigger:hover { border-color: var(--systm-line); background: rgba(46, 48, 45, .035); }
+.surface-trigger { display: inline-flex; justify-content: center; align-items: center; gap: 7px; }
+.spatial-installation .instrument-actions { justify-self: end; gap: 12px; }
+.spatial-installation .headphone-note { color: var(--systm-muted); font-size: 11px; }
+.spatial-installation .instrument-play {
+  min-width: 104px;
+  height: 42px;
+  border: 0;
+  border-radius: 5px;
+  background: var(--systm-ink);
+  color: #fff;
+  font: 600 12px/1 "Space Grotesk", sans-serif;
+  letter-spacing: .11em;
+  transition: transform 150ms var(--systm-ease), background-color 150ms var(--systm-ease);
+}
+.spatial-installation .instrument-play.is-playing { background: var(--systm-signal-red); }
+.spatial-installation .instrument-play:active,
+.surface-trigger:active,
+.speaker-library button:active { transform: scale(.97); }
+
+.spatial-installation .instrument-stage { height: calc(100dvh - 62px); min-height: 580px; }
+.spatial-installation .club-floor-3d,
+.spatial-installation .side-scene,
+.spatial-installation .pov-preview { background: var(--systm-bg); }
+.view-switcher {
+  z-index: 12;
+  top: 18px;
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid rgba(46,48,45,.13);
+  border-radius: 5px;
+  background: rgba(251,250,245,.86);
+  box-shadow: 0 4px 18px rgba(30,32,29,.07);
+  backdrop-filter: blur(10px);
+}
+.view-switcher button { min-width: 58px; min-height: 36px; padding: 0 12px; color: var(--systm-muted); font: 600 11px/1 "Space Grotesk", sans-serif; letter-spacing: .08em; }
+.view-switcher button.active { color: var(--systm-ink); background: rgba(46,48,45,.07); }
+.view-switcher button.active::after { right: 11px; bottom: 5px; left: 11px; height: 2px; background: var(--systm-signal-green); }
+
+.systm-library {
+  right: 22px;
+  bottom: 18px;
+  left: 22px;
+  display: grid;
+  grid-template-columns: 132px auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 102px;
+  gap: 18px;
+  padding: 12px 16px;
+  border: 1px solid rgba(46,48,45,.16);
+  border-radius: 6px;
+  background: rgba(251,250,245,.91);
+  box-shadow: 0 12px 30px rgba(30,32,29,.09);
+  backdrop-filter: blur(14px);
+}
+.systm-library-title { display: grid; gap: 5px; padding-right: 16px; border-right: 1px solid var(--systm-line); }
+.systm-library-title span { color: var(--systm-ink); font: 600 12px/1 "Space Grotesk", sans-serif; letter-spacing: .1em; }
+.systm-library-title small { color: var(--systm-muted); font: 500 10px/1 "JetBrains Mono", monospace; letter-spacing: .04em; }
+.systm-library .family-switch { display: flex; flex-direction: column; gap: 2px; min-width: 72px; }
+.systm-library .family-switch button { min-height: 18px; padding: 2px 0 2px 9px; color: var(--systm-muted); font: 500 11px/1 "Space Grotesk", sans-serif; text-align: left; }
+.systm-library .family-switch button.active { color: var(--systm-ink); }
+.systm-library .family-switch button.active::before { width: 4px; height: 4px; border-radius: 0; background: var(--systm-signal-red); }
+.systm-library .model-choices { display: flex; min-width: 0; gap: 9px; overflow-x: auto; overflow-y: hidden; padding: 2px 0; scrollbar-width: thin; }
+.systm-library .systm-equipment-item {
+  display: grid;
+  grid-template-columns: 35px minmax(42px, 1fr) 14px;
+  flex: 0 0 124px;
+  min-width: 124px;
+  min-height: 62px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--systm-ink);
+  background: rgba(46,48,45,.025);
+  text-align: left;
+  transition: background-color 150ms var(--systm-ease), border-color 150ms var(--systm-ease), transform 150ms var(--systm-ease);
+}
+.systm-library .systm-equipment-item:hover { border-color: var(--systm-line); background: rgba(46,48,45,.06); }
+.systm-library .systm-equipment-item i { justify-self: center; background: var(--systm-speaker); box-shadow: 0 2px 5px rgba(30,32,29,.2); }
+.systm-library .systm-equipment-item > span { display: grid; gap: 3px; }
+.systm-library .systm-equipment-item b { font: 600 12px/1 "Space Grotesk", sans-serif; letter-spacing: .03em; }
+.systm-library .systm-equipment-item small { color: var(--systm-muted); font: 500 9px/1 "JetBrains Mono", monospace; text-transform: uppercase; }
+.systm-library .systm-equipment-item svg { color: var(--systm-muted); }
+
+.spatial-inspector {
+  right: 30px;
+  bottom: 142px;
+  width: 282px;
+  padding: 17px 18px 16px;
+  border: 1px solid var(--systm-line);
+  border-radius: 6px;
+  background: rgba(251,250,245,.94);
+  box-shadow: 0 14px 34px rgba(30,32,29,.12);
+  backdrop-filter: blur(16px);
+}
+.spatial-inspector::before { display: block; margin: 0 0 9px; color: var(--systm-muted); content: "SPEAKER / EDIT"; font: 600 10px/1 "JetBrains Mono", monospace; letter-spacing: .09em; }
+.spatial-inspector h2 { margin-bottom: 18px; font: 600 20px/1.1 "Space Grotesk", sans-serif; }
+.spatial-control { grid-template-columns: 64px 1fr; min-height: 40px; gap: 12px; margin: 12px 0; }
+.spatial-control > span { color: var(--systm-muted); font: 600 11px/1 "JetBrains Mono", monospace; letter-spacing: .04em; text-transform: uppercase; }
+.spatial-control select { min-height: 38px; border-bottom: 1px solid var(--systm-line); font-size: 13px; }
+.spatial-control input { min-height: 38px; accent-color: var(--systm-signal-green); }
+.height-control .height-stops { font-size: 10px; }
+.spatial-inspector .inspector-actions { gap: 9px; margin-top: 20px; }
+.spatial-inspector .inspector-actions button { min-height: 40px; padding: 0 10px; border: 1px solid var(--systm-line); border-radius: 4px; color: var(--systm-ink); font: 600 11px/1 "Space Grotesk", sans-serif; letter-spacing: .04em; }
+.spatial-inspector .inspector-actions .muted { color: var(--systm-signal-red); }
+
+.mixer-trigger { right: 26px; bottom: 26px; min-width: 72px; min-height: 42px; border: 1px solid rgba(46,48,45,.17); border-radius: 5px; background: rgba(251,250,245,.93); color: var(--systm-ink); box-shadow: 0 5px 15px rgba(30,32,29,.08); font: 600 12px/1 "Space Grotesk", sans-serif; letter-spacing: .1em; }
+.speaker-mixer-sheet { border-top-color: rgba(46,48,45,.2) !important; background: #2e302d !important; }
+.speaker-mixer-head h2 { font-size: 0; }
+.speaker-mixer-head h2::after { content: "MIX"; font-size: 14px; }
+.speaker-mixer-head p { font-size: 0; font-family: "JetBrains Mono", monospace; }
+.speaker-mixer-head p::after { content: "SPEAKER · LEVEL · MUTE · ACTIVITY"; font-size: 10px; }
+.speaker-mixer-note { font-size: 0; }
+.speaker-mixer-note::after { content: "DRAG LEVEL · DOUBLE-CLICK RESET · SHIFT LINKS"; font: 10px/1.2 "JetBrains Mono", monospace; }
+.speaker-custom-head h2 { font-size: 0; }
+.speaker-custom-head h2::after { content: "CUSTOM EQ"; font-size: 18px; }
+.source-popover-label { font-size: 0 !important; }
+.source-popover-label::after { content: "SYSTM SOUNDS"; font-size: 11px; }
+.mixer-meter i { background: var(--systm-signal-green); }
+.mixer-fader-fill { background: var(--systm-signal-yellow); }
+.mixer-strip.is-selected { border-color: rgba(230,184,44,.5); }
+.speaker-custom-head span { color: var(--systm-signal-green); }
+
+@media (prefers-reduced-motion: reduce) { .systm-library *, .instrument-play, .surface-trigger { transition: none !important; } }
+
+@media (max-width: 760px) {
+  .instrument-app.spatial-installation { min-height: 100dvh; height: 100dvh; padding: 0; overflow: hidden; }
+  .spatial-installation .instrument-header {
+    height: max(56px, env(safe-area-inset-top));
+    min-height: 56px;
+    padding: env(safe-area-inset-top) 10px 0;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 6px;
+  }
+  .spatial-brand { gap: 7px; }
+  .spatial-brand img { width: 31px; height: 26px; }
+  .spatial-word { min-width: 57px; font-size: 13px; }
+  .spatial-brand small, .spatial-installation .headphone-note { display: none; }
+  .header-controls { min-width: 0; justify-content: center; overflow: hidden; }
+  .spatial-installation .source-trigger { min-width: 0; max-width: 124px; min-height: 44px; padding: 0 9px; }
+  .spatial-installation .source-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .spatial-installation .preset-trigger-wrap .surface-trigger { width: 44px; min-width: 44px; padding: 0; font-size: 0; }
+  .spatial-installation .preset-trigger-wrap .surface-trigger::after { content: "SYS"; font: 600 10px/1 "Space Grotesk", sans-serif; letter-spacing: .04em; }
+  .spatial-installation .surface-trigger-wrap, .layout-trigger-wrap { display: none; }
+  .spatial-installation .instrument-play { min-width: 44px; height: 44px; padding: 0; font-size: 0; }
+  .spatial-installation .instrument-play svg { width: 18px; height: 18px; }
+  .spatial-installation .instrument-stage { height: calc(100dvh - 56px - env(safe-area-inset-top)); min-height: 0; }
+  .view-switcher { top: auto; bottom: calc(136px + env(safe-area-inset-bottom)); gap: 2px; padding: 3px; }
+  .view-switcher button { min-width: 50px; min-height: 44px; padding: 0 8px; font-size: 11px; }
+  .scene-view-pov .view-switcher { bottom: calc(14px + env(safe-area-inset-bottom)); }
+
+  .systm-library {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    grid-template-columns: 1fr;
+    min-height: 118px;
+    gap: 7px;
+    padding: 9px 12px calc(10px + env(safe-area-inset-bottom));
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0;
+    background: rgba(251,250,245,.96);
+  }
+  .systm-library-title { display: flex; align-items: center; justify-content: space-between; padding: 0; border: 0; }
+  .systm-library-title span { font-size: 11px; }.systm-library-title small { font-size: 9px; }
+  .systm-library .family-switch { flex-direction: row; width: max-content; min-width: 0; gap: 10px; overflow-x: auto; }
+  .systm-library .family-switch button { min-width: 44px; min-height: 28px; padding: 6px 0 6px 8px; font-size: 11px; }
+  .systm-library .model-choices { gap: 8px; padding-bottom: 1px; }
+  .systm-library .systm-equipment-item { flex-basis: 126px; min-width: 126px; min-height: 54px; }
+  .systm-library .systm-equipment-item b { font-size: 12px; }
+  .scene-view-pov .systm-library { display: none; }
+
+  .mobile-speaker-edit { right: 12px; bottom: calc(222px + env(safe-area-inset-bottom)); display: grid; min-width: 58px; min-height: 44px; border-radius: 5px; font-size: 11px; }
+  .spatial-inspector,
+  .dark-club .spatial-inspector {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    max-height: min(62dvh, 540px);
+    padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 12px 12px 0 0;
+    background: rgba(251,250,245,.98);
+  }
+  .spatial-inspector h2 { padding-right: 42px; font-size: 21px; }
+  .spatial-control { min-height: 44px; margin: 14px 0; }
+  .spatial-control select, .spatial-control input { min-height: 42px; }
+  .mobile-inspector-close { width: 44px; height: 44px; border-radius: 5px; font-size: 24px; }
+  .spatial-inspector .inspector-actions button { min-height: 44px; padding: 0 13px; font-size: 12px; }
+  .mixer-trigger { right: 12px; bottom: calc(142px + env(safe-area-inset-bottom)); min-width: 60px; min-height: 44px; }
+  .scene-view-pov .mixer-trigger { bottom: calc(14px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 320px) {
+  .spatial-word { display: none; }
+  .spatial-installation .source-trigger { max-width: 90px; }
+  .systm-library .systm-equipment-item { flex-basis: 118px; min-width: 118px; }
+}
