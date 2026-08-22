@@ -2,9 +2,12 @@
 
 ## Scene-first First Use Onboarding
 
+- [x] completion messageを削除し、LISTEN後のguide・highlight・veil fade outへ置換する。
+- [x] LISTEN開始、audio継続、completion UI不在、300〜500ms fade outを確認する。
+- [ ] completion変更のtest・typecheck・build後に対象branchへcommit・pushする。
 - [x] guide panel、focus veil、target highlight、pointer lineを各stepへ追加する。
 - [x] 1440×900と390×844でstep 01〜04の視認性・pointer・既存UI非干渉を確認する。
-- [ ] onboarding強化のtest・typecheck・build後に対象branchへcommit・pushする。
+- [x] onboarding強化のtest・typecheck・build後に対象branchへcommit・pushする。
 - [x] 既存step flow、SYSTEM LIBRARY・Headerの接点、onboarding testを確認する。
 - [x] thumbnail grid・dark modal・sound card・giant play CTAを廃止し、Scene内instructionへ置換する。
 - [x] desktop/mobileでScene、view switcher、library、EDIT、MIXと重ならないonboarding guidanceを調整する。

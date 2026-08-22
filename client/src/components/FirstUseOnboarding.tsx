@@ -21,6 +21,7 @@ const progress = (index: string, label: string) => <><span className="first-use-
 const Pointer = ({ direction }: { direction: "down" | "up" }) => <span className={`first-use-pointer first-use-pointer-${direction}`} aria-hidden="true" />;
 
 export default function FirstUseOnboarding({ step, error, onChooseSweep, onChooseMusic, onSkip, onPlace }: Props) {
+  const guideStep = step === "complete" ? "play" : step;
   useEffect(() => {
     if (step !== "place") return;
     const placeFromFloorCanvas = (event: PointerEvent) => {
@@ -35,12 +36,11 @@ export default function FirstUseOnboarding({ step, error, onChooseSweep, onChoos
     return () => window.removeEventListener("pointerdown", placeFromFloorCanvas);
   }, [onPlace, step]);
   return <div className={`first-use-onboarding first-use-${step}`} aria-live="polite">
-    {step !== "complete" && <span className="first-use-focus-veil" aria-hidden="true" />}
-    {step !== "complete" && <button className="first-use-skip" onClick={onSkip}>SKIP INTRO</button>}
-    {step === "speaker" && <aside className="first-use-guide first-use-guide-library">{progress("01", "PICK A CABINET")}<span className="first-use-guide-secondary">CHOOSE ONE CABINET FROM THE LIBRARY</span><Pointer direction="down" /></aside>}
-    {step === "place" && <><span className="first-use-floor-frame" aria-hidden="true" /><span className="first-use-floor-target" aria-hidden="true" /><aside className="first-use-guide first-use-guide-place">{progress("02", "PLACE IT")}<span className="first-use-guide-secondary"><span className="desktop-copy">CLICK ANYWHERE ON THE FLOOR</span><span className="mobile-copy">TAP ANYWHERE ON THE FLOOR</span></span><Pointer direction="down" /></aside></>}
-    {step === "sound" && <aside className="first-use-guide first-use-guide-sound">{progress("03", "CHOOSE A SOUND")}<div className="first-use-sound-actions"><button onClick={onChooseSweep}>SINE SWEEP</button><button onClick={onChooseMusic}>YOUR MUSIC</button></div><small>YOUR FILE STAYS ON THIS DEVICE</small>{error && <p className="first-use-error">{error}</p>}</aside>}
-    {step === "play" && <aside className="first-use-guide first-use-guide-listen">{progress("04", "LISTEN")}<span className="first-use-guide-secondary">START THE SOUND SYSTEM</span><Pointer direction="up" />{error && <p className="first-use-error">{error}</p>}</aside>}
-    {step === "complete" && <aside className="first-use-complete">BUILD YOUR SYSTEM</aside>}
+    <span className="first-use-focus-veil" aria-hidden="true" />
+    <button className="first-use-skip" onClick={onSkip}>SKIP INTRO</button>
+    {guideStep === "speaker" && <aside className="first-use-guide first-use-guide-library">{progress("01", "PICK A CABINET")}<span className="first-use-guide-secondary">CHOOSE ONE CABINET FROM THE LIBRARY</span><Pointer direction="down" /></aside>}
+    {guideStep === "place" && <><span className="first-use-floor-frame" aria-hidden="true" /><span className="first-use-floor-target" aria-hidden="true" /><aside className="first-use-guide first-use-guide-place">{progress("02", "PLACE IT")}<span className="first-use-guide-secondary"><span className="desktop-copy">CLICK ANYWHERE ON THE FLOOR</span><span className="mobile-copy">TAP ANYWHERE ON THE FLOOR</span></span><Pointer direction="down" /></aside></>}
+    {guideStep === "sound" && <aside className="first-use-guide first-use-guide-sound">{progress("03", "CHOOSE A SOUND")}<div className="first-use-sound-actions"><button onClick={onChooseSweep}>SINE SWEEP</button><button onClick={onChooseMusic}>YOUR MUSIC</button></div><small>YOUR FILE STAYS ON THIS DEVICE</small>{error && <p className="first-use-error">{error}</p>}</aside>}
+    {guideStep === "play" && <aside className="first-use-guide first-use-guide-listen">{progress("04", "LISTEN")}<span className="first-use-guide-secondary">START THE SOUND SYSTEM</span><Pointer direction="up" />{error && <p className="first-use-error">{error}</p>}</aside>}
   </div>;
 }
