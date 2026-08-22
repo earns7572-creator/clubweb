@@ -23,9 +23,16 @@ assert.match(onboarding, /PLACE IT/, "step 02 keeps floor placement guidance");
 assert.match(onboarding, /CHOOSE A SOUND/, "step 03 uses compact sound commands");
 assert.match(onboarding, /BUILD YOUR SYSTEM/, "completion is an in-scene transient label");
 assert.match(onboarding, /club-floor-3d canvas/, "placement listens to the actual scene canvas rather than an overlay");
+assert.match(onboarding, /first-use-focus-veil/, "onboarding adds a restrained scene focus veil");
+assert.match(onboarding, /first-use-floor-target/, "step 02 provides one non-blocking floor crosshair");
+assert.match(onboarding, /first-use-pointer/, "guide panels provide a pointer toward the current action");
 assert.match(styles, /first-use-onboarding\{[^}]*pointer-events:none/, "guidance does not block normal scene controls");
+assert.match(styles, /background:rgba\(248,247,242,.98\).*border:2px solid #2e302d/, "guides use the specified high-contrast material treatment");
+assert.match(styles, /onboarding-speaker \.systm-library/, "step 01 highlights the native SYSTEM LIBRARY");
+assert.match(styles, /onboarding-play \.instrument-play/, "step 04 highlights the native Header Listen control");
 assert.doesNotMatch(styles, /first-use-place\{pointer-events:auto|background:rgba\(0,0,0/, "no placement blocker or dark modal styling remains");
 assert.match(home, /setTimeout\(\(\) => setOnboardingStep\(null\), 1750\)/, "completion fades for the required 1.5–2 second window");
 assert.match(home, /onboardingStep === "speaker"/, "SYSTEM LIBRARY routes first onboarding cabinet choice through the existing interaction");
+assert.match(home, /onboarding-\$\{onboardingStep \?\? "idle"\}/, "page root exposes the active onboarding step for native target highlighting");
 
 console.log("scene-first onboarding tests passed");

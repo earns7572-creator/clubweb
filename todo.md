@@ -2,6 +2,9 @@
 
 ## Scene-first First Use Onboarding
 
+- [x] guide panel、focus veil、target highlight、pointer lineを各stepへ追加する。
+- [x] 1440×900と390×844でstep 01〜04の視認性・pointer・既存UI非干渉を確認する。
+- [ ] onboarding強化のtest・typecheck・build後に対象branchへcommit・pushする。
 - [x] 既存step flow、SYSTEM LIBRARY・Headerの接点、onboarding testを確認する。
 - [x] thumbnail grid・dark modal・sound card・giant play CTAを廃止し、Scene内instructionへ置換する。
 - [x] desktop/mobileでScene、view switcher、library、EDIT、MIXと重ならないonboarding guidanceを調整する。
@@ -10,6 +13,8 @@
 
 ## Cloudflare Pages preview deployment
 
+- [x] `21b0f6b` のPreview deploymentを確認し、必要時のみコード無変更で再deployする。
+- [x] 公開Previewでscene-first onboarding表示と旧modal／thumbnail grid不在を確認する。
 - [x] Cloudflare接続可否と`feat/reggae-quality`の指定commitを確認する。
 - [x] Cloudflare PagesへGitHub repositoryを接続し、Preview deploymentを作成する。
 - [x] GitHub installationが復旧しない場合、API direct uploadで同一static buildをPreview deploymentとして公開する。
