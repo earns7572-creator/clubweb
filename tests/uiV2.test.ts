@@ -8,6 +8,7 @@ const floor = read("client/src/components/ClubFloor3D.tsx");
 const systm = read("client/src/systm.css");
 const onboarding = read("client/src/first-use-onboarding.css");
 const page = read("client/index.html");
+const home = read("client/src/pages/Home.tsx");
 
 assert.ok(!floor.includes("DjBooth"), "Top View must not render a DJ booth context object");
 assert.ok(!floor.includes("spatial-stage-anchor"), "Top View must not render STAGE text");
@@ -20,5 +21,13 @@ assert.ok(systm.includes(".systm-library") && systm.includes("data-slot"), "SYST
 assert.ok(systm.includes("SPEAKER / SELECTED"), "Inspector must retain a technical channel identity");
 assert.ok(onboarding.includes("font-ui") && onboarding.includes("font-tech"), "onboarding must share the UI typography system");
 assert.ok(page.includes("SYSTM / Virtual Sound System"), "document title must use SYSTM micro-copy");
+assert.ok(home.includes('type HeaderPopover = "sound" | "system" | "background" | "layout" | null'), "Header popovers must use an explicit single-state union");
+assert.ok(home.includes("activeHeaderPopover"), "Header popovers must derive visibility from one active state");
+assert.ok(!home.includes("const [showSourcePicker, setShowSourcePicker] = useState(false)"), "SOUND must not retain an independent boolean state");
+assert.ok(!home.includes("const [showPresetPicker, setShowPresetPicker] = useState(false)"), "SYSTEM must not retain an independent boolean state");
+assert.ok(home.includes('event.key === "Escape"'), "Escape must dismiss an active Header popover");
+assert.ok(home.includes('event.target.closest(".source-trigger-wrap, .preset-trigger-wrap, .surface-trigger-wrap, .layout-trigger-wrap")'), "outside pointer input must dismiss an active Header popover while trigger and panel clicks remain usable");
+assert.ok(home.includes("const setMixerOpen = (next: boolean) => { if (next) setActiveHeaderPopover(null)"), "opening MIX must immediately close Header popovers");
+assert.ok(home.includes("const setCustomOpen = (next: boolean) => { if (next) setActiveHeaderPopover(null)"), "opening CUSTOM must immediately close Header popovers");
 
-console.log("SYSTM UI v2 static tests passed");
+console.log("SYSTM UI v2 and Header popover static tests passed");

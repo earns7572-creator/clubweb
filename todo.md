@@ -2,6 +2,11 @@
 
 ## Scene-first First Use Onboarding
 
+- [x] Header popover state・dismiss処理・MIX/CUSTOM/onboardingとの接続を監査する。
+- [x] SOUND/SYSTEM/BACKGROUND/LAYOUTをsingle activeHeaderPopover stateへ統合する。
+- [x] outside click、Escape、同control再click、MIX/CUSTOM起動時のHeader popover closeを実装する。
+- [x] desktop/mobile/onboardingでHeader popoverが常に1つだけ表示されることを検証する。
+- [x] Header popover排他変更をtest・build後に対象branchへcommit・pushする。
 - [x] SYSTM UI v2要件と既存Header・View・Library・Inspector・Mixer・EQ・mobile CSSを監査する。
 - [x] 共通Typographyとsignal languageを整理し、Header control railを再設計する。
 - [x] View switcher、SYSTEM LIBRARY、Inspectorをequipment/instrument languageへ再構成する。

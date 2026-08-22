@@ -25,6 +25,8 @@ import "../mobile.css";
 import "../systm.css";
 
 type SceneView = "top" | "side" | "pov";
+type HeaderPopover = "sound" | "system" | "background" | "layout" | null;
+type HeaderPopoverChange = boolean | ((open: boolean) => boolean);
 type Point = { x: number; y: number };
 const logoMark = "/assets/brand/systm-mark-header.png";
 const makeSpeaker = (id: string, modelId: SpeakerModelId, x: number, y: number, level: number): ClubSpeaker => { const model = getSpeakerModel(modelId, "sub"); return { id, modelId, kind: model.kind, label: model.label, position: { x, y, z: 0 }, orientation: { yaw: 0 }, stackParentId: null, level, muted: false, responseProfileId: modelId, activity: 0, eq: createDefaultEq() }; };
@@ -56,8 +58,53 @@ function FamilyLibrary({ family, onFamilyChange, onAdd }: { family: SpeakerFamil
 }
 
 export default function Home() {
-  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep | null>("speaker"); const [onboardingModel, setOnboardingModel] = useState<SpeakerModelId | null>(null); const [fileValidationError, setFileValidationError] = useState<string | null>(null); const [speakers, setSpeakers] = useState<ClubSpeaker[]>([]); const [listener, setListener] = useState<ClubListener>(initialListener); const [sources, setSources] = useState<ClubSource[]>(clubTracks); const [selectedSourceId, setSelectedSourceId] = useState("sweep"); const [selectedSpeakerId, setSelectedSpeakerId] = useState(""); const [view, setView] = useState<SceneView>(initialViewFromUrl); const [surfaceTone, setSurfaceTone] = useState<SurfaceTone>(() => (localStorage.getItem("club-craft-surface") as SurfaceTone) || "paper"); const [showSourcePicker, setShowSourcePicker] = useState(false); const [showSurfacePicker, setShowSurfacePicker] = useState(false); const [showLayoutMenu, setShowLayoutMenu] = useState(false); const [layoutStatus, setLayoutStatus] = useState(""); const [speakerFamily, setSpeakerFamily] = useState<SpeakerFamily>("modern"); const [showPresetPicker, setShowPresetPicker] = useState(false); const [pendingPreset, setPendingPreset] = useState<SystemPreset | null>(null); const [mixerOpen, setMixerOpen] = useState(false); const [customOpen, setCustomOpen] = useState(false); const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false); const fileInputRef = useRef<HTMLInputElement>(null); const layoutInputRef = useRef<HTMLInputElement>(null); const localUrlsRef = useRef(new Set<string>()); const layoutStatusTimerRef = useRef<number | null>(null);
+  const [onboardingStep, setOnboardingStep] = useState<OnboardingStep | null>("speaker");
+  const [onboardingModel, setOnboardingModel] = useState<SpeakerModelId | null>(null);
+  const [fileValidationError, setFileValidationError] = useState<string | null>(null);
+  const [speakers, setSpeakers] = useState<ClubSpeaker[]>([]);
+  const [listener, setListener] = useState<ClubListener>(initialListener);
+  const [sources, setSources] = useState<ClubSource[]>(clubTracks);
+  const [selectedSourceId, setSelectedSourceId] = useState("sweep");
+  const [selectedSpeakerId, setSelectedSpeakerId] = useState("");
+  const [view, setView] = useState<SceneView>(initialViewFromUrl);
+  const [surfaceTone, setSurfaceTone] = useState<SurfaceTone>(() => (localStorage.getItem("club-craft-surface") as SurfaceTone) || "paper");
+  const [activeHeaderPopover, setActiveHeaderPopover] = useState<HeaderPopover>(null);
+  const [layoutStatus, setLayoutStatus] = useState("");
+  const [speakerFamily, setSpeakerFamily] = useState<SpeakerFamily>("modern");
+  const [pendingPreset, setPendingPreset] = useState<SystemPreset | null>(null);
+  const [mixerOpen, setMixerOpenState] = useState(false);
+  const [customOpen, setCustomOpenState] = useState(false);
+  const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const layoutInputRef = useRef<HTMLInputElement>(null);
+  const localUrlsRef = useRef(new Set<string>());
+  const layoutStatusTimerRef = useRef<number | null>(null);
+  const setHeaderPopover = (kind: Exclude<HeaderPopover, null>, next: HeaderPopoverChange) => setActiveHeaderPopover((current) => {
+    const shouldOpen = typeof next === "function" ? next(current === kind) : next;
+    if (!shouldOpen) return null;
+    if (kind === "sound" && onboardingStep === "sound") return current;
+    return kind;
+  });
+  const showSourcePicker = activeHeaderPopover === "sound";
+  const showPresetPicker = activeHeaderPopover === "system";
+  const showSurfacePicker = activeHeaderPopover === "background";
+  const showLayoutMenu = activeHeaderPopover === "layout";
+  const setShowSourcePicker = (next: HeaderPopoverChange) => setHeaderPopover("sound", next);
+  const setShowPresetPicker = (next: HeaderPopoverChange) => setHeaderPopover("system", next);
+  const setShowSurfacePicker = (next: HeaderPopoverChange) => setHeaderPopover("background", next);
+  const setShowLayoutMenu = (next: HeaderPopoverChange) => setHeaderPopover("layout", next);
+  const setMixerOpen = (next: boolean) => { if (next) setActiveHeaderPopover(null); setMixerOpenState(next); };
+  const setCustomOpen = (next: boolean) => { if (next) setActiveHeaderPopover(null); setCustomOpenState(next); };
   const { isPlaying, activityStore, lowActivityStore, togglePlayback, playbackError, clearPlaybackError } = useClubAudio(speakers, listener, sources, selectedSourceId);
+  useEffect(() => {
+    if (!activeHeaderPopover) return;
+    const closeFromOutside = (event: PointerEvent) => { if (event.target instanceof Element && event.target.closest(".source-trigger-wrap, .preset-trigger-wrap, .surface-trigger-wrap, .layout-trigger-wrap")) return; setActiveHeaderPopover(null); };
+    const closeFromEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setActiveHeaderPopover(null); };
+    document.addEventListener("pointerdown", closeFromOutside);
+    document.addEventListener("keydown", closeFromEscape);
+    return () => { document.removeEventListener("pointerdown", closeFromOutside); document.removeEventListener("keydown", closeFromEscape); };
+  }, [activeHeaderPopover]);
+  useEffect(() => { if (mixerOpen || customOpen || onboardingStep === "sound") setActiveHeaderPopover(null); }, [customOpen, mixerOpen, onboardingStep]);
   const selectedSource = sources.find((source) => source.id === selectedSourceId) ?? sources[0]; const selectedSpeaker = speakers.find((speaker) => speaker.id === selectedSpeakerId); const selectedModel = selectedSpeaker ? getSpeakerModel(selectedSpeaker.modelId, selectedSpeaker.kind) : null;
   const moveSpeakerTop = (id: string, position: Point) => setSpeakers((now) => now.map((speaker) => speaker.id === id && !speaker.stackParentId ? { ...speaker, position: { ...speaker.position, x: clamp(position.x), y: clamp(position.y) } } : speaker));
   const moveSpeakerSide = (id: string, position: { y: number; z: number }) => setSpeakers((now) => now.map((speaker) => speaker.id === id && !speaker.stackParentId ? { ...speaker, position: { ...speaker.position, y: clamp(position.y), z: Math.max(0, Math.min(1, position.z)) } } : speaker));
