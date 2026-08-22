@@ -380,6 +380,24 @@
 
 > 実再生検証: POVでDeep PulseのPlay/Pause操作を完了し、Pause状態へ遷移することを確認した。操作後のbrowser consoleにはruntime errorが記録されていない。cameraの小さな振幅そのものは静止画では定量評価できないため、二帯域・gate・envelope・camera条件は自動testと実装検査で担保する。
 
+## Speaker Direct Manipulation + Band-Accurate Activity
+
+- [ ] pointerdownを選択候補として記録し、desktop 5px／touch 10pxを超えた後だけspeaker dragを開始する。
+- [ ] stacked memberの通常dragでstack rootだけを移動し、親子関係・stack geometry・audio positionを維持する。
+- [ ] DETACHをInspectorの明示操作へ移し、通常drag・rotationから自動detachを完全に除去する。
+- [ ] scene上の削除×を撤去し、InspectorにREMOVE、stack member selector、mobileの±15° TURNを追加する。
+- [ ] cabinet実寸width/depthを使うsafe boundsと、stack overlapを避けるbounded hit targetを実装する。
+- [ ] existing analyserのfrequencyData一配列から20–200 Hz／200 Hz–2 kHz／2–20 kHzのlow/mid/high activityを算出する。
+- [ ] low/mid/high emitter meshとSound Field componentを同じband activityだけで駆動し、Pause時に全bandをzeroへ収束させる。
+- [ ] LOW Sound Fieldを広く柔らかく、従来より明確な表示へ調整する。
+- [ ] pointer threshold、root move、explicit detach、yaw、safe bounds、sine sweep band extractionのtestを追加する。
+- [ ] desktop/mobile実機、回帰test、Pages build、Cloudflare Previewを確認して対象branchへcommit・pushする。
+
+### 55分時点の安全な切り出し
+
+- [ ] 実行中の回帰testとPages buildの終了状態を確認し、55分時点で完了済みの変更だけをcommit・pushする。
+- [ ] commit SHA、PASS済み検証、未実施のbrowser/Preview QA、次回再開位置をユーザーへ報告する。
+
 ## Named Listener Avatar + DJ Booth Avatar
 
 - [x] 添付仕様と現行のListener marker・DJ booth・TOP/SIDE/POVを照合する。
