@@ -7,7 +7,7 @@
 - [x] View switcher、SYSTEM LIBRARY、Inspectorをequipment/instrument languageへ再構成する。
 - [x] Mixer・EQ・popover・mobileを統一し、不要なcard/shadowを削減する。
 - [x] desktop/mobileの機能回帰、onboarding、typecheck、tests、build、Cloudflare Previewを確認する。
-- [ ] UI v2変更を対象branchへcommit・pushする。
+- [x] UI v2変更を対象branchへcommit・pushする。
 - [x] completion messageを削除し、LISTEN後のguide・highlight・veil fade outへ置換する。
 - [x] LISTEN開始、audio継続、completion UI不在、300〜500ms fade outを確認する。
 - [x] completion変更のtest・typecheck・build後に対象branchへcommit・pushする。
