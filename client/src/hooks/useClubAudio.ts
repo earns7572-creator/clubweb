@@ -10,6 +10,7 @@ import { bassEnergy } from "@/lib/bassPressure";
 import { sceneToAudioPosition, speakerToAudioPosition } from "@/lib/spatialCoordinates";
 import { speakerOrientationToAudioOrientation } from "@/lib/speakerOrientation";
 import type { StackAlignment } from "@/lib/speakerStacking";
+import { SWEEP_END_HZ, SWEEP_LEG_DURATION_SECONDS, SWEEP_SCHEDULE_LEGS, SWEEP_START_HZ, sweepLegTarget } from "@/lib/sineSweep";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
@@ -26,7 +27,6 @@ type SpeakerNode = { input: GainNode; characterFilters: BiquadFilterNode[]; eq: 
 type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam; orientationX?: AudioParam; orientationY?: AudioParam; orientationZ?: AudioParam };
 
 const EPSILON = .0001;
-const toneForOfficialSound: Record<string, number> = { pulse: 55, rain: 196, bronze: 146 };
 const visualEnvelopeForKind: Record<SpeakerKind, { attack: number; release: number; gain: number }> = {
   sub: { attack: .16, release: .07, gain: 5.6 }, woofer: { attack: .22, release: .11, gain: 5.1 }, full: { attack: .26, release: .14, gain: 5.2 }, mid: { attack: .38, release: .18, gain: 6.6 }, high: { attack: .46, release: .21, gain: 7.8 },
 };
@@ -60,31 +60,20 @@ function setSpeakerOrientation(node: LegacySpatialNode, yaw: number, cache: Spat
   cache.x = forward.x; cache.y = forward.y; cache.z = forward.z;
 }
 
-const SWEEP_START_HZ = 20;
-const SWEEP_END_HZ = 20_000;
-const SWEEP_DURATION_SECONDS = 15;
-
-function makeSweepVoice(context: AudioContext, onComplete: () => void): Voice {
-  const output = context.createGain(); const level = context.createGain(); const oscillator = context.createOscillator(); const now = context.currentTime; let stoppedManually = false;
-  output.gain.value = .24; level.gain.setValueAtTime(0, now); level.gain.linearRampToValueAtTime(.18, now + .025); level.gain.setValueAtTime(.18, now + SWEEP_DURATION_SECONDS - .04); level.gain.linearRampToValueAtTime(0, now + SWEEP_DURATION_SECONDS);
-  oscillator.type = "sine"; oscillator.frequency.setValueAtTime(SWEEP_START_HZ, now); oscillator.frequency.exponentialRampToValueAtTime(SWEEP_END_HZ, now + SWEEP_DURATION_SECONDS); oscillator.connect(level); level.connect(output);
-  oscillator.onended = () => { output.disconnect(); level.disconnect(); if (!stoppedManually) onComplete(); };
-  oscillator.start(now); oscillator.stop(now + SWEEP_DURATION_SECONDS);
-  return { output, stop: () => { stoppedManually = true; oscillator.onended = null; oscillator.stop(); level.disconnect(); output.disconnect(); } };
+function makeSweepVoice(context: AudioContext): Voice {
+  const output = context.createGain(); const level = context.createGain(); const oscillator = context.createOscillator(); const now = context.currentTime;
+  output.gain.value = .24; level.gain.setValueAtTime(0, now); level.gain.linearRampToValueAtTime(.18, now + .03);
+  oscillator.type = "sine"; oscillator.frequency.setValueAtTime(SWEEP_START_HZ, now);
+  for (let index = 0; index < SWEEP_SCHEDULE_LEGS; index += 1) oscillator.frequency.exponentialRampToValueAtTime(sweepLegTarget(index), now + (index + 1) * SWEEP_LEG_DURATION_SECONDS);
+  oscillator.connect(level); level.connect(output); oscillator.onended = () => { level.disconnect(); output.disconnect(); };
+  oscillator.start(now);
+  return { output, stop: () => { const stopAt = context.currentTime + .035; level.gain.cancelScheduledValues(context.currentTime); level.gain.setTargetAtTime(0, context.currentTime, .01); oscillator.stop(stopAt); } };
 }
 
-function makeOfficialVoice(context: AudioContext, source: ClubSource, onSweepComplete: () => void): Voice {
-  if (source.id === "sweep") return makeSweepVoice(context, onSweepComplete);
-  const output = context.createGain(); output.gain.value = .24;
-  const osc = context.createOscillator(); const overtone = context.createOscillator(); const lowpass = context.createBiquadFilter(); const lfo = context.createOscillator(); const lfoGain = context.createGain(); const fundamental = toneForOfficialSound[source.id] ?? 110;
-  osc.type = source.id === "rain" ? "sine" : "triangle"; osc.frequency.value = fundamental; overtone.type = "sine"; overtone.frequency.value = fundamental * (source.id === "bronze" ? 2.01 : 1.5); overtone.detune.value = source.id === "bronze" ? 7 : -4;
-  lowpass.type = "lowpass"; lowpass.frequency.value = source.id === "pulse" ? 380 : 1150; lowpass.Q.value = .4; lfo.frequency.value = source.id === "pulse" ? 1.7 : .16; lfoGain.gain.value = source.id === "pulse" ? 120 : 26;
-  osc.connect(lowpass); overtone.connect(lowpass); lowpass.connect(output); lfo.connect(lfoGain); lfoGain.connect(lowpass.frequency); osc.start(); overtone.start(); lfo.start();
-  return { output, stop: () => { osc.stop(); overtone.stop(); lfo.stop(); output.disconnect(); } };
-}
+function makeOfficialVoice(context: AudioContext): Voice { return makeSweepVoice(context); }
 function makeLocalVoice(context: AudioContext, source: ClubSource, onError: (message: string) => void): Voice {
   const media = new Audio(); media.src = source.localUrl ?? ""; media.preload = "auto"; media.loop = true; media.setAttribute("playsinline", "");
-  const onMediaError = () => onError("この音声ファイルは、このブラウザでは再生できません。MP3、WAV、M4A、またはAACを試してください。");
+  const onMediaError = () => onError("MP3 or WAV files only.");
   media.addEventListener("error", onMediaError); media.load();
   const mediaSource = context.createMediaElementSource(media); const output = context.createGain(); output.gain.value = .6; mediaSource.connect(output);
   return { output, media, dispose: () => { media.pause(); media.removeEventListener("error", onMediaError); mediaSource.disconnect(); output.disconnect(); media.removeAttribute("src"); media.load(); } };
@@ -137,7 +126,7 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     speakerList.forEach((speaker) => { const modelId = resolveModelId(speaker.modelId, speaker.kind); const existing = speakerNodes.get(speaker.id); if (!existing || existing.cache.modelId !== modelId) { if (existing) disconnectSpeakerNode(existing); speakerNodes.set(speaker.id, createSpeakerNode(context, master, modelId)); topologyRef.current = ""; } });
     const desiredSource = sourceList.find((source) => source.id === sourceId); const voices = voicesRef.current;
     Array.from(voices.entries()).forEach(([id, voice]) => { if (id !== sourceId || !desiredSource) { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); voices.delete(id); topologyRef.current = ""; } });
-    if (desiredSource && shouldPlay && !voices.has(desiredSource.id)) { const nextVoice = desiredSource.category === "local" && desiredSource.localUrl ? makeLocalVoice(context, desiredSource, setPlaybackError) : makeOfficialVoice(context, desiredSource, () => { voicesRef.current.delete(desiredSource.id); topologyRef.current = ""; setIsPlaying(false); }); voices.set(desiredSource.id, nextVoice); if (nextVoice.media) void nextVoice.media.play().catch(() => { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }); topologyRef.current = ""; }
+    if (desiredSource && shouldPlay && !voices.has(desiredSource.id)) { const nextVoice = desiredSource.category === "local" && desiredSource.localUrl ? makeLocalVoice(context, desiredSource, setPlaybackError) : makeOfficialVoice(context); voices.set(desiredSource.id, nextVoice); if (nextVoice.media) void nextVoice.media.play().catch(() => { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }); topologyRef.current = ""; }
     const graph = `${sourceId}:${speakerList.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}`).sort().join("|")}`;
     if (topologyRef.current !== graph) { voices.forEach((voice) => { voice.output.disconnect(); speakerList.forEach((speaker) => { const node = speakerNodes.get(speaker.id); if (node) voice.output.connect(node.input); }); }); topologyRef.current = graph; }
   }, []);

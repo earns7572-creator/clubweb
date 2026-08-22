@@ -20,7 +20,7 @@ type RotationDrag = { type: "rotation"; id: string };
 type DragTarget = SpeakerDrag | RotationDrag | { type: "listener"; offset: Point } | null;
 type PendingDrag = { raw: Point; modifiers: ModifierState } | null;
 export type SurfaceTone = "paper" | "sand" | "slate" | "night";
-type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; listener: ClubListener; selectedSpeakerId: string; sourceColor?: string; signalActive?: boolean; surfaceTone: SurfaceTone; canRemove: boolean; onSpeakerSelect: (id: string) => void; onSpeakerRemove: (id: string) => void; onSpeakerMove: (id: string, position: Point) => void; onSpeakerRotate?: (id: string, yaw: number) => void; onSpeakerStack: (id: string, parentId: string, alignment: StackCandidate["alignment"]) => void; onSpeakerDetach: (id: string, position: Point) => void; onListenerMove: (position: Point) => void; onListenerNameChange: (name: string) => void };
+type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; listener: ClubListener; selectedSpeakerId: string; sourceColor?: string; signalActive?: boolean; surfaceTone: SurfaceTone; canRemove: boolean; onSpeakerSelect: (id: string) => void; onSpeakerRemove: (id: string) => void; onSpeakerMove: (id: string, position: Point) => void; onSpeakerRotate?: (id: string, yaw: number) => void; onSpeakerStack: (id: string, parentId: string, alignment: StackCandidate["alignment"]) => void; onSpeakerDetach: (id: string, position: Point) => void; onListenerMove: (position: Point) => void; onListenerNameChange: (name: string) => void; onFloorPlace?: (point: Point) => void };
 
 const roomWidth = 13;
 const roomDepth = 8;
