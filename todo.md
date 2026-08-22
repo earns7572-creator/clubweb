@@ -1,5 +1,22 @@
 # Club Craft Web — Signal Color Update
 
+## Scene-first First Use Onboarding
+
+- [x] 既存step flow、SYSTEM LIBRARY・Headerの接点、onboarding testを確認する。
+- [x] thumbnail grid・dark modal・sound card・giant play CTAを廃止し、Scene内instructionへ置換する。
+- [x] desktop/mobileでScene、view switcher、library、EDIT、MIXと重ならないonboarding guidanceを調整する。
+- [x] step 01〜04、SKIP、local file chooser、Listen、pointer・scrollを実操作で検証する。
+- [x] test・typecheck・build後に対象branchへcommit・pushする。
+
+## Cloudflare Pages preview deployment
+
+- [x] Cloudflare接続可否と`feat/reggae-quality`の指定commitを確認する。
+- [x] Cloudflare PagesへGitHub repositoryを接続し、Preview deploymentを作成する。
+- [x] GitHub installationが復旧しない場合、API direct uploadで同一static buildをPreview deploymentとして公開する。
+- [x] Previewでasset・3D・audio・mobile操作・console/404を実機確認する。
+- [x] 必要な修正を対象branchへ反映して再deployする。
+- [x] custom domain接続可能な状態を確認して結果を報告する。
+
 ## Hosting-independent static build
 
 - [x] `/manus-storage/`参照とManus固有runtime設定を全件監査する。
