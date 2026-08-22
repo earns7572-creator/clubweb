@@ -1,9 +1,10 @@
 import type { SpeakerFamily, SpeakerModelId } from "@/lib/speakerModels";
 import type { StackAlignment } from "@/lib/speakerStacking";
 
-export type PresetSpeaker = { key: string; modelId: SpeakerModelId; x: number; y: number; z?: number; yaw?: number; level: number; stackOn?: string; stackAlign?: StackAlignment };
+export type PresetSpeaker = { key: string; modelId: SpeakerModelId; x?: number; y?: number; z?: number; yaw?: number; level: number; stackOn?: string; stackAlign?: StackAlignment };
 export type SystemPreset = { id: string; label: string; family: SpeakerFamily; description: string; speakers: PresetSpeaker[] };
 const p = (key: string, modelId: SpeakerModelId, x: number, y: number, level: number, stackOn?: string, yaw?: number): PresetSpeaker => ({ key, modelId, x, y, level, ...(stackOn ? { stackOn } : {}), ...(yaw === undefined ? {} : { yaw }) });
+const stacked = (key: string, modelId: SpeakerModelId, level: number, stackOn: string, stackAlign: StackAlignment): PresetSpeaker => ({ key, modelId, level, stackOn, stackAlign });
 
 export const REGGAE_WALL: SystemPreset = { id: "reggae-wall", label: "Reggae Sound System", family: "reggae", description: "Scoop bass, kick, horn mids and top boxes.", speakers: [
   p("left-scoop", "reggae-scoop", .36, .36, .86), p("left-kick", "reggae-kick", .36, .36, .76, "left-scoop"), p("left-mid", "reggae-mid-horn", .36, .36, .7, "left-kick"), p("left-top", "reggae-top", .36, .36, .62, "left-mid"),
@@ -11,8 +12,9 @@ export const REGGAE_WALL: SystemPreset = { id: "reggae-wall", label: "Reggae Sou
 ] };
 
 export const FREEPARTY_WALL: SystemPreset = { id: "freeparty-wall", label: "Free Party Stack", family: "freeparty", description: "DIY W-bin, kick horn and high-impact horn stack.", speakers: [
-  p("left-wbin", "freeparty-wbin", .33, .34, .88), p("left-kick", "freeparty-kick-horn", .33, .34, .78, "left-wbin"), p("left-mid", "freeparty-mid-horn", .33, .34, .7, "left-kick"), p("left-top", "freeparty-top", .33, .34, .62, "left-mid"),
-  p("right-wbin", "freeparty-wbin", .67, .34, .88), p("right-kick", "freeparty-kick-horn", .67, .34, .78, "right-wbin"), p("right-mid", "freeparty-mid-horn", .67, .34, .7, "right-kick"), p("right-top", "freeparty-top", .67, .34, .62, "right-mid"),
+  p("left-wbin", "freeparty-wbin", .4090999702785325, .21316313088870198, .68), stacked("left-kick", "freeparty-kick-horn", .68, "left-wbin", "right"), stacked("left-mid", "freeparty-mid-horn", .68, "left-kick", "right"), stacked("left-top", "freeparty-top", .68, "left-mid", "center"),
+  p("center-wbin", "freeparty-wbin", .5, .21316313088870198, .88), stacked("center-kick", "freeparty-kick-horn", .78, "center-wbin", "center"), stacked("center-mid", "freeparty-mid-horn", .7, "center-kick", "center"), stacked("center-top", "freeparty-top", .62, "center-mid", "center"),
+  p("right-wbin", "freeparty-wbin", .5909000297214675, .21316313088870198, .88), stacked("right-kick", "freeparty-kick-horn", .78, "right-wbin", "left"), stacked("right-mid", "freeparty-mid-horn", .7, "right-kick", "left"), stacked("right-top", "freeparty-top", .62, "right-mid", "center"),
 ] };
 
 export const MODERN_FOUR_POINT: SystemPreset = { id: "modern-four-point", label: "4-Point Club", family: "modern", description: "Four point sources with a paired sub front line.", speakers: [
