@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { modelIdsForFamily, orderedSpeakerFamilies } from "../client/src/lib/speakerModels";
 import { onboardingSpeakerPreviewByModel } from "../client/src/lib/onboardingSpeakerPreviews";
 
 for (const family of orderedSpeakerFamilies()) {
   for (const modelId of modelIdsForFamily(family.id)) {
-    assert.ok(onboardingSpeakerPreviewByModel[modelId].startsWith("/manus-storage/"), `${modelId} has a deployed actual-model static preview`);
-    assert.ok(onboardingSpeakerPreviewByModel[modelId].startsWith(`/manus-storage/${modelId}_`), `${modelId} preview asset is keyed by that exact modelId`);
+    const preview = onboardingSpeakerPreviewByModel[modelId];
+    assert.ok(preview.startsWith("/assets/onboarding/"), `${modelId} has a repo-owned static preview`);
+    assert.ok(preview.endsWith(`/${modelId}.webp`), `${modelId} preview asset is keyed by that exact modelId`);
+    assert.ok(existsSync(new URL(`../client/public${preview}`, import.meta.url)), `${modelId} preview file is committed to client/public`);
   }
 }
 

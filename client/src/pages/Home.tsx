@@ -26,7 +26,7 @@ import "../systm.css";
 
 type SceneView = "top" | "side" | "pov";
 type Point = { x: number; y: number };
-const logoMark = "/manus-storage/systm-approved-mark-header_7226c6b0.png";
+const logoMark = "/assets/brand/systm-mark-header.png";
 const makeSpeaker = (id: string, modelId: SpeakerModelId, x: number, y: number, level: number): ClubSpeaker => { const model = getSpeakerModel(modelId, "sub"); return { id, modelId, kind: model.kind, label: model.label, position: { x, y, z: 0 }, orientation: { yaw: 0 }, stackParentId: null, level, muted: false, responseProfileId: modelId, activity: 0, eq: createDefaultEq() }; };
 const initialSpeakers: ClubSpeaker[] = [];
 const listenerNameKey = "club-craft-listener-name";

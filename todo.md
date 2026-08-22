@@ -1,5 +1,13 @@
 # Club Craft Web — Signal Color Update
 
+## Hosting-independent static build
+
+- [x] `/manus-storage/`参照とManus固有runtime設定を全件監査する。
+- [x] production assetを`client/public/assets/`へ移行し、repo内public pathへ置換する。
+- [x] Vite・package設定からManus production依存を除去し、Cloudflare Pages用build commandを追加する。
+- [x] `check`・通常build・Pages build・asset出力・残存Manus参照を検証する。
+- [ ] GitHub対象branchへcommit・pushし、移行結果を報告する。
+
 ## SYSTM product UI/UX migration
 
 - [x] 承認済みSYSTM仕様、提供済みの正式ロゴ、既存UIと保持対象の3D・音響・操作を照合する。

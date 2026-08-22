@@ -1,5 +1,5 @@
 /* SYSTM brand rule: approved gray horn and RGB signal pixels are used sparingly as the product mark, never as a decorative background. */
-const systmLogoAsset = "/manus-storage/systm-approved-mark-header_7226c6b0.png";
+const systmLogoAsset = "/assets/brand/systm-mark-header.png";
 
 type SystmLogoProps = {
   compact?: boolean;
@@ -15,4 +15,3 @@ export default function SystmLogo({ compact = false }: SystmLogoProps) {
     </span>
   );
 }
-
