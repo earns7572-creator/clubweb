@@ -9,6 +9,7 @@ import { SpeakerMiniature } from "@/components/SpeakerMiniature";
 import type { SurfaceTone } from "@/components/ClubFloor3D";
 import { createStackResolver } from "@/lib/speakerStacking";
 import { DjBooth } from "@/components/DjBooth";
+import { listenerEarHeightMeters } from "@/lib/spatialCoordinates";
 
 type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; lowActivityBySpeaker: Readonly<Record<string, number>>; listener: ClubListener; surfaceTone: SurfaceTone; isPlaying: boolean; onLook: (deltaYaw: number, deltaPitch: number) => void; onLookAbsolute: (yaw: number, pitch: number) => void };
 const world = (position: Pick<ClubSpeaker["position"], "x" | "y">) => [(position.x - .5) * 13, 0, (position.y - .5) * 8] as const;
@@ -28,7 +29,7 @@ function CameraRig({ listener, vibration, motionPose, onInvalidateReady }: { lis
     const motion = motionPose.current;
     const yaw = motion.active ? motion.yaw : listener.orientation.yaw;
     const pitch = motion.active ? motion.pitch : listener.orientation.pitch;
-    const x = (listener.position.x - .5) * 13; const y = .55 + listener.position.z * 1.1; const z = (listener.position.y - .5) * 8;
+    const x = (listener.position.x - .5) * 13; const y = listenerEarHeightMeters(listener.position.z); const z = (listener.position.y - .5) * 8;
     const last = lastLook.current;
     if (yaw === last.yaw && pitch === last.pitch && x === last.x && y === last.y && z === last.z) return;
     forward.current.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
