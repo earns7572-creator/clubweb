@@ -11,7 +11,7 @@ export const onboardingSpeakerPreviewByModel: Record<SpeakerModelId, string> = {
   "reggae-kick": "/manus-storage/reggae-kick_0623c3f3.webp",
   "reggae-mid-horn": "/manus-storage/reggae-mid-horn_0d62bac4.webp",
   "reggae-top": "/manus-storage/reggae-top_7f8c0679.webp",
-  "freeparty-wbin": "/manus-storage/freeparty-wbin_85152d0.webp",
+  "freeparty-wbin": "/manus-storage/freeparty-wbin_v3_79ca8024.webp",
   "freeparty-kick-horn": "/manus-storage/freeparty-kick-horn_168a0172.webp",
   "freeparty-mid-horn": "/manus-storage/freeparty-mid-horn_d2d8f747.webp",
   "freeparty-top": "/manus-storage/freeparty-top_976817a5.webp",
