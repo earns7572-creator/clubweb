@@ -50,7 +50,7 @@ function FamilyLibrary({ family, onFamilyChange, onAdd }: { family: SpeakerFamil
       {orderedSpeakerFamilies().map((definition) => <button key={definition.id} role="tab" aria-selected={family === definition.id} className={family === definition.id ? "active" : ""} onClick={() => onFamilyChange(definition.id)} title={definition.description}>{definition.shortLabel}</button>)}
     </div>
     <div className="model-choices">
-      {models.map((modelId) => { const model = getSpeakerModel(modelId, "sub"); return <button key={modelId} className={`speaker-type-icon systm-equipment-item ${model.family} ${model.kind}`} onClick={() => onAdd(modelId)} aria-label={`Add ${model.label}`} title={`Add ${model.label}`}><i /><span><b>{model.shortLabel}</b><small>{model.kind}</small></span><Plus size={14} aria-hidden="true" /></button>; })}
+      {models.map((modelId, index) => { const model = getSpeakerModel(modelId, "sub"); return <button key={modelId} data-slot={String(index + 1).padStart(2, "0")} className={`speaker-type-icon systm-equipment-item ${model.family} ${model.kind}`} onClick={() => onAdd(modelId)} aria-label={`Add ${model.label}`} title={`Add ${model.label}`}><i /><span><b>{model.shortLabel}</b><small>{model.kind}</small></span><Plus size={14} aria-hidden="true" /></button>; })}
     </div>
   </section>;
 }

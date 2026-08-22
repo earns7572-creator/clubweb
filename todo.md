@@ -2,9 +2,15 @@
 
 ## Scene-first First Use Onboarding
 
+- [x] SYSTM UI v2要件と既存Header・View・Library・Inspector・Mixer・EQ・mobile CSSを監査する。
+- [x] 共通Typographyとsignal languageを整理し、Header control railを再設計する。
+- [x] View switcher、SYSTEM LIBRARY、Inspectorをequipment/instrument languageへ再構成する。
+- [x] Mixer・EQ・popover・mobileを統一し、不要なcard/shadowを削減する。
+- [x] desktop/mobileの機能回帰、onboarding、typecheck、tests、build、Cloudflare Previewを確認する。
+- [ ] UI v2変更を対象branchへcommit・pushする。
 - [x] completion messageを削除し、LISTEN後のguide・highlight・veil fade outへ置換する。
 - [x] LISTEN開始、audio継続、completion UI不在、300〜500ms fade outを確認する。
-- [ ] completion変更のtest・typecheck・build後に対象branchへcommit・pushする。
+- [x] completion変更のtest・typecheck・build後に対象branchへcommit・pushする。
 - [x] guide panel、focus veil、target highlight、pointer lineを各stepへ追加する。
 - [x] 1440×900と390×844でstep 01〜04の視認性・pointer・既存UI非干渉を確認する。
 - [x] onboarding強化のtest・typecheck・build後に対象branchへcommit・pushする。
