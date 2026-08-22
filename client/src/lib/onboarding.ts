@@ -1,5 +1,3 @@
-export const ONBOARDING_STORAGE_KEY = "club-craft-onboarding-complete";
-
 export type OnboardingStep = "speaker" | "place" | "sound" | "play" | "complete";
 
 export function isSupportedMusicFile(file: Pick<File, "name" | "type">) {
