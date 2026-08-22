@@ -95,7 +95,7 @@ SYSTEM_PRESETS.forEach((preset) => {
     }
   });
   const ids = new Map(preset.speakers.map((speaker) => [speaker.key, `${preset.id}-${speaker.key}`]));
-  const scene = preset.speakers.map((speaker) => ({ id: ids.get(speaker.key)!, kind: SPEAKER_MODELS[speaker.modelId].kind, modelId: speaker.modelId, label: speaker.key, position: { x: speaker.x, y: speaker.y, z: speaker.z ?? 0 }, stackParentId: speaker.stackOn ? ids.get(speaker.stackOn) : null, level: speaker.level, muted: false, responseProfileId: speaker.modelId, activity: 0, eq }));
+  const scene = preset.speakers.map((speaker) => ({ id: ids.get(speaker.key)!, kind: SPEAKER_MODELS[speaker.modelId].kind, modelId: speaker.modelId, label: speaker.key, position: { x: speaker.x ?? .5, y: speaker.y ?? .5, z: speaker.z ?? 0 }, stackParentId: speaker.stackOn ? ids.get(speaker.stackOn) : null, ...(speaker.stackOn ? { stackAlign: speaker.stackAlign ?? "center" } : {}), level: speaker.level, muted: false, responseProfileId: speaker.modelId, activity: 0, eq }));
   const resolver = createStackResolver(scene);
   scene.forEach((speaker) => {
     if (!speaker.stackParentId) return;
@@ -105,7 +105,20 @@ SYSTEM_PRESETS.forEach((preset) => {
     assert.ok(Math.abs(frontPlane(speaker, parent.orientation?.yaw ?? 0, resolver) - frontPlane(parent, parent.orientation?.yaw ?? 0, resolver)) < 1e-9, `${preset.label}: ${speaker.label} front flushes with its parent`);
   });
 });
-assert.equal(FREEPARTY_WALL.speakers.filter((speaker) => Boolean(speaker.stackOn)).length, 6, "Free Party keeps its stack chain data without schema changes");
+assert.equal(FREEPARTY_WALL.speakers.length, 12, "Free Party Stack has three four-way columns");
+assert.equal(FREEPARTY_WALL.speakers.filter((speaker) => !speaker.stackOn).length, 3, "Free Party Stack has three floor roots");
+assert.equal(FREEPARTY_WALL.speakers.filter((speaker) => Boolean(speaker.stackOn)).length, 9, "Free Party Stack keeps nine resolver-positioned children");
+assert.ok(FREEPARTY_WALL.speakers.filter((speaker) => speaker.stackOn).every((speaker) => speaker.x === undefined && speaker.y === undefined), "Free Party child coordinates remain resolver-derived");
+assert.deepEqual(FREEPARTY_WALL.speakers.filter((speaker) => !speaker.stackOn).map(({ key, x, y, level }) => ({ key, x, y, level })), [
+  { key: "left-wbin", x: .4090999702785325, y: .21316313088870198, level: .68 },
+  { key: "center-wbin", x: .5, y: .21316313088870198, level: .88 },
+  { key: "right-wbin", x: .5909000297214675, y: .21316313088870198, level: .88 },
+], "Free Party floor roots preserve the user-exported baseline coordinates and levels");
+assert.deepEqual(FREEPARTY_WALL.speakers.filter((speaker) => speaker.stackOn).map(({ key, stackOn, stackAlign }) => ({ key, stackOn, stackAlign })), [
+  { key: "left-kick", stackOn: "left-wbin", stackAlign: "right" }, { key: "left-mid", stackOn: "left-kick", stackAlign: "right" }, { key: "left-top", stackOn: "left-mid", stackAlign: "center" },
+  { key: "center-kick", stackOn: "center-wbin", stackAlign: "center" }, { key: "center-mid", stackOn: "center-kick", stackAlign: "center" }, { key: "center-top", stackOn: "center-mid", stackAlign: "center" },
+  { key: "right-kick", stackOn: "right-wbin", stackAlign: "left" }, { key: "right-mid", stackOn: "right-kick", stackAlign: "left" }, { key: "right-top", stackOn: "right-mid", stackAlign: "center" },
+], "Free Party Stack preserves the exported left, center and right alignment chains");
 
 const modernFull = { id: "modern", kind: "full" as const, modelId: "modern-full" as const, label: "Full", position: { x: .5, y: .5, z: 0 }, level: 1, muted: false, responseProfileId: "modern-full", activity: 0, eq };
 const scoop = { ...modernFull, id: "scoop", kind: "sub" as const, modelId: "reggae-scoop" as const, responseProfileId: "reggae-scoop" };
