@@ -1,4 +1,28 @@
-# Club Craft Web 0.1 — デザインと体験の方針
+# SYSTM — 承認済みプロダクト仕様
+
+> 既存のClub Craft名は表示上のみSYSTMへ移行する。内部のlocalStorage key、custom event name、preset ID、API、3D geometry、speaker model assignment、audio graph、stack・drag・rotation・view URLは互換性のため維持する。
+
+## SYSTM Ground Truth
+
+**Design Movement**: creative software × sound system culture × club tool。明るいwarm off-whiteの操作面と、深いcharcoalの音場を接続する、静かで精密なsignal languageを採用する。
+
+**Core Principles**: Sceneを最優先にする。操作は44px以上の直接的なtargetにする。赤・黄・緑は音・signal・acoustic activityに限定する。長い説明ではなく、SOUND / SYSTEM / TOP / SIDE / POV / MIX / CUSTOMの短い言葉で案内する。
+
+**Color Philosophy**: `#F3F2ED`のwarm off-white、`#2E302D`のgraphite、`#70736D`のmuted gray、`#8A8D87`のspeaker grayを基調にする。signal red `#E13B2B`、signal yellow `#E6B82C`、signal green `#2F9564`は音・route・field・EQの帯域とactivityにだけ使う。
+
+**Layout Paradigm**: 56–64pxのheader、最大化された3D scene、下部のequipment shelf、選択時のみ現れるfloating inspectorで構成する。恒久的なsidebarやカードのグリッドは使わない。
+
+**Signature Elements**: 承認済みのgray horn + red/yellow/green pixel signal mark、直線から小さなsquare pixelへ分解するsignal line、44px以上のquiet command control。
+
+**Interaction Philosophy**: Speakerを置く・掴む・動かす・鳴らすことを中心にする。パネルは必要時だけ表示し、hover/press/selectionは120–220ms以内に控えめに応答する。
+
+**Typography System**: Space Groteskをproduct labelと主要数値、Noto Sans JPを説明、必要なtechnical valueのみmonospaceで扱う。通常文字は13–14px、補助は11–12px、主要操作は15–18pxを基準にする。
+
+**Brand Essence**: 3Dでsound systemを組み、置き、聴くためのcreative tool。**tactile / precise / underground**。
+
+**Brand Voice**: 「BUILD THE SOUND SYSTEM」「DRAG SPEAKERS · MOVE LISTENER · PRESS LISTEN」のように短く身体的に書く。設定用語を並べず、行為と結果を示す。
+
+## Club Craft Web 0.1 — デザインと体験の方針
 
 ## 3つの方向性
 

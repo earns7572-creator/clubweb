@@ -1,6 +1,6 @@
 /**
- * Club Craft Mixer — a quiet bottom-sheet projection of existing Speaker level/muted state.
- * It adds no AudioNode, preserves the dark-club hierarchy, and keeps activity subscription local.
+ * SYSTM UI v2 — a technical bottom-sheet projection of existing Speaker level/muted state.
+ * It adds no AudioNode and keeps the audio/activity contract local.
  */
 import { memo, useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX, X } from "lucide-react";
@@ -28,7 +28,7 @@ function ActivityMeter({ speakerId, store }: { speakerId: string; store: Activit
   return <div className="mixer-meter" aria-label="Activity meter"><i style={{ transform: `scaleY(${Math.max(.025, activity)})`, opacity: .2 + activity * .8 }} /></div>;
 }
 
-const SpeakerFader = memo(function SpeakerFader({ speaker, selected, linked, activityStore, onSelect, onLevelsChange, onMutedChange }: { speaker: ClubSpeaker; selected: boolean; linked: boolean; activityStore: ActivityStore; onSelect: (shiftKey: boolean) => void; onLevelsChange: (speakerId: string, nextLevel: number) => void; onMutedChange: () => void }) {
+const SpeakerFader = memo(function SpeakerFader({ speaker, index, selected, linked, activityStore, onSelect, onLevelsChange, onMutedChange }: { speaker: ClubSpeaker; index: number; selected: boolean; linked: boolean; activityStore: ActivityStore; onSelect: (shiftKey: boolean) => void; onLevelsChange: (speakerId: string, nextLevel: number) => void; onMutedChange: () => void }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const latestYRef = useRef<number | null>(null);
   const rafRef = useRef(0);
@@ -52,8 +52,8 @@ const SpeakerFader = memo(function SpeakerFader({ speaker, selected, linked, act
     }
   };
   useEffect(() => () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); }, []);
-  return <article className={`mixer-strip ${selected ? "is-selected" : ""} ${linked ? "is-linked" : ""}`} onClick={(event) => onSelect(event.shiftKey)}>
-    <button className="mixer-strip-heading" onClick={(event) => { event.stopPropagation(); onSelect(event.shiftKey); }}><strong>{typeLabel[speaker.kind]}</strong><span>{speaker.id.replace(/^[a-z]+-/, "")}</span></button>
+  return <article data-kind={speaker.kind} className={`mixer-strip ${selected ? "is-selected" : ""} ${linked ? "is-linked" : ""}`} onClick={(event) => onSelect(event.shiftKey)}>
+    <button className="mixer-strip-heading" onClick={(event) => { event.stopPropagation(); onSelect(event.shiftKey); }}><strong>{String(index + 1).padStart(2, "0")} {typeLabel[speaker.kind]}</strong><span>LEVEL / ACTIVITY</span></button>
     <div className="mixer-channel-core">
       <ActivityMeter speakerId={speaker.id} store={activityStore} />
       <div className="mixer-fader-wrap">
@@ -95,8 +95,8 @@ export default function SpeakerMixer({ open, speakers, selectedSpeakerId, activi
   };
   if (!open) return null;
   return <div className="speaker-mixer-root"><button className="speaker-mixer-backdrop" aria-label="Close mixer" onClick={() => onOpenChange(false)} /><section className="speaker-mixer-sheet" role="dialog" aria-label="Speaker mixer">
-    <div className="speaker-mixer-head"><div><h2>Speaker Mix</h2><p>Level balance · select strips · Shift links faders</p></div><button className="speaker-mixer-close" onClick={() => onOpenChange(false)} aria-label="Close mixer"><X size={16} /></button></div>
-    <div className="speaker-mixer-bank" aria-label="Speaker mixer channels">{speakers.map((speaker) => <SpeakerFader key={speaker.id} speaker={speaker} selected={selectedSpeakerId === speaker.id} linked={linkedSpeakerIds.has(speaker.id)} activityStore={activityStore} onSelect={(shiftKey) => chooseSpeaker(speaker.id, shiftKey)} onLevelsChange={applyFader} onMutedChange={() => onMutedChange(speaker.id, !speaker.muted)} />)}</div>
-    <p className="speaker-mixer-note">Drag for level · double-click returns one channel to 0 dB · Shift selects a linked balance group</p>
+    <div className="speaker-mixer-head"><div><h2>SPEAKER / MIX</h2><p>{speakers.length} channels · Shift links faders</p></div><button className="speaker-mixer-close" onClick={() => onOpenChange(false)} aria-label="Close mixer"><X size={16} /></button></div>
+    <div className="speaker-mixer-bank" aria-label="Speaker mixer channels">{speakers.map((speaker, index) => <SpeakerFader key={speaker.id} speaker={speaker} index={index} selected={selectedSpeakerId === speaker.id} linked={linkedSpeakerIds.has(speaker.id)} activityStore={activityStore} onSelect={(shiftKey) => chooseSpeaker(speaker.id, shiftKey)} onLevelsChange={applyFader} onMutedChange={() => onMutedChange(speaker.id, !speaker.muted)} />)}</div>
+    <p className="speaker-mixer-note">FADER: drag · double-click → 0 dB · Shift selects a linked group</p>
   </section></div>;
 }

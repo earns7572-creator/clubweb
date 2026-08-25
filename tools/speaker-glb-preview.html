@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Club Craft GLB inspection</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: #e8e8e5; background: #131516; font: 14px/1.4 system-ui, sans-serif; }
+    header { display: flex; justify-content: space-between; align-items: end; padding: 18px 24px 13px; border-bottom: 1px solid #34383a; }
+    h1 { margin: 0; font-size: 18px; letter-spacing: .04em; }
+    #dimensions { color: #aeb4b7; font-variant-numeric: tabular-nums; }
+    main { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #34383a; }
+    figure { position: relative; min-width: 0; margin: 0; background: #1b1d1f; }
+    canvas { display: block; width: 100%; height: calc(100vh - 102px); min-height: 420px; }
+    figcaption { position: absolute; top: 14px; left: 16px; padding: 5px 8px; color: #d6d9da; background: #151719cc; border: 1px solid #454a4d; border-radius: 4px; font-size: 11px; letter-spacing: .12em; }
+    .floor-note { position: absolute; left: 16px; bottom: 13px; color: #8e9598; font-size: 11px; }
+  </style>
+  <script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+</head>
+<body>
+  <header><h1 id="title">Speaker asset</h1><div id="dimensions"></div></header>
+  <main id="views"></main>
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    const models = {
+      "freeparty-wbin": ["Free Party W-Bin", "/client/public/models/speakers/freeparty/w-bin.glb", [1.2,.9,1.05]],
+      "festival-line-array": ["Festival Line Array Hang", "/client/public/models/speakers/festival/line-array-hang.glb", [.9,3.2,.7]],
+      "hifi-mid-horn": ["Hi-Fi Wooden Mid Horn", "/client/public/models/speakers/hifi/mid-horn.glb", [1.05,.55,.52]],
+      "steppers-reflex-sub": ["Steppers Reflex Sub", "/client/public/models/speakers/steppers/reflex-sub.glb", [1.12,.82,.96]],
+    };
+    const key = new URLSearchParams(location.search).get("model") || "freeparty-wbin";
+    const [label, source, body] = models[key] || models["freeparty-wbin"];
+    document.querySelector("#title").textContent = label;
+    document.querySelector("#dimensions").textContent = `${body[0].toFixed(2)} W × ${body[1].toFixed(2)} H × ${body[2].toFixed(2)} D m · bottom Y = 0`;
+    const loaded = await new GLTFLoader().loadAsync(source);
+    const views = [["FRONT", 0, 1, .5], ["3/4 FRONT", 1, 1, .58], ["SIDE", 1, 0, .5]];
+    for (const [viewLabel, cameraX, cameraZ, cameraY] of views) {
+      const figure = document.createElement("figure");
+      figure.innerHTML = `<figcaption>${viewLabel}</figcaption><div class="floor-note">floor Y = 0</div>`;
+      const canvas = document.createElement("canvas"); figure.prepend(canvas); document.querySelector("#views").append(figure);
+      const scene = new THREE.Scene(); scene.background = new THREE.Color("#1b1d1f");
+      const model = loaded.scene.clone(true); scene.add(model);
+      const aspect = canvas.clientWidth / canvas.clientHeight;
+      const horizontalSpan = viewLabel === "SIDE" ? body[2] : viewLabel === "3/4 FRONT" ? Math.hypot(body[0], body[2]) * .78 : body[0];
+      const heightMargin = body[1] > 2 ? 1.02 : .62;
+      const halfHeight = Math.max(body[1] * heightMargin, horizontalSpan / (2 * aspect) * 1.12);
+      const camera = new THREE.OrthographicCamera(-halfHeight*aspect, halfHeight*aspect, halfHeight, -halfHeight, .01, 50);
+      const distance = Math.max(4, body[1]*2.1); const horizontal = new THREE.Vector3(cameraX, 0, cameraZ).normalize().multiplyScalar(distance);
+      camera.position.set(horizontal.x, body[1] * cameraY, horizontal.z); camera.lookAt(0, body[1]*.46, 0);
+      scene.add(new THREE.HemisphereLight("#e4edf2", "#3a332c", 1.6));
+      const keyLight = new THREE.DirectionalLight("#fff6e9", 3.2); keyLight.position.set(-2.5, 4.5, 3.5); scene.add(keyLight);
+      const fill = new THREE.DirectionalLight("#c9d9e4", 1.8); fill.position.set(3, 2.5, 2); scene.add(fill);
+      const rim = new THREE.DirectionalLight("#ffffff", 1.1); rim.position.set(0, 3, -3); scene.add(rim);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(12,12), new THREE.MeshStandardMaterial({color:"#272a2c",roughness:.94})); floor.rotation.x=-Math.PI/2; floor.position.y=-.002; scene.add(floor);
+      const floorLine = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-4,0,body[2]/2+.02),new THREE.Vector3(4,0,body[2]/2+.02)]),new THREE.LineBasicMaterial({color:"#9da3a6"})); scene.add(floorLine);
+      const renderer = new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.setSize(canvas.clientWidth,canvas.clientHeight,false); renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.25; renderer.shadowMap.enabled=true;
+      renderer.render(scene,camera);
+    }
+    document.body.dataset.ready = "true";
+  </script>
+</body>
+</html>

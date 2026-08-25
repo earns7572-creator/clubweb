@@ -3,17 +3,20 @@
  * Sync is deliberately split so a listener turn or one Speaker drag never reprograms unrelated DSP nodes.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createActivityStore } from "@/lib/activityStore";
+import { createActivityStore, createBandActivityStore } from "@/lib/activityStore";
+import { activityFromFrequencyData, SILENT_BAND_ACTIVITY, type SpeakerBandActivity } from "@/lib/bandActivity";
 import type { SpeakerEq } from "@/lib/speakerEq";
 import { getSpeakerModel, resolveModelId, type CharacterFilter, type SpeakerModelId } from "@/lib/speakerModels";
-import { bassEnergy } from "@/lib/bassPressure";
+import { bassEnergyFromFrequencyData } from "@/lib/bassPressure";
 import { sceneToAudioPosition, speakerToAudioPosition } from "@/lib/spatialCoordinates";
 import { speakerOrientationToAudioOrientation } from "@/lib/speakerOrientation";
+import type { StackAlignment } from "@/lib/speakerStacking";
+import { SWEEP_END_HZ, SWEEP_LEG_DURATION_SECONDS, SWEEP_SCHEDULE_LEGS, SWEEP_START_HZ, sweepLegTarget } from "@/lib/sineSweep";
 
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
 export type ClubListener = { name: string; position: Position3D; orientation: { yaw: number; pitch: number } };
-export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; orientation?: { yaw: number }; stackParentId?: string | null; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
+export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; orientation?: { yaw: number }; stackParentId?: string | null; stackAlign?: StackAlignment; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
 type Voice = { output: GainNode; stop?: () => void; media?: HTMLAudioElement; dispose?: () => void };
@@ -25,7 +28,6 @@ type SpeakerNode = { input: GainNode; characterFilters: BiquadFilterNode[]; eq: 
 type LegacySpatialNode = { setPosition?: (x: number, y: number, z: number) => void; setOrientation?: (x: number, y: number, z: number) => void; positionX?: AudioParam; positionY?: AudioParam; positionZ?: AudioParam; forwardX?: AudioParam; forwardY?: AudioParam; forwardZ?: AudioParam; orientationX?: AudioParam; orientationY?: AudioParam; orientationZ?: AudioParam };
 
 const EPSILON = .0001;
-const toneForOfficialSound: Record<string, number> = { pulse: 55, rain: 196, bronze: 146 };
 const visualEnvelopeForKind: Record<SpeakerKind, { attack: number; release: number; gain: number }> = {
   sub: { attack: .16, release: .07, gain: 5.6 }, woofer: { attack: .22, release: .11, gain: 5.1 }, full: { attack: .26, release: .14, gain: 5.2 }, mid: { attack: .38, release: .18, gain: 6.6 }, high: { attack: .46, release: .21, gain: 7.8 },
 };
@@ -59,31 +61,20 @@ function setSpeakerOrientation(node: LegacySpatialNode, yaw: number, cache: Spat
   cache.x = forward.x; cache.y = forward.y; cache.z = forward.z;
 }
 
-const SWEEP_START_HZ = 20;
-const SWEEP_END_HZ = 20_000;
-const SWEEP_DURATION_SECONDS = 15;
-
-function makeSweepVoice(context: AudioContext, onComplete: () => void): Voice {
-  const output = context.createGain(); const level = context.createGain(); const oscillator = context.createOscillator(); const now = context.currentTime; let stoppedManually = false;
-  output.gain.value = .24; level.gain.setValueAtTime(0, now); level.gain.linearRampToValueAtTime(.18, now + .025); level.gain.setValueAtTime(.18, now + SWEEP_DURATION_SECONDS - .04); level.gain.linearRampToValueAtTime(0, now + SWEEP_DURATION_SECONDS);
-  oscillator.type = "sine"; oscillator.frequency.setValueAtTime(SWEEP_START_HZ, now); oscillator.frequency.exponentialRampToValueAtTime(SWEEP_END_HZ, now + SWEEP_DURATION_SECONDS); oscillator.connect(level); level.connect(output);
-  oscillator.onended = () => { output.disconnect(); level.disconnect(); if (!stoppedManually) onComplete(); };
-  oscillator.start(now); oscillator.stop(now + SWEEP_DURATION_SECONDS);
-  return { output, stop: () => { stoppedManually = true; oscillator.onended = null; oscillator.stop(); level.disconnect(); output.disconnect(); } };
+function makeSweepVoice(context: AudioContext): Voice {
+  const output = context.createGain(); const level = context.createGain(); const oscillator = context.createOscillator(); const now = context.currentTime;
+  output.gain.value = .24; level.gain.setValueAtTime(0, now); level.gain.linearRampToValueAtTime(.18, now + .03);
+  oscillator.type = "sine"; oscillator.frequency.setValueAtTime(SWEEP_START_HZ, now);
+  for (let index = 0; index < SWEEP_SCHEDULE_LEGS; index += 1) oscillator.frequency.exponentialRampToValueAtTime(sweepLegTarget(index), now + (index + 1) * SWEEP_LEG_DURATION_SECONDS);
+  oscillator.connect(level); level.connect(output); oscillator.onended = () => { level.disconnect(); output.disconnect(); };
+  oscillator.start(now);
+  return { output, stop: () => { const stopAt = context.currentTime + .035; level.gain.cancelScheduledValues(context.currentTime); level.gain.setTargetAtTime(0, context.currentTime, .01); oscillator.stop(stopAt); } };
 }
 
-function makeOfficialVoice(context: AudioContext, source: ClubSource, onSweepComplete: () => void): Voice {
-  if (source.id === "sweep") return makeSweepVoice(context, onSweepComplete);
-  const output = context.createGain(); output.gain.value = .24;
-  const osc = context.createOscillator(); const overtone = context.createOscillator(); const lowpass = context.createBiquadFilter(); const lfo = context.createOscillator(); const lfoGain = context.createGain(); const fundamental = toneForOfficialSound[source.id] ?? 110;
-  osc.type = source.id === "rain" ? "sine" : "triangle"; osc.frequency.value = fundamental; overtone.type = "sine"; overtone.frequency.value = fundamental * (source.id === "bronze" ? 2.01 : 1.5); overtone.detune.value = source.id === "bronze" ? 7 : -4;
-  lowpass.type = "lowpass"; lowpass.frequency.value = source.id === "pulse" ? 380 : 1150; lowpass.Q.value = .4; lfo.frequency.value = source.id === "pulse" ? 1.7 : .16; lfoGain.gain.value = source.id === "pulse" ? 120 : 26;
-  osc.connect(lowpass); overtone.connect(lowpass); lowpass.connect(output); lfo.connect(lfoGain); lfoGain.connect(lowpass.frequency); osc.start(); overtone.start(); lfo.start();
-  return { output, stop: () => { osc.stop(); overtone.stop(); lfo.stop(); output.disconnect(); } };
-}
+function makeOfficialVoice(context: AudioContext): Voice { return makeSweepVoice(context); }
 function makeLocalVoice(context: AudioContext, source: ClubSource, onError: (message: string) => void): Voice {
   const media = new Audio(); media.src = source.localUrl ?? ""; media.preload = "auto"; media.loop = true; media.setAttribute("playsinline", "");
-  const onMediaError = () => onError("この音声ファイルは、このブラウザでは再生できません。MP3、WAV、M4A、またはAACを試してください。");
+  const onMediaError = () => onError("MP3 or WAV files only.");
   media.addEventListener("error", onMediaError); media.load();
   const mediaSource = context.createMediaElementSource(media); const output = context.createGain(); output.gain.value = .6; mediaSource.connect(output);
   return { output, media, dispose: () => { media.pause(); media.removeEventListener("error", onMediaError); mediaSource.disconnect(); output.disconnect(); media.removeAttribute("src"); media.load(); } };
@@ -100,8 +91,9 @@ function createCharacterFilters(context: AudioContext, modelId: SpeakerModelId) 
 function connectCharacterChain(input: AudioNode, filters: BiquadFilterNode[], destination: AudioNode) { if (!filters.length) { input.connect(destination); return; } input.connect(filters[0]); for (let index = 0; index < filters.length - 1; index += 1) filters[index].connect(filters[index + 1]); filters[filters.length - 1].connect(destination); }
 function createSpeakerNode(context: AudioContext, master: GainNode, modelId: SpeakerModelId): SpeakerNode {
   const input = context.createGain(); const characterFilters = createCharacterFilters(context, modelId); const eq = createSpeakerEqNodes(context); const gain = context.createGain(); const analyser = context.createAnalyser(); const panner = context.createPanner();
+  const model = getSpeakerModel(modelId, "sub");
   input.channelCount = 1; input.channelCountMode = "explicit"; input.channelInterpretation = "speakers"; input.gain.value = 1; analyser.fftSize = 1024; analyser.smoothingTimeConstant = .35;
-  panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = 90; panner.coneOuterAngle = 180; panner.coneOuterGain = .35;
+  panner.panningModel = "HRTF"; panner.distanceModel = "inverse"; panner.refDistance = 1.2; panner.maxDistance = 12; panner.rolloffFactor = .85; panner.coneInnerAngle = model.directivity.innerAngle; panner.coneOuterAngle = model.directivity.outerAngle; panner.coneOuterGain = model.directivity.outerGain;
   connectCharacterChain(input, characterFilters, eq.low); eq.low.connect(eq.lowMid); eq.lowMid.connect(eq.highMid); eq.highMid.connect(eq.high); eq.high.connect(gain); gain.connect(analyser); analyser.connect(panner); panner.connect(master);
   return { input, characterFilters, eq, gain, analyser, analyserData: new Uint8Array(analyser.fftSize), frequencyData: new Uint8Array(analyser.frequencyBinCount), panner, cache: { modelId, eq: {} } };
 }
@@ -116,13 +108,13 @@ function syncEq(node: SpeakerNode, eq: SpeakerEq, now: number) {
 }
 
 export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, sources: ClubSource[], activeSourceId: string) {
-  const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const visualEnvelopeRef = useRef<Record<string, number>>({}); const lowEnvelopeRef = useRef<Record<string, number>>({}); const activitySnapshotRef = useRef<Record<string, number>>({}); const lowActivitySnapshotRef = useRef<Record<string, number>>({}); const kindBySpeakerRef = useRef(new Map<string, SpeakerKind>()); const topologyRef = useRef(""); const listenerPositionCacheRef = useRef<SpatialCache>({}); const listenerOrientationCacheRef = useRef<SpatialCache>({}); const activityStoreRef = useRef(createActivityStore()); const lowActivityStoreRef = useRef(createActivityStore()); const topologyPayloadRef = useRef({ speakers, sources, activeSourceId }); const speakersRef = useRef(speakers); const listenerRef = useRef(listener);
+  const contextRef = useRef<AudioContext | null>(null); const masterRef = useRef<GainNode | null>(null); const voicesRef = useRef(new Map<string, Voice>()); const speakerNodesRef = useRef(new Map<string, SpeakerNode>()); const visualEnvelopeRef = useRef<Record<string, number>>({}); const lowEnvelopeRef = useRef<Record<string, number>>({}); const bandEnvelopeRef = useRef<Record<string, SpeakerBandActivity>>({}); const activitySnapshotRef = useRef<Record<string, number>>({}); const lowActivitySnapshotRef = useRef<Record<string, number>>({}); const bandActivitySnapshotRef = useRef<Record<string, SpeakerBandActivity>>({}); const kindBySpeakerRef = useRef(new Map<string, SpeakerKind>()); const topologyRef = useRef(""); const listenerPositionCacheRef = useRef<SpatialCache>({}); const listenerOrientationCacheRef = useRef<SpatialCache>({}); const activityStoreRef = useRef(createActivityStore()); const lowActivityStoreRef = useRef(createActivityStore()); const bandActivityStoreRef = useRef(createBandActivityStore()); const topologyPayloadRef = useRef({ speakers, sources, activeSourceId }); const speakersRef = useRef(speakers); const listenerRef = useRef(listener);
   topologyPayloadRef.current = { speakers, sources, activeSourceId };
   speakersRef.current = speakers; listenerRef.current = listener;
   const [isPlaying, setIsPlaying] = useState(false); const [playbackError, setPlaybackError] = useState<string | null>(null);
   const topologyKey = useMemo(() => `${activeSourceId}:${sources.map((source) => `${source.id}:${source.category}:${source.localUrl ?? ""}`).join("|")}:${speakers.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}`).sort().join("|")}`, [activeSourceId, sources, speakers]);
   const speakerDspKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}:${speaker.level}:${speaker.muted}:${speaker.eq.low.frequency}:${speaker.eq.low.gainDb}:${speaker.eq.lowMid.frequency}:${speaker.eq.lowMid.gainDb}:${speaker.eq.lowMid.q}:${speaker.eq.highMid.frequency}:${speaker.eq.highMid.gainDb}:${speaker.eq.highMid.q}:${speaker.eq.high.frequency}:${speaker.eq.high.gainDb}`).join("|"), [speakers]);
-  const speakerPositionKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.position.x}:${speaker.position.y}:${speaker.position.z}:${speaker.stackParentId ?? "floor"}`).join("|"), [speakers]);
+  const speakerPositionKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.position.x}:${speaker.position.y}:${speaker.position.z}:${speaker.stackParentId ?? "floor"}:${speaker.stackAlign ?? "center"}`).join("|"), [speakers]);
   const speakerOrientationKey = useMemo(() => speakers.map((speaker) => `${speaker.id}:${speaker.orientation?.yaw ?? 0}`).join("|"), [speakers]);
   const listenerPositionKey = `${listener.position.x}:${listener.position.y}:${listener.position.z}`;
   const listenerOrientationKey = `${listener.orientation.yaw}:${listener.orientation.pitch}`;
@@ -131,11 +123,11 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     const context = contextRef.current; const master = masterRef.current; if (!context || !master) return;
     const { speakers: speakerList, sources: sourceList, activeSourceId: sourceId } = topologyPayloadRef.current;
     const speakerNodes = speakerNodesRef.current; const requestedIds = new Set(speakerList.map((speaker) => speaker.id));
-    Array.from(speakerNodes.entries()).forEach(([id, node]) => { if (!requestedIds.has(id)) { disconnectSpeakerNode(node); speakerNodes.delete(id); delete visualEnvelopeRef.current[id]; delete lowEnvelopeRef.current[id]; kindBySpeakerRef.current.delete(id); topologyRef.current = ""; } });
+    Array.from(speakerNodes.entries()).forEach(([id, node]) => { if (!requestedIds.has(id)) { disconnectSpeakerNode(node); speakerNodes.delete(id); delete visualEnvelopeRef.current[id]; delete lowEnvelopeRef.current[id]; delete bandEnvelopeRef.current[id]; kindBySpeakerRef.current.delete(id); topologyRef.current = ""; } });
     speakerList.forEach((speaker) => { const modelId = resolveModelId(speaker.modelId, speaker.kind); const existing = speakerNodes.get(speaker.id); if (!existing || existing.cache.modelId !== modelId) { if (existing) disconnectSpeakerNode(existing); speakerNodes.set(speaker.id, createSpeakerNode(context, master, modelId)); topologyRef.current = ""; } });
     const desiredSource = sourceList.find((source) => source.id === sourceId); const voices = voicesRef.current;
     Array.from(voices.entries()).forEach(([id, voice]) => { if (id !== sourceId || !desiredSource) { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); voices.delete(id); topologyRef.current = ""; } });
-    if (desiredSource && shouldPlay && !voices.has(desiredSource.id)) { const nextVoice = desiredSource.category === "local" && desiredSource.localUrl ? makeLocalVoice(context, desiredSource, setPlaybackError) : makeOfficialVoice(context, desiredSource, () => { voicesRef.current.delete(desiredSource.id); topologyRef.current = ""; setIsPlaying(false); }); voices.set(desiredSource.id, nextVoice); if (nextVoice.media) void nextVoice.media.play().catch(() => { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }); topologyRef.current = ""; }
+    if (desiredSource && shouldPlay && !voices.has(desiredSource.id)) { const nextVoice = desiredSource.category === "local" && desiredSource.localUrl ? makeLocalVoice(context, desiredSource, setPlaybackError) : makeOfficialVoice(context); voices.set(desiredSource.id, nextVoice); if (nextVoice.media) void nextVoice.media.play().catch(() => { setPlaybackError("音源を再生できませんでした。ファイル形式を確認して、もう一度Playを押してください。"); setIsPlaying(false); }); topologyRef.current = ""; }
     const graph = `${sourceId}:${speakerList.map((speaker) => `${speaker.id}:${resolveModelId(speaker.modelId, speaker.kind)}`).sort().join("|")}`;
     if (topologyRef.current !== graph) { voices.forEach((voice) => { voice.output.disconnect(); speakerList.forEach((speaker) => { const node = speakerNodes.get(speaker.id); if (node) voice.output.connect(node.input); }); }); topologyRef.current = graph; }
   }, []);
@@ -154,18 +146,20 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
   useEffect(() => { syncListenerPosition(listenerRef.current); }, [listenerPositionKey, syncListenerPosition]);
   useEffect(() => { syncListenerOrientation(listenerRef.current); }, [listenerOrientationKey, syncListenerOrientation]);
   useEffect(() => {
-    let frame = 0; let lastPaint = 0; const store = activityStoreRef.current; const lowStore = lowActivityStoreRef.current;
+    let frame = 0; let lastPaint = 0; const store = activityStoreRef.current; const lowStore = lowActivityStoreRef.current; const bandStore = bandActivityStoreRef.current;
     const paint = (time: number) => {
       if (time - lastPaint < 48) { frame = requestAnimationFrame(paint); return; }
-      lastPaint = time; const next: Record<string, number> = {}; const nextLow: Record<string, number> = {}; let hasResidual = false; let hasLowResidual = false;
-      speakerNodesRef.current.forEach((node, id) => { const kind = kindBySpeakerRef.current.get(id) ?? "full"; const envelope = visualEnvelopeForKind[kind]; let target = 0; let lowTarget = 0; if (isPlaying) { node.analyser.getByteTimeDomainData(node.analyserData); let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128; target = Math.min(1, (energy / node.analyserData.length) * envelope.gain); lowTarget = bassEnergy(node.analyser, node.frequencyData, contextRef.current?.sampleRate ?? 48_000); } const previous = visualEnvelopeRef.current[id] ?? 0; const smoothed = previous + (target - previous) * (target > previous ? envelope.attack : envelope.release); const previousLow = lowEnvelopeRef.current[id] ?? 0; const lowRate = lowTarget > previousLow ? LOW_ATTACK : (isPlaying ? LOW_RELEASE : LOW_PAUSE_RELEASE); const lowSmoothed = previousLow + (lowTarget - previousLow) * lowRate; const cleanedLow = lowSmoothed < LOW_SNAP ? 0 : lowSmoothed; visualEnvelopeRef.current[id] = smoothed; lowEnvelopeRef.current[id] = cleanedLow; next[id] = smoothed; nextLow[id] = cleanedLow; hasResidual ||= smoothed > .001; hasLowResidual ||= cleanedLow > 0; });
+      lastPaint = time; const next: Record<string, number> = {}; const nextLow: Record<string, number> = {}; const nextBands: Record<string, SpeakerBandActivity> = {}; let hasResidual = false; let hasLowResidual = false; let hasBandResidual = false;
+      speakerNodesRef.current.forEach((node, id) => { const kind = kindBySpeakerRef.current.get(id) ?? "full"; const envelope = visualEnvelopeForKind[kind]; let target = 0; let lowTarget = 0; let rawBands = SILENT_BAND_ACTIVITY; if (isPlaying) { node.analyser.getByteTimeDomainData(node.analyserData); let energy = 0; for (let index = 0; index < node.analyserData.length; index += 1) energy += Math.abs(node.analyserData[index] - 128) / 128; target = Math.min(1, (energy / node.analyserData.length) * envelope.gain); node.analyser.getByteFrequencyData(node.frequencyData); rawBands = activityFromFrequencyData(node.frequencyData, contextRef.current?.sampleRate ?? 48_000, target); lowTarget = bassEnergyFromFrequencyData(node.frequencyData, contextRef.current?.sampleRate ?? 48_000); } const previous = visualEnvelopeRef.current[id] ?? 0; const smoothed = previous + (target - previous) * (target > previous ? envelope.attack : envelope.release); const previousLow = lowEnvelopeRef.current[id] ?? 0; const lowRate = lowTarget > previousLow ? LOW_ATTACK : (isPlaying ? LOW_RELEASE : LOW_PAUSE_RELEASE); const lowSmoothed = previousLow + (lowTarget - previousLow) * lowRate; const cleanedLow = lowSmoothed < LOW_SNAP ? 0 : lowSmoothed; const previousBands = bandEnvelopeRef.current[id] ?? SILENT_BAND_ACTIVITY; const bandRate = (nextValue: number, previousValue: number) => nextValue > previousValue ? envelope.attack : (isPlaying ? envelope.release : Math.max(envelope.release, .38)); const bands = { overall: smoothed, low: previousBands.low + (rawBands.low - previousBands.low) * bandRate(rawBands.low, previousBands.low), mid: previousBands.mid + (rawBands.mid - previousBands.mid) * bandRate(rawBands.mid, previousBands.mid), high: previousBands.high + (rawBands.high - previousBands.high) * bandRate(rawBands.high, previousBands.high) }; const cleanedBands = { overall: bands.overall < .001 ? 0 : bands.overall, low: bands.low < .004 ? 0 : bands.low, mid: bands.mid < .004 ? 0 : bands.mid, high: bands.high < .004 ? 0 : bands.high }; visualEnvelopeRef.current[id] = smoothed; lowEnvelopeRef.current[id] = cleanedLow; bandEnvelopeRef.current[id] = cleanedBands; next[id] = smoothed; nextLow[id] = cleanedLow; nextBands[id] = cleanedBands; hasResidual ||= smoothed > .001; hasLowResidual ||= cleanedLow > 0; hasBandResidual ||= cleanedBands.low > 0 || cleanedBands.mid > 0 || cleanedBands.high > 0; });
       const previousSnapshot = activitySnapshotRef.current; const changed = Object.keys(next).length !== Object.keys(previousSnapshot).length || Object.keys(next).some((id) => Math.abs((previousSnapshot[id] ?? 0) - next[id]) > .012);
       if (changed) { activitySnapshotRef.current = next; store.publish(next); }
       const previousLowSnapshot = lowActivitySnapshotRef.current; const lowChanged = Object.keys(nextLow).length !== Object.keys(previousLowSnapshot).length || Object.keys(nextLow).some((id) => Math.abs((previousLowSnapshot[id] ?? 0) - nextLow[id]) > .008);
       if (lowChanged) { lowActivitySnapshotRef.current = nextLow; lowStore.publish(nextLow); }
-      if (isPlaying || hasResidual || hasLowResidual) frame = requestAnimationFrame(paint); else { if (Object.keys(previousSnapshot).length) { activitySnapshotRef.current = {}; store.publish({}); } if (Object.keys(previousLowSnapshot).length) { lowActivitySnapshotRef.current = {}; lowStore.publish({}); } frame = 0; }
+      const previousBandSnapshot = bandActivitySnapshotRef.current; const bandChanged = Object.keys(nextBands).length !== Object.keys(previousBandSnapshot).length || Object.keys(nextBands).some((id) => { const previous = previousBandSnapshot[id] ?? SILENT_BAND_ACTIVITY; const current = nextBands[id]; return Math.abs(previous.overall - current.overall) > .008 || Math.abs(previous.low - current.low) > .008 || Math.abs(previous.mid - current.mid) > .008 || Math.abs(previous.high - current.high) > .008; });
+      if (bandChanged) { bandActivitySnapshotRef.current = nextBands; bandStore.publish(nextBands); }
+      if (isPlaying || hasResidual || hasLowResidual || hasBandResidual) frame = requestAnimationFrame(paint); else { if (Object.keys(previousSnapshot).length) { activitySnapshotRef.current = {}; store.publish({}); } if (Object.keys(previousLowSnapshot).length) { lowActivitySnapshotRef.current = {}; lowStore.publish({}); } if (Object.keys(previousBandSnapshot).length) { bandActivitySnapshotRef.current = {}; bandStore.publish({}); } frame = 0; }
     };
-    if (isPlaying || Object.values(visualEnvelopeRef.current).some((value) => value > .001) || Object.values(lowEnvelopeRef.current).some((value) => value > 0)) frame = requestAnimationFrame(paint);
+    if (isPlaying || Object.values(visualEnvelopeRef.current).some((value) => value > .001) || Object.values(lowEnvelopeRef.current).some((value) => value > 0) || Object.values(bandEnvelopeRef.current).some((value) => value.low > 0 || value.mid > 0 || value.high > 0)) frame = requestAnimationFrame(paint);
     return () => { if (frame) cancelAnimationFrame(frame); };
   }, [isPlaying]);
   const togglePlayback = useCallback(async () => {
@@ -183,5 +177,5 @@ export function useClubAudio(speakers: ClubSpeaker[], listener: ClubListener, so
     } catch { setPlaybackError("端末の音声を開始できませんでした。音量とブラウザの音声許可を確認して、もう一度Playを押してください。"); setIsPlaying(false); }
   }, [ensureContext, isPlaying, syncListenerOrientation, syncListenerPosition, syncSpeakerDsp, syncSpeakerOrientations, syncSpeakerPositions, syncTopology]);
   useEffect(() => () => { voicesRef.current.forEach((voice) => { voice.stop?.(); voice.dispose?.(); voice.media?.pause(); }); speakerNodesRef.current.forEach(disconnectSpeakerNode); void contextRef.current?.close(); }, []);
-  return { isPlaying, activityStore: activityStoreRef.current, lowActivityStore: lowActivityStoreRef.current, togglePlayback, playbackError, clearPlaybackError: () => setPlaybackError(null) };
+  return { isPlaying, activityStore: activityStoreRef.current, lowActivityStore: lowActivityStoreRef.current, bandActivityStore: bandActivityStoreRef.current, togglePlayback, playbackError, clearPlaybackError: () => setPlaybackError(null) };
 }

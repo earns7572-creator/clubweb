@@ -1,5 +1,58 @@
 # Club Craft Web — Signal Color Update
 
+## Scene-first First Use Onboarding
+
+- [x] Header popover state・dismiss処理・MIX/CUSTOM/onboardingとの接続を監査する。
+- [x] SOUND/SYSTEM/BACKGROUND/LAYOUTをsingle activeHeaderPopover stateへ統合する。
+- [x] outside click、Escape、同control再click、MIX/CUSTOM起動時のHeader popover closeを実装する。
+- [x] desktop/mobile/onboardingでHeader popoverが常に1つだけ表示されることを検証する。
+- [x] Header popover排他変更をtest・build後に対象branchへcommit・pushする。
+- [x] SYSTM UI v2要件と既存Header・View・Library・Inspector・Mixer・EQ・mobile CSSを監査する。
+- [x] 共通Typographyとsignal languageを整理し、Header control railを再設計する。
+- [x] View switcher、SYSTEM LIBRARY、Inspectorをequipment/instrument languageへ再構成する。
+- [x] Mixer・EQ・popover・mobileを統一し、不要なcard/shadowを削減する。
+- [x] desktop/mobileの機能回帰、onboarding、typecheck、tests、build、Cloudflare Previewを確認する。
+- [x] UI v2変更を対象branchへcommit・pushする。
+- [x] completion messageを削除し、LISTEN後のguide・highlight・veil fade outへ置換する。
+- [x] LISTEN開始、audio継続、completion UI不在、300〜500ms fade outを確認する。
+- [x] completion変更のtest・typecheck・build後に対象branchへcommit・pushする。
+- [x] guide panel、focus veil、target highlight、pointer lineを各stepへ追加する。
+- [x] 1440×900と390×844でstep 01〜04の視認性・pointer・既存UI非干渉を確認する。
+- [x] onboarding強化のtest・typecheck・build後に対象branchへcommit・pushする。
+- [x] 既存step flow、SYSTEM LIBRARY・Headerの接点、onboarding testを確認する。
+- [x] thumbnail grid・dark modal・sound card・giant play CTAを廃止し、Scene内instructionへ置換する。
+- [x] desktop/mobileでScene、view switcher、library、EDIT、MIXと重ならないonboarding guidanceを調整する。
+- [x] step 01〜04、SKIP、local file chooser、Listen、pointer・scrollを実操作で検証する。
+- [x] test・typecheck・build後に対象branchへcommit・pushする。
+
+## Cloudflare Pages preview deployment
+
+- [x] `21b0f6b` のPreview deploymentを確認し、必要時のみコード無変更で再deployする。
+- [x] 公開Previewでscene-first onboarding表示と旧modal／thumbnail grid不在を確認する。
+- [x] Cloudflare接続可否と`feat/reggae-quality`の指定commitを確認する。
+- [x] Cloudflare PagesへGitHub repositoryを接続し、Preview deploymentを作成する。
+- [x] GitHub installationが復旧しない場合、API direct uploadで同一static buildをPreview deploymentとして公開する。
+- [x] Previewでasset・3D・audio・mobile操作・console/404を実機確認する。
+- [x] 必要な修正を対象branchへ反映して再deployする。
+- [x] custom domain接続可能な状態を確認して結果を報告する。
+
+## Hosting-independent static build
+
+- [x] `/manus-storage/`参照とManus固有runtime設定を全件監査する。
+- [x] production assetを`client/public/assets/`へ移行し、repo内public pathへ置換する。
+- [x] Vite・package設定からManus production依存を除去し、Cloudflare Pages用build commandを追加する。
+- [x] `check`・通常build・Pages build・asset出力・残存Manus参照を検証する。
+- [ ] GitHub対象branchへcommit・pushし、移行結果を報告する。
+
+## SYSTM product UI/UX migration
+
+- [x] 承認済みSYSTM仕様、提供済みの正式ロゴ、既存UIと保持対象の3D・音響・操作を照合する。
+- [x] SYSTMブランド、ロゴ、色・type・signal pixel motifの基盤を整える。
+- [x] desktopのheader、view control、SYSTEM LIBRARY、inspector、mixerを仕様に沿って再設計する。
+- [x] mobileのheader、touch target、library、bottom sheet、safe areaを再設計する。
+- [x] 3D・audio・speaker操作を回帰検証し、desktop/mobileの画面品質を確認する。
+- [ ] GitHub対象branchと公開checkpointへ保存し、結果を報告する。
+
 - [x] グレー基調を保った信号機カラーの役割を定義する。
 - [x] Floor View、Route、Speaker、音源カードへ赤・黄・緑の状態色を適用する。
 - [x] Inspectorと再生状態のコントラストを調整する。
@@ -326,6 +379,24 @@
 - [ ] 回帰テスト、production build、GitHub main、公開チェックポイントを完了する。
 
 > 実再生検証: POVでDeep PulseのPlay/Pause操作を完了し、Pause状態へ遷移することを確認した。操作後のbrowser consoleにはruntime errorが記録されていない。cameraの小さな振幅そのものは静止画では定量評価できないため、二帯域・gate・envelope・camera条件は自動testと実装検査で担保する。
+
+## Speaker Direct Manipulation + Band-Accurate Activity
+
+- [ ] pointerdownを選択候補として記録し、desktop 5px／touch 10pxを超えた後だけspeaker dragを開始する。
+- [ ] stacked memberの通常dragでstack rootだけを移動し、親子関係・stack geometry・audio positionを維持する。
+- [ ] DETACHをInspectorの明示操作へ移し、通常drag・rotationから自動detachを完全に除去する。
+- [ ] scene上の削除×を撤去し、InspectorにREMOVE、stack member selector、mobileの±15° TURNを追加する。
+- [ ] cabinet実寸width/depthを使うsafe boundsと、stack overlapを避けるbounded hit targetを実装する。
+- [ ] existing analyserのfrequencyData一配列から20–200 Hz／200 Hz–2 kHz／2–20 kHzのlow/mid/high activityを算出する。
+- [ ] low/mid/high emitter meshとSound Field componentを同じband activityだけで駆動し、Pause時に全bandをzeroへ収束させる。
+- [ ] LOW Sound Fieldを広く柔らかく、従来より明確な表示へ調整する。
+- [ ] pointer threshold、root move、explicit detach、yaw、safe bounds、sine sweep band extractionのtestを追加する。
+- [ ] desktop/mobile実機、回帰test、Pages build、Cloudflare Previewを確認して対象branchへcommit・pushする。
+
+### 55分時点の安全な切り出し
+
+- [ ] 実行中の回帰testとPages buildの終了状態を確認し、55分時点で完了済みの変更だけをcommit・pushする。
+- [ ] commit SHA、PASS済み検証、未実施のbrowser/Preview QA、次回再開位置をユーザーへ報告する。
 
 ## Named Listener Avatar + DJ Booth Avatar
 

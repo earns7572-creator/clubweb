@@ -14,6 +14,7 @@ const boothTopMaterial: Record<SurfaceTone, THREE.MeshStandardMaterial> = {
   paper: new THREE.MeshStandardMaterial({ color: "#696961", roughness: .86, metalness: .01 }),
   sand: new THREE.MeshStandardMaterial({ color: "#6a6157", roughness: .86, metalness: .01 }),
   slate: new THREE.MeshStandardMaterial({ color: "#606864", roughness: .86, metalness: .01 }),
+  night: new THREE.MeshStandardMaterial({ color: "#252925", roughness: .86, metalness: .01 }),
 };
 const ignoreRaycast = () => null;
 

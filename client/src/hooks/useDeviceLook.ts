@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from "react";
 import * as THREE from "three";
 import type { ClubListener } from "@/hooks/useClubAudio";
-import { getScreenOrientationDegrees, requestOrientationPermission, writeDeviceOrientationQuaternion } from "@/lib/deviceOrientation";
+import { getScreenOrientationDegrees, requestOrientationPermission, writeDeviceOrientationQuaternion, writeRelativeDeviceLook } from "@/lib/deviceOrientation";
+import { recenterLookAnchor } from "@/lib/povLook";
 
 export type MotionState = "off" | "requesting" | "active" | "denied" | "unsupported";
 export type DeviceLookPose = { active: boolean; yaw: number; pitch: number };
@@ -41,7 +42,8 @@ export function useDeviceLook({ listener, onLookAbsolute, onVisualUpdate }: Opti
   const baselineQuaternion = useRef<THREE.Quaternion | null>(null);
   const currentQuaternion = useRef(new THREE.Quaternion());
   const relativeQuaternion = useRef(new THREE.Quaternion());
-  const relativeEuler = useRef(new THREE.Euler());
+  const relativeForward = useRef(new THREE.Vector3());
+  const relativeLook = useRef({ yaw: 0, pitch: 0 });
   const lastVisualUpdate = useRef(0);
   const lastAudioUpdate = useRef(0);
 
@@ -59,10 +61,9 @@ export function useDeviceLook({ listener, onLookAbsolute, onVisualUpdate }: Opti
     if (stateRef.current !== "active" || event.alpha === null || event.beta === null || event.gamma === null) return;
     writeDeviceOrientationQuaternion(currentQuaternion.current, event.alpha, event.beta, event.gamma, getScreenOrientationDegrees());
     if (!baselineQuaternion.current) { baselineQuaternion.current = currentQuaternion.current.clone(); poseRef.current = { active: true, ...anchorRef.current }; publish(performance.now(), true); return; }
-    relativeQuaternion.current.copy(baselineQuaternion.current).invert().multiply(currentQuaternion.current);
-    relativeEuler.current.setFromQuaternion(relativeQuaternion.current, "YXZ");
-    const yawDelta = clamp(relativeEuler.current.y, -MAX_YAW_DELTA, MAX_YAW_DELTA);
-    const pitchDelta = clamp(relativeEuler.current.x, -MAX_PITCH_DELTA, MAX_PITCH_DELTA);
+    const relative = writeRelativeDeviceLook(relativeLook.current, baselineQuaternion.current, currentQuaternion.current, relativeQuaternion.current, relativeForward.current);
+    const yawDelta = clamp(relative.yaw, -MAX_YAW_DELTA, MAX_YAW_DELTA);
+    const pitchDelta = clamp(relative.pitch, -MAX_PITCH_DELTA, MAX_PITCH_DELTA);
     const targetYaw = anchorRef.current.yaw + yawDelta;
     const targetPitch = clamp(anchorRef.current.pitch + pitchDelta, -MAX_PITCH, MAX_PITCH);
     const current = poseRef.current;
@@ -102,8 +103,9 @@ export function useDeviceLook({ listener, onLookAbsolute, onVisualUpdate }: Opti
   const recenter = useCallback(() => {
     if (stateRef.current !== "active") return;
     if (baselineQuaternion.current) baselineQuaternion.current.copy(currentQuaternion.current);
-    anchorRef.current = { yaw: poseRef.current.yaw, pitch: poseRef.current.pitch };
-  }, []);
+    anchorRef.current = recenterLookAnchor(poseRef.current);
+    publish(performance.now(), true);
+  }, [publish]);
 
   const adjustCenter = useCallback((deltaYaw: number, deltaPitch: number) => {
     if (stateRef.current !== "active") return;

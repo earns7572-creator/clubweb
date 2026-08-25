@@ -1,13 +1,17 @@
 import { useSyncExternalStore } from "react";
+import type { SpeakerBandActivityMap } from "@/lib/bandActivity";
 
-export type ActivityStore = {
-  getSnapshot: () => Readonly<Record<string, number>>;
-  publish: (next: Record<string, number>) => void;
+type Store<T> = {
+  getSnapshot: () => T;
+  publish: (next: T) => void;
   subscribe: (listener: () => void) => () => void;
 };
 
-export function createActivityStore(): ActivityStore {
-  let snapshot: Readonly<Record<string, number>> = {};
+export type ActivityStore = Store<Readonly<Record<string, number>>>;
+export type BandActivityStore = Store<SpeakerBandActivityMap>;
+
+function createStore<T>(initial: T): Store<T> {
+  let snapshot = initial;
   const listeners = new Set<() => void>();
   return {
     getSnapshot: () => snapshot,
@@ -16,6 +20,18 @@ export function createActivityStore(): ActivityStore {
   };
 }
 
+export function createActivityStore(): ActivityStore {
+  return createStore<Readonly<Record<string, number>>>({});
+}
+
+export function createBandActivityStore(): BandActivityStore {
+  return createStore<SpeakerBandActivityMap>({});
+}
+
 export function useSpeakerActivity(store: ActivityStore) {
+  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
+}
+
+export function useSpeakerBandActivity(store: BandActivityStore) {
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 }

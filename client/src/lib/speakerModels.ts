@@ -10,20 +10,81 @@ export type SpeakerModelId =
   | "steppers-reflex-sub" | "steppers-kick" | "steppers-mid" | "steppers-top";
 
 export type CharacterFilter = { type: BiquadFilterType; frequency: number; q?: number; gainDb?: number };
+export type SpeakerBand = "low" | "kick" | "full" | "mid" | "high";
+export type SpeakerDirectivity = { innerAngle: number; outerAngle: number; outerGain: number; visualRangeMeters: number };
+export type SpeakerFieldComponent = { band: "low" | "kick" | "mid" | "high"; gain: number; innerAngle: number; outerAngle: number; outerGain: number; visualRangeMeters: number };
 export type SpeakerVisualVariant = SpeakerFamily;
 export type SpeakerGlbVisual = { renderer: "glb"; variant: SpeakerVisualVariant; plannedGlbPath: string; src: string; emitterMeshes?: { low?: string[]; mid?: string[]; high?: string[] } };
 export type SpeakerProceduralVisual = { renderer: "procedural"; variant: SpeakerVisualVariant; plannedGlbPath: string };
 export type SpeakerVisualDefinition = SpeakerGlbVisual | SpeakerProceduralVisual;
 export type SpeakerFamilyDefinition = { id: SpeakerFamily; label: string; shortLabel: string; description: string; order: number };
-export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; characterFilters: CharacterFilter[]; visual: SpeakerVisualDefinition };
+export type SpeakerModelDefinition = { id: SpeakerModelId; family: SpeakerFamily; kind: SpeakerKind; band: SpeakerBand; label: string; shortLabel: string; body: { width: number; height: number; depth: number }; directivity: SpeakerDirectivity; fieldComponents: SpeakerFieldComponent[]; characterFilters: CharacterFilter[]; visual: SpeakerVisualDefinition };
+
+const BAND_BY_MODEL: Record<SpeakerModelId, SpeakerBand> = {
+  "modern-sub": "low", "modern-woofer": "low", "modern-full": "full", "modern-mid": "mid", "modern-high": "high",
+  "reggae-scoop": "low", "reggae-kick": "kick", "reggae-mid-horn": "mid", "reggae-top": "high",
+  "freeparty-wbin": "low", "freeparty-kick-horn": "kick", "freeparty-mid-horn": "mid", "freeparty-top": "high",
+  "festival-sub": "low", "festival-line-array": "full", "festival-front-fill": "full",
+  "hifi-woofer": "low", "hifi-mid-horn": "mid", "hifi-tweeter": "high",
+  "steppers-reflex-sub": "low", "steppers-kick": "kick", "steppers-mid": "mid", "steppers-top": "high",
+};
+
+const DIRECTIVITY_BY_MODEL: Record<SpeakerModelId, SpeakerDirectivity> = {
+  "modern-sub": { innerAngle: 300, outerAngle: 360, outerGain: .75, visualRangeMeters: 7 },
+  "modern-woofer": { innerAngle: 170, outerAngle: 270, outerGain: .45, visualRangeMeters: 7 },
+  "modern-full": { innerAngle: 100, outerAngle: 170, outerGain: .25, visualRangeMeters: 9 },
+  "modern-mid": { innerAngle: 80, outerAngle: 140, outerGain: .18, visualRangeMeters: 9 },
+  "modern-high": { innerAngle: 60, outerAngle: 110, outerGain: .10, visualRangeMeters: 10 },
+  "reggae-scoop": { innerAngle: 170, outerAngle: 280, outerGain: .55, visualRangeMeters: 8 },
+  "reggae-kick": { innerAngle: 120, outerAngle: 210, outerGain: .35, visualRangeMeters: 8 },
+  "reggae-mid-horn": { innerAngle: 60, outerAngle: 105, outerGain: .12, visualRangeMeters: 10 },
+  "reggae-top": { innerAngle: 45, outerAngle: 90, outerGain: .08, visualRangeMeters: 11 },
+  "freeparty-wbin": { innerAngle: 150, outerAngle: 250, outerGain: .50, visualRangeMeters: 8 },
+  "freeparty-kick-horn": { innerAngle: 100, outerAngle: 180, outerGain: .30, visualRangeMeters: 8 },
+  "freeparty-mid-horn": { innerAngle: 55, outerAngle: 100, outerGain: .12, visualRangeMeters: 10 },
+  "freeparty-top": { innerAngle: 45, outerAngle: 85, outerGain: .08, visualRangeMeters: 11 },
+  "festival-sub": { innerAngle: 300, outerAngle: 360, outerGain: .70, visualRangeMeters: 10 },
+  "festival-line-array": { innerAngle: 90, outerAngle: 140, outerGain: .20, visualRangeMeters: 13 },
+  "festival-front-fill": { innerAngle: 110, outerAngle: 180, outerGain: .25, visualRangeMeters: 8 },
+  "hifi-woofer": { innerAngle: 160, outerAngle: 260, outerGain: .40, visualRangeMeters: 6 },
+  "hifi-mid-horn": { innerAngle: 60, outerAngle: 105, outerGain: .12, visualRangeMeters: 7 },
+  "hifi-tweeter": { innerAngle: 45, outerAngle: 80, outerGain: .06, visualRangeMeters: 7 },
+  "steppers-reflex-sub": { innerAngle: 280, outerAngle: 360, outerGain: .65, visualRangeMeters: 8 },
+  "steppers-kick": { innerAngle: 110, outerAngle: 190, outerGain: .32, visualRangeMeters: 8 },
+  "steppers-mid": { innerAngle: 70, outerAngle: 120, outerGain: .15, visualRangeMeters: 9 },
+  "steppers-top": { innerAngle: 50, outerAngle: 90, outerGain: .08, visualRangeMeters: 10 },
+};
+
+const FIELD_COMPONENTS_BY_MODEL: Partial<Record<SpeakerModelId, SpeakerFieldComponent[]>> = {
+  "modern-full": [
+    { band: "low", gain: .32, innerAngle: 155, outerAngle: 240, outerGain: .35, visualRangeMeters: 7.5 },
+    { band: "mid", gain: .78, innerAngle: 105, outerAngle: 165, outerGain: .20, visualRangeMeters: 9 },
+    { band: "high", gain: 1, innerAngle: 72, outerAngle: 120, outerGain: .10, visualRangeMeters: 10 },
+  ],
+  "festival-line-array": [
+    { band: "mid", gain: .90, innerAngle: 100, outerAngle: 150, outerGain: .18, visualRangeMeters: 13 },
+    { band: "high", gain: 1.15, innerAngle: 84, outerAngle: 130, outerGain: .12, visualRangeMeters: 14 },
+  ],
+  "festival-front-fill": [
+    { band: "mid", gain: .78, innerAngle: 120, outerAngle: 185, outerGain: .25, visualRangeMeters: 8 },
+    { band: "high", gain: .95, innerAngle: 105, outerAngle: 165, outerGain: .20, visualRangeMeters: 8.5 },
+  ],
+};
+
+const fieldComponentsFor = (id: SpeakerModelId): SpeakerFieldComponent[] => {
+  const components = FIELD_COMPONENTS_BY_MODEL[id];
+  if (components) return components;
+  const band = BAND_BY_MODEL[id];
+  if (band === "full") return [];
+  return [{ band, gain: 1, ...DIRECTIVITY_BY_MODEL[id] }];
+};
 
 const GLB_ASSET_URLS: Record<string, string> = {
-  "modern/sub.glb": "/manus-storage/club-sub_945f551c.glb", "modern/point-source.glb": "/manus-storage/point-source_cf234f10.glb",
-  "reggae/scoop.glb": "/manus-storage/scoop_5fb2dc25.glb", "reggae/kick-bin.glb": "/manus-storage/kick-bin_4ded79f4.glb", "reggae/mid-horn.glb": "/manus-storage/mid-horn_88e26e4b.glb", "reggae/top.glb": "/manus-storage/top_f53d710b.glb",
-  "freeparty/w-bin.glb": "/manus-storage/w-bin_0ce00c0f.glb", "freeparty/kick-horn.glb": "/manus-storage/kick-horn_683764ee.glb", "freeparty/mid-horn.glb": "/manus-storage/mid-horn_913b1365.glb", "freeparty/hf-horn.glb": "/manus-storage/hf-horn_e168a6aa.glb",
-  "festival/sub.glb": "/manus-storage/festival-sub_a42dba39.glb", "festival/line-array-hang.glb": "/manus-storage/line-array-hang_9a71a238.glb", "festival/front-fill.glb": "/manus-storage/front-fill_863b5295.glb",
-  "hifi/large-woofer.glb": "/manus-storage/large-woofer_4221dd9f.glb", "hifi/mid-horn.glb": "/manus-storage/wooden-mid-horn_678136a1.glb", "hifi/tweeter.glb": "/manus-storage/super-tweeter_22afe845.glb",
-  "steppers/reflex-sub.glb": "/manus-storage/reflex-sub_c5d109b8.glb", "steppers/kick.glb": "/manus-storage/kick_08ffe74a.glb", "steppers/mid-top.glb": "/manus-storage/mid-top_8676374e.glb", "steppers/top.glb": "/manus-storage/hf-top_b6c07775.glb",
+  // Modern and Reggae intentionally have no entry: their approved procedural visuals are protected from bulk GLB replacement.
+  "freeparty/w-bin.glb": "/models/speakers/freeparty/w-bin.glb", "freeparty/kick-horn.glb": "/models/speakers/freeparty/kick-horn.glb", "freeparty/mid-horn.glb": "/models/speakers/freeparty/mid-horn.glb", "freeparty/hf-horn.glb": "/models/speakers/freeparty/hf-horn.glb",
+  "festival/sub.glb": "/models/speakers/festival/sub.glb", "festival/line-array-hang.glb": "/models/speakers/festival/line-array-hang.glb", "festival/front-fill.glb": "/models/speakers/festival/front-fill.glb",
+  "hifi/large-woofer.glb": "/models/speakers/hifi/large-woofer.glb", "hifi/mid-horn.glb": "/models/speakers/hifi/mid-horn.glb", "hifi/tweeter.glb": "/models/speakers/hifi/tweeter.glb",
+  "steppers/reflex-sub.glb": "/models/speakers/steppers/reflex-sub.glb", "steppers/kick.glb": "/models/speakers/steppers/kick.glb", "steppers/mid-top.glb": "/models/speakers/steppers/mid-top.glb", "steppers/top.glb": "/models/speakers/steppers/top.glb",
 };
 const emittersFor = (id: SpeakerModelId): SpeakerGlbVisual["emitterMeshes"] => {
   if (id === "modern-full" || id === "festival-front-fill") return { low: ["EmitterLow"], high: ["EmitterHigh"] };
@@ -34,7 +95,7 @@ const emittersFor = (id: SpeakerModelId): SpeakerGlbVisual["emitterMeshes"] => {
   return { low: ["EmitterLow"] };
 };
 const visual = (variant: SpeakerVisualVariant, plannedGlbPath: string, id: SpeakerModelId): SpeakerVisualDefinition => { const src = GLB_ASSET_URLS[plannedGlbPath]; return src ? { renderer: "glb", variant, plannedGlbPath, src, emitterMeshes: emittersFor(id) } : { renderer: "procedural", variant, plannedGlbPath }; };
-const model = (id: SpeakerModelId, family: SpeakerFamily, kind: SpeakerKind, label: string, shortLabel: string, body: [number, number, number], characterFilters: CharacterFilter[], plannedGlbPath: string): SpeakerModelDefinition => ({ id, family, kind, label, shortLabel, body: { width: body[0], height: body[1], depth: body[2] }, characterFilters, visual: visual(family, plannedGlbPath, id) });
+const model = (id: SpeakerModelId, family: SpeakerFamily, kind: SpeakerKind, label: string, shortLabel: string, body: [number, number, number], characterFilters: CharacterFilter[], plannedGlbPath: string): SpeakerModelDefinition => ({ id, family, kind, band: BAND_BY_MODEL[id], label, shortLabel, body: { width: body[0], height: body[1], depth: body[2] }, directivity: DIRECTIVITY_BY_MODEL[id], fieldComponents: fieldComponentsFor(id), characterFilters, visual: visual(family, plannedGlbPath, id) });
 const hp = (frequency: number, q = .7): CharacterFilter => ({ type: "highpass", frequency, q });
 const lp = (frequency: number, q = .7): CharacterFilter => ({ type: "lowpass", frequency, q });
 const peak = (frequency: number, gainDb: number, q = .75): CharacterFilter => ({ type: "peaking", frequency, gainDb, q });
@@ -54,10 +115,10 @@ export const SPEAKER_MODELS: Record<SpeakerModelId, SpeakerModelDefinition> = {
   "modern-full": model("modern-full", "modern", "full", "Full Range", "Full", [1.1, 2, 1.08], [{ type: "allpass", frequency: 1000, q: .3 }], "modern/point-source.glb"),
   "modern-mid": model("modern-mid", "modern", "mid", "Mid", "Mid", [.84, .88, .58], [{ type: "bandpass", frequency: 1600, q: .6 }], "modern/point-source.glb"),
   "modern-high": model("modern-high", "modern", "high", "High", "High", [1.08, .62, .72], [hp(3600)], "modern/point-source.glb"),
-  "reggae-scoop": model("reggae-scoop", "reggae", "sub", "Reggae Scoop", "Scoop", [1.45, 1.65, 1.15], [hp(28), peak(55, 2.5, .8), lp(100, .85)], "reggae/scoop.glb"),
-  "reggae-kick": model("reggae-kick", "reggae", "woofer", "Reggae Kick", "Kick", [1.35, .85, 1.05], [hp(75), peak(125, 2), lp(240, .72)], "reggae/kick-bin.glb"),
-  "reggae-mid-horn": model("reggae-mid-horn", "reggae", "mid", "Reggae Mid Horn", "Mid Horn", [1.12, .72, .76], [hp(190), peak(1100, 1.5, .65), lp(4200)], "reggae/mid-horn.glb"),
-  "reggae-top": model("reggae-top", "reggae", "high", "Reggae Top", "Top", [1, .42, .44], [hp(4000, .72), peak(8500, 1.5, .65)], "reggae/top.glb"),
+  "reggae-scoop": model("reggae-scoop", "reggae", "sub", "Reggae Scoop", "Scoop", [1.2, 1.65, 1.15], [hp(28), peak(55, 2.5, .8), lp(100, .85)], "reggae/scoop.glb"),
+  "reggae-kick": model("reggae-kick", "reggae", "woofer", "Reggae Kick", "Kick", [1.05, .88, .9], [hp(75), peak(125, 2), lp(240, .72)], "reggae/kick-bin.glb"),
+  "reggae-mid-horn": model("reggae-mid-horn", "reggae", "mid", "Reggae Mid Horn", "Mid Horn", [.96, .72, .76], [hp(190), peak(1100, 1.5, .65), lp(4200)], "reggae/mid-horn.glb"),
+  "reggae-top": model("reggae-top", "reggae", "high", "Reggae Top", "Top", [.88, .42, .44], [hp(4000, .72), peak(8500, 1.5, .65)], "reggae/top.glb"),
   "freeparty-wbin": model("freeparty-wbin", "freeparty", "sub", "W-Bin Bass", "W-Bin", [1.2, .9, 1.05], [hp(35), lp(105, .8)], "freeparty/w-bin.glb"),
   "freeparty-kick-horn": model("freeparty-kick-horn", "freeparty", "woofer", "Kick Horn", "Kick", [1.1, .72, .9], [hp(80), peak(130, 2), lp(260)], "freeparty/kick-horn.glb"),
   "freeparty-mid-horn": model("freeparty-mid-horn", "freeparty", "mid", "Mid Horn", "Mid", [.9, .68, .65], [hp(220), lp(3500)], "freeparty/mid-horn.glb"),

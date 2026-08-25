@@ -7,7 +7,11 @@ export function normalizeYaw(yaw: number) {
 }
 
 export function degreesToYaw(degrees: number) { return normalizeYaw(degrees * Math.PI / 180); }
-export function yawToDegrees(yaw: number) { return Math.round(normalizeYaw(yaw) * 180 / Math.PI); }
+export function yawToDegrees(yaw: number) {
+  const fullTurn = Math.PI * 2;
+  const degrees = Math.round((((yaw % fullTurn) + fullTurn) % fullTurn) * 180 / Math.PI);
+  return degrees === 360 ? 0 : degrees;
+}
 export function snapYaw(yaw: number, step = ROTATION_SNAP_RADIANS) { return normalizeYaw(Math.round(yaw / step) * step); }
 
 /** Audio room axes match TOP: scene +X → audio +X, scene +Z → audio +Z. */
