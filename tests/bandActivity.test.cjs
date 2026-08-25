@@ -11,6 +11,9 @@ const assertDominantBand = (hz, expected) => {
 };
 
 assert.deepEqual(VISUAL_BAND_HZ, { low: { low: 20, high: 200 }, mid: { low: 200, high: 2000 }, high: { low: 2000, high: 20000 } }, "visual bands use the specified real frequency ranges");
+assertDominantBand(80, "low");
+assertDominantBand(800, "mid");
+assertDominantBand(8_000, "high");
 assertDominantBand(100, "low");
 assertDominantBand(1_000, "mid");
 assertDominantBand(10_000, "high");
