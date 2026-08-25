@@ -14,6 +14,7 @@ const ignoreRaycast: THREE.Mesh["raycast"] = () => {};
 
 type Props = {
   speakers: ClubSpeaker[];
+  activityBySpeaker: Readonly<Record<string, number>>;
   bandActivityBySpeaker: SpeakerBandActivityMap;
   roomWidth: number;
   roomDepth: number;
@@ -146,9 +147,9 @@ void main() {
 }
 `;
 
-function activityForBand(activity: SpeakerBandActivity | undefined, band: SpeakerBand) { if (!activity) return 0; if (band === "low" || band === "kick") return activity.low; if (band === "mid") return activity.mid; if (band === "high") return activity.high; return activity.overall; }
+function activityForBand(activity: SpeakerBandActivity | undefined, overall: number, band: SpeakerBand) { if (!activity) return overall; if (band === "low" || band === "kick") return activity.low; if (band === "mid") return activity.mid; if (band === "high") return activity.high; return activity.overall; }
 
-export default function SoundFieldLayer({ speakers, bandActivityBySpeaker, roomWidth, roomDepth, hazeColor = "#777870", darkSurface = false }: Props) {
+export default function SoundFieldLayer({ speakers, activityBySpeaker, bandActivityBySpeaker, roomWidth, roomDepth, hazeColor = "#777870", darkSurface = false }: Props) {
   const { invalidate } = useThree();
   const resolver = useMemo(() => createStackResolver(speakers), [speakers]);
   const fieldWidth = roomWidth * SOUND_FIELD_STYLE.fieldExtentScale;
@@ -196,7 +197,8 @@ export default function SoundFieldLayer({ speakers, bandActivityBySpeaker, roomW
       const xy = resolver.getXY(speaker);
       const orientation = speakerOrientationToAudioOrientation(speaker.orientation?.yaw ?? 0);
       const activity = speaker.muted ? undefined : bandActivityBySpeaker[speaker.id];
-      return model.fieldComponents.map((component) => ({ component, x: (xy.x - .5) * roomWidth, z: (xy.y - .5) * roomDepth, directionX: orientation.x, directionZ: orientation.z, rawActivity: activityForBand(activity, component.band) }));
+      const overall = speaker.muted ? 0 : activityBySpeaker[speaker.id] ?? 0;
+      return model.fieldComponents.map((component) => ({ component, x: (xy.x - .5) * roomWidth, z: (xy.y - .5) * roomDepth, directionX: orientation.x, directionZ: orientation.z, rawActivity: activityForBand(activity, overall, component.band) }));
     }).slice(0, MAX_FIELD_COMPONENTS);
     material.uniforms.uCount.value = activeFieldComponents.length;
     const positions = material.uniforms.uPositions.value as THREE.Vector2[];
@@ -230,7 +232,7 @@ export default function SoundFieldLayer({ speakers, bandActivityBySpeaker, roomW
     }
 
     invalidate();
-  }, [speakers, bandActivityBySpeaker, resolver, roomWidth, roomDepth, fieldWidth, fieldDepth, hazeColor, darkSurface, material, invalidate]);
+  }, [speakers, activityBySpeaker, bandActivityBySpeaker, resolver, roomWidth, roomDepth, fieldWidth, fieldDepth, hazeColor, darkSurface, material, invalidate]);
 
   useEffect(() => () => material.dispose(), [material]);
 
