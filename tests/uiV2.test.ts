@@ -12,7 +12,7 @@ const home = read("client/src/pages/Home.tsx");
 
 assert.ok(!floor.includes("DjBooth"), "Top View must not render a DJ booth context object");
 assert.ok(!floor.includes("spatial-stage-anchor"), "Top View must not render STAGE text");
-assert.ok(floor.includes("orthographic.zoom = size.width < 760 ? 46 : 108"), "desktop TOP camera must use the focused UI v2 framing");
+assert.ok(floor.includes("orthographic.zoom = size.width < 760 ? 52 : 108"), "TOP camera must use the focused UI v2 framing");
 assert.ok(floor.includes("const yaw = snapYaw("), "speaker yaw must snap by default while rotating");
 assert.ok(floor.includes("TURN {yawToDegrees(yaw)}°"), "selected speaker must show its orientation value");
 assert.ok(systm.includes("--font-ui") && systm.includes("--font-tech"), "UI and technical typography roles must be explicit");

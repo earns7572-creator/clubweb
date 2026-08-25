@@ -180,9 +180,9 @@ assert.match(home, /const detachSpeaker = \(id: string\) => setSpeakers\(\(now\)
 assert.match(home, /onClick=\{\(\) => detachSpeaker\(selectedSpeaker\.id\)\}/);
 assert.match(home, /modelIdsForFamily/);
 assert.match(home, /orderedSpeakerFamilies/);
-assert.match(home, /SYSTEM_PRESETS/);
+assert.match(home, /SYSTEM_RECIPES/);
 assert.match(home, /function FamilyLibrary/);
-assert.match(home, /loadSystemPreset/);
+assert.match(home, /prepareRecipeMaterials/);
 assert.match(home, /selectedSpeakerId, setSelectedSpeakerId\] = useState\(""\)/);
 assert.match(top, /onPointerDown=\{\(\) => props\.onSpeakerSelect\(""\)\}/);
 assert.match(audio, /type ClubListener = \{ name: string;/);

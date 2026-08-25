@@ -1,4 +1,4 @@
-/* SYSTM recipe rule: a recipe lists ingredients only; a preset still owns finished placement. */
+/* SYSTM recipe rule: a recipe lists ingredients only; it never owns finished placement. */
 import type { ClubSpeaker } from "@/hooks/useClubAudio";
 import { resolveModelId, type SpeakerModelId } from "@/lib/speakerModels";
 
@@ -19,9 +19,9 @@ export const SYSTEM_RECIPES: SystemRecipe[] = [
   {
     id: "reggae-sound-system",
     name: "Reggae Sound System",
-    description: "A two-column multi-way wall built from scoop, kick, mid and top cabinets.",
+    description: "Low-frequency-heavy cabinet system built from dedicated bass, kick, mid and top sections.",
     ingredients: [
-      { modelId: "reggae-scoop", quantity: 2 },
+      { modelId: "reggae-scoop", quantity: 4 },
       { modelId: "reggae-kick", quantity: 2 },
       { modelId: "reggae-mid-horn", quantity: 2 },
       { modelId: "reggae-top", quantity: 2 },
@@ -32,12 +32,12 @@ export const SYSTEM_RECIPES: SystemRecipe[] = [
   {
     id: "steppers-stack",
     name: "Steppers Stack",
-    description: "A compact dub-oriented stack with dedicated bass, kick, mid and top ingredients.",
+    description: "A compact dub-oriented material set with dedicated bass, kick, mid and top sections.",
     ingredients: [
-      { modelId: "steppers-reflex-sub", quantity: 1 },
-      { modelId: "steppers-kick", quantity: 1 },
-      { modelId: "steppers-mid", quantity: 1 },
-      { modelId: "steppers-top", quantity: 1 },
+      { modelId: "steppers-reflex-sub", quantity: 2 },
+      { modelId: "steppers-kick", quantity: 2 },
+      { modelId: "steppers-mid", quantity: 2 },
+      { modelId: "steppers-top", quantity: 2 },
     ],
     tags: ["steppers", "dub", "single-tower"],
     suggestedLayout: { towers: 1, notes: "Use vertical stacking as a starting point; arrangement remains user-defined." },
@@ -52,4 +52,8 @@ export function getRecipeProgress(recipe: SystemRecipe, speakers: ReadonlyArray<
     return { ...ingredient, required: ingredient.quantity, placed, complete: placed >= ingredient.quantity };
   });
   return { recipeId: recipe.id, ingredients, complete: ingredients.every((ingredient) => ingredient.complete) };
+}
+
+export function getMissingRecipeIngredients(recipe: SystemRecipe, speakers: ReadonlyArray<Pick<ClubSpeaker, "modelId"> & Partial<Pick<ClubSpeaker, "kind">>>) {
+  return getRecipeProgress(recipe, speakers).ingredients.flatMap((ingredient) => Array.from({ length: Math.max(0, ingredient.required - ingredient.placed) }, () => ({ modelId: ingredient.modelId })));
 }

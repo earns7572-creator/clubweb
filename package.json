@@ -13,6 +13,7 @@
     "test:placement": "node tests/run-smartPlacement.mjs",
     "test:physical-placement": "node tests/run-physicalPlacement.mjs",
     "test:recipe": "node tests/run-systemRecipes.mjs",
+    "test:recipe-materials": "tsx tests/recipeMaterials.test.ts",
     "test:performance": "node tests/performanceArchitecture.test.cjs",
     "test:mixer": "node tests/run-mixerMath.mjs",
     "test:response": "tsx tests/responseCurve.test.ts",
