@@ -12,6 +12,8 @@ const euler = new THREE.Euler();
 const screenQuaternion = new THREE.Quaternion();
 const cameraCorrection = new THREE.Quaternion(-Math.sqrt(.5), 0, 0, Math.sqrt(.5));
 
+export type DeviceLookDelta = { yaw: number; pitch: number };
+
 export async function requestOrientationPermission(): Promise<OrientationPermission> {
   if (typeof window === "undefined" || !("DeviceOrientationEvent" in window)) return "unsupported";
   const Orientation = DeviceOrientationEvent as PermissionCapableOrientation;
@@ -39,4 +41,14 @@ export function writeDeviceOrientationQuaternion(output: THREE.Quaternion, alpha
   output.setFromEuler(euler).multiply(cameraCorrection);
   screenQuaternion.setFromAxisAngle(zee, -screenRadians);
   return output.multiply(screenQuaternion);
+}
+
+// Camera look follows the rotated -Z forward vector. Reading an Euler Y component
+// inverted portrait gamma relative to this axis in the previous implementation.
+export function writeRelativeDeviceLook(output: DeviceLookDelta, baseline: THREE.Quaternion, current: THREE.Quaternion, relative: THREE.Quaternion, forward: THREE.Vector3) {
+  relative.copy(baseline).invert().multiply(current);
+  forward.set(0, 0, -1).applyQuaternion(relative);
+  output.yaw = Math.atan2(forward.x, -forward.z);
+  output.pitch = Math.asin(THREE.MathUtils.clamp(forward.y, -1, 1));
+  return output;
 }

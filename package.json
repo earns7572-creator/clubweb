@@ -26,6 +26,7 @@
     "test:glb-assets": "node tools/validate-speaker-glb-assets.mjs",
     "generate:glb-assets": "node tools/generate-speaker-glb-assets.mjs",
     "test:motion": "tsx tests/deviceOrientation.test.ts",
+    "test:mobile": "tsx tests/mobilePov.test.ts",
     "format": "prettier --write ."
   },
   "dependencies": {

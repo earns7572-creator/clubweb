@@ -1,5 +1,5 @@
 const assert = require("node:assert/strict");
-const { createStackResolver, findStackCandidate, removeSpeakerFromStack, stackAlignmentPoint, stackFrontFlushOffsetMeters } = require("../.tmp-stacking.cjs");
+const { createStackResolver, findStackCandidate, mobileStackTargetMeters, removeSpeakerFromStack, stackAlignmentPoint, stackFrontFlushOffsetMeters } = require("../.tmp-stacking.cjs");
 
 const speaker = (id, kind, x, y, parent = null, z = 0, stackAlign) => ({ id, kind, label: kind, position: { x, y, z }, orientation: { yaw: 0 }, stackParentId: parent, ...(stackAlign ? { stackAlign } : {}), level: 1, muted: false, responseProfileId: kind, activity: 0, eq: {} });
 const close = (actual, expected, message) => assert.ok(Math.abs(actual - expected) < 1e-9, message);
@@ -42,6 +42,8 @@ assert.deepEqual(removed.map((item) => item.id), ["sub", "high"], "other cabinet
 assert.equal(removed.find((item) => item.id === "high").stackParentId, "sub", "remove reparents direct child to removed parent");
 const far = speaker("far", "full", .1, .1);
 assert.equal(findStackCandidate({ dragged: far, point: { x: .1, y: .1 }, speakers: [...column, far] }), null, "distant speaker has no candidate");
+assert.equal(mobileStackTargetMeters(.01, true), .72, "mobile stack target keeps a 72px screen-space affordance");
+assert.equal(mobileStackTargetMeters(.01, false), 0, "desktop keeps its physical stack threshold");
 
 const wideParent = speaker("wide", "sub", .5, .5);
 const narrowLeft = speaker("left", "high", .5, .5, "wide", 0, "left");

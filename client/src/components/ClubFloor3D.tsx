@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { ClubListener, ClubSpeaker, Position3D } from "@/hooks/useClubAudio";
 import { SpeakerMiniature } from "@/components/SpeakerMiniature";
 import { placeWithSmartGuides, type ModifierState, type SmartGuideState, type SmartSnapState, type WorldPoint } from "@/lib/smartPlacement";
-import { createStackResolver, findStackCandidate, stackAlignmentPoint, type StackCandidate } from "@/lib/speakerStacking";
+import { createStackResolver, findStackCandidate, mobileStackTargetMeters, stackAlignmentPoint, type StackCandidate } from "@/lib/speakerStacking";
 import { SimpleHumanAvatar } from "@/components/SimpleHumanAvatar";
 import { normalizeYaw, snapYaw, yawToDegrees } from "@/lib/speakerOrientation";
 import { getSpeakerModel } from "@/lib/speakerModels";
@@ -46,8 +46,8 @@ const toPoint = (position: THREE.Vector3): Point => ({ x: Math.max(ROOM_LAYOUT_B
 const pointerPointOnFloor = (event: ThreeEvent<PointerEvent>) => event.ray.intersectPlane(floorDragPlane, dragIntersection) ? toPoint(dragIntersection) : null;
 
 function SpeakerObject({ speaker, activity, bandActivity, selected, centerY, xy, canRemove, worldPerPixel, mobile, onSelect, onRemove, onRotate, onDragStart, onDragMove, onDragEnd }: { speaker: ClubSpeaker; activity: number; bandActivity: SpeakerBandActivityMap[string] | undefined; selected: boolean; centerY: number; xy: Point; canRemove: boolean; worldPerPixel: number; mobile: boolean; onSelect: () => void; onRemove: () => void; onRotate: (id: string, yaw: number) => void; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: (event: ThreeEvent<PointerEvent>) => void }) {
-  const modelBody = getSpeakerModel(speaker.modelId, speaker.kind).body; const [width, height, depth] = [modelBody.width, modelBody.height, modelBody.depth]; const yaw = speaker.orientation?.yaw ?? 0; const stacked = Boolean(speaker.stackParentId); const hit = interactionTargetMeters(speaker, stacked, worldPerPixel, mobile); const railLength = Math.max(.38, depth * .38); const deleteSide = xy.x > .82 ? -1 : 1; const deleteFront = xy.y > .82 ? -1 : 1;
-  const [x, , z] = toWorld(xy);
+  const modelBody = getSpeakerModel(speaker.modelId, speaker.kind).body; const [width, height, depth] = [modelBody.width, modelBody.height, modelBody.depth]; const yaw = speaker.orientation?.yaw ?? 0; const stacked = Boolean(speaker.stackParentId); const hit = interactionTargetMeters(speaker, stacked, worldPerPixel, mobile); const railLength = Math.max(.38, depth * .38);
+  const [x, , z] = toWorld(xy); const controlClearance = mobile ? worldPerPixel * 28 : 0; const deleteSide = x + width / 2 + .18 + controlClearance > roomWidth / 2 ? -1 : 1; const deleteFront = z + depth / 2 + .08 + controlClearance > roomDepth / 2 ? -1 : 1;
   const stopControlPointer = (event: React.PointerEvent) => { event.stopPropagation(); };
   const turn = () => { const baseYaw = speaker.orientation?.yaw ?? 0; const yaw = snapYaw(baseYaw + Math.PI / 12); onRotate(speaker.id, yaw); };
   // TURN {yawToDegrees(yaw)}° is anchored at the speaker's front rail, not in a distant inspector.
@@ -87,7 +87,7 @@ function SideSnapPreview({ candidate, resolver }: { candidate: SideSnapCandidate
   const targetPoint = resolver.getXY(target); const [fromX, , fromZ] = toWorld(targetPoint); const [toX, , toZ] = toWorld(candidate.point); const length = Math.hypot(toX - fromX, toZ - fromZ); const angle = Math.atan2(toZ - fromZ, toX - fromX);
   return <group><mesh geometry={guideBox} position={[(fromX + toX) / 2, .034, (fromZ + toZ) / 2]} rotation={[0, -angle, 0]} scale={[Math.max(.05, length), .008, .014]} material={guideLineMaterial} /><Html position={[(fromX + toX) / 2, .12, (fromZ + toZ) / 2]} center sprite><span className="smart-guide-label">SNAP · SIDE</span></Html></group>;
 }
-function ResponsiveFloorCamera() { const { camera, size, invalidate } = useThree(); useEffect(() => { const orthographic = camera as THREE.OrthographicCamera; orthographic.position.set(0, 14, 3.2); orthographic.zoom = size.width < 760 ? 46 : 108; orthographic.lookAt(0, 0, 0); orthographic.updateProjectionMatrix(); invalidate(); }, [camera, invalidate, size.width]); return null; }
+function ResponsiveFloorCamera() { const { camera, size, invalidate } = useThree(); useEffect(() => { const orthographic = camera as THREE.OrthographicCamera; orthographic.position.set(0, 14, 3.2); orthographic.zoom = size.width < 760 ? 52 : 108; orthographic.lookAt(0, 0, 0); orthographic.updateProjectionMatrix(); invalidate(); }, [camera, invalidate, size.width, size.height]); return null; }
 
 function RoomScene(props: Props) {
   const { camera, size, invalidate } = useThree(); const drag = useRef<DragTarget>(null); const pending = useRef<PendingDrag>(null); const frame = useRef<number | null>(null); const [guides, setGuides] = useState<SmartGuideState | null>(null); const [stackCandidate, setStackCandidate] = useState<StackCandidate | null>(null); const [sideSnapCandidate, setSideSnapCandidate] = useState<SideSnapCandidate | null>(null); const stackResolver = useMemo(() => createStackResolver(props.speakers), [props.speakers]); const surface = surfacePalette[props.surfaceTone];
@@ -100,7 +100,7 @@ function RoomScene(props: Props) {
     if (!active.didMove) { if (!exceedsDragThreshold(active.startedAt, movement.screen, active.pointerType)) return; active.didMove = true; props.onSpeakerSelect(active.id); }
     const dragged = stackResolver.byId.get(active.rootId); if (!dragged) return; const safeRaw = clampStackRootPoint(props.speakers, active.rootId, raw); const previousPoint = active.lastPoint ?? stackResolver.getXY(dragged);
     const movingExistingStack = active.id !== active.rootId || stackResolver.getSubtreeIds(active.rootId).size > 1;
-    const candidate = movingExistingStack ? null : findStackCandidate({ dragged, point: safeRaw, speakers: props.speakers, previousParentId: active.candidateParentId });
+    const candidate = movingExistingStack ? null : findStackCandidate({ dragged, point: safeRaw, speakers: props.speakers, previousParentId: active.candidateParentId, minimumTargetMeters: mobileStackTargetMeters(worldPerPixel(), size.width < 760) });
     active.candidateParentId = candidate?.parentId ?? null; active.candidate = candidate; setStackCandidate(candidate);
     if (candidate) { active.sideCandidate = null; setSideSnapCandidate(null); setGuides(null); invalidate(); return; }
     const sideCandidate = findSideSnapCandidate({ speakers: props.speakers, movingRootId: active.rootId, rawRootPoint: safeRaw, previous: active.sideCandidate });
