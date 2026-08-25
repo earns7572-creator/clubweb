@@ -37,6 +37,8 @@ assert.equal(candidate.parentId, "high", "drop target resolves to single-column 
 assert.equal(findStackCandidate({ dragged: sub, point: { x: .5, y: .5 }, speakers: column }), null, "cannot stack a root onto its own descendant");
 
 const removed = removeSpeakerFromStack(column, "full");
+assert.equal(removed.some((item) => item.id === "full"), false, "trash removes only the selected cabinet");
+assert.deepEqual(removed.map((item) => item.id), ["sub", "high"], "other cabinets remain after selected removal");
 assert.equal(removed.find((item) => item.id === "high").stackParentId, "sub", "remove reparents direct child to removed parent");
 const far = speaker("far", "full", .1, .1);
 assert.equal(findStackCandidate({ dragged: far, point: { x: .1, y: .1 }, speakers: [...column, far] }), null, "distant speaker has no candidate");
