@@ -8,6 +8,7 @@ const forward = (degrees: number) => speakerOrientationToAudioOrientation(degree
 
 assert.equal(yawToDegrees(degreesToYaw(135)), 135, "degree/radian conversion remains reversible");
 assert.equal(yawToDegrees(snapYaw(degreesToYaw(22))), 15, "Shift rotation snaps to 15 degree increments");
+assert.equal(yawToDegrees(snapYaw(degreesToYaw(345))), 345, "the UI exposes the full 0-345 degree snap range");
 for (const [degrees, x, z] of [[0, 0, 1], [90, 1, 0], [180, 0, -1], [-90, -1, 0]] as const) {
   const vector = forward(degrees); close(vector.x, x, `${degrees} degrees gives expected audio X`); close(vector.y, 0, `${degrees} degrees stays level`); close(vector.z, z, `${degrees} degrees gives expected audio Z`);
 }

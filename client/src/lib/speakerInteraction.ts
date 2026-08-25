@@ -9,12 +9,24 @@ export type LayoutBounds = { minX: number; maxX: number; minY: number; maxY: num
 
 export const ROOM_LAYOUT_BOUNDS: LayoutBounds = { minX: .02, maxX: .98, minY: .02, maxY: .98 };
 export const POINTER_DRAG_THRESHOLD_PX = { mouse: 5, touch: 10 } as const;
+export const POINTER_HIT_TARGET_PX = { desktop: 48, mobile: 66 } as const;
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 
 export function exceedsDragThreshold(start: LayoutPoint, current: LayoutPoint, pointerType: string | undefined) {
   const threshold = pointerType === "touch" || pointerType === "pen" ? POINTER_DRAG_THRESHOLD_PX.touch : POINTER_DRAG_THRESHOLD_PX.mouse;
   return Math.hypot(current.x - start.x, current.y - start.y) >= threshold;
+}
+
+export function pointerIntent(start: LayoutPoint, current: LayoutPoint, pointerType: string | undefined): "select" | "drag" {
+  return exceedsDragThreshold(start, current, pointerType) ? "drag" : "select";
+}
+
+export function interactionTargetMeters(speaker: ClubSpeaker, stacked: boolean, worldPerPixel: number, mobile: boolean) {
+  const body = speakerBodyForSpeaker(speaker);
+  if (stacked) return { width: body.width, depth: body.depth };
+  const targetMeters = POINTER_HIT_TARGET_PX[mobile ? "mobile" : "desktop"] * worldPerPixel;
+  return { width: Math.max(body.width, targetMeters), depth: Math.max(body.depth, targetMeters) };
 }
 
 export function resolveStackRootId(speakers: ClubSpeaker[], id: string) {
@@ -26,8 +38,9 @@ export function resolveStackRootId(speakers: ClubSpeaker[], id: string) {
 
 function safeBoundsForOffset(speaker: ClubSpeaker, offset: LayoutPoint, bounds: LayoutBounds) {
   const body = speakerBodyForSpeaker(speaker);
-  const halfWidth = body.width / 2 / STACK_ROOM_METERS.width;
-  const halfDepth = body.depth / 2 / STACK_ROOM_METERS.depth;
+  const yaw = speaker.orientation?.yaw ?? 0;
+  const halfWidth = (Math.abs(Math.cos(yaw)) * body.width + Math.abs(Math.sin(yaw)) * body.depth) / 2 / STACK_ROOM_METERS.width;
+  const halfDepth = (Math.abs(Math.sin(yaw)) * body.width + Math.abs(Math.cos(yaw)) * body.depth) / 2 / STACK_ROOM_METERS.depth;
   return {
     minX: bounds.minX + halfWidth - offset.x,
     maxX: bounds.maxX - halfWidth - offset.x,

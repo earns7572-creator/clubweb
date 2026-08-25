@@ -1,6 +1,6 @@
 /* SYSTM UI rule: approved horn signal brand, large direct commands and equipment shelf must never alter the audio graph or 3D scene state. */
 import { memo, useEffect, useRef, useState } from "react";
-import { ChevronDown, Headphones, Music2, Palette, Pause, Play, Plus, RotateCcw, SlidersHorizontal, Volume2, VolumeX, X } from "lucide-react";
+import { ChevronDown, Headphones, Music2, Palette, Pause, Play, Plus, RotateCcw, SlidersHorizontal, Trash2, Volume2, VolumeX, X } from "lucide-react";
 import { type ClubListener, type ClubSource, type ClubSpeaker, useClubAudio } from "@/hooks/useClubAudio";
 import ClubFloor3D, { type SurfaceTone } from "@/components/ClubFloor3D";
 import SideScene from "@/components/SideScene";
@@ -13,6 +13,7 @@ import { useSpeakerActivity, useSpeakerBandActivity, type ActivityStore, type Ba
 import { createDefaultEq, type SpeakerEq } from "@/lib/speakerEq";
 import { createStackResolver, removeSpeakerFromStack, type StackAlignment } from "@/lib/speakerStacking";
 import { detachSpeakerExplicitly, moveStackRoot, resolveStackRootId, rotateSpeakerWithoutDetach } from "@/lib/speakerInteraction";
+import { yawToDegrees } from "@/lib/speakerOrientation";
 import { defaultModelForKind, getSpeakerModel, modelIdsForFamily, orderedSpeakerFamilies, resolveModelId, type SpeakerFamily, type SpeakerModelId } from "@/lib/speakerModels";
 import { SYSTEM_PRESETS, type SystemPreset } from "@/lib/systemPresets";
 import { createLayoutFile, layoutToClubSpeakers, layoutToPresetData, parseLayoutFile, serializeLayout } from "@/lib/layoutFile";
@@ -143,14 +144,14 @@ export default function Home() {
         {selectedSpeaker && selectedModel && <>
           <button className="mobile-speaker-edit" onClick={() => setMobileInspectorOpen(true)} aria-label={`Edit ${selectedModel.label}`}>Edit</button>
           <aside className={`spatial-inspector ${mobileInspectorOpen ? "mobile-open" : ""}`} aria-label="Selected speaker">
-            <button className="mobile-inspector-close" onClick={() => setMobileInspectorOpen(false)} aria-label="Close speaker controls">×</button>
+            <button className="mobile-inspector-close" onClick={() => setMobileInspectorOpen(false)} aria-label="Close speaker controls">×</button><button className="mobile-inspector-delete" disabled={speakers.length <= 1} onClick={() => removeSpeaker(selectedSpeaker.id)} aria-label={`Delete ${selectedSpeaker.label}`}><Trash2 size={16} /></button>
             <h2>{selectedModel.label}</h2>
             <label className="spatial-control"><span>Model</span><select value={resolveModelId(selectedSpeaker.modelId, selectedSpeaker.kind)} onChange={(event) => updateSpeaker({ modelId: event.target.value as SpeakerModelId })}>{inspectorModels.map((modelId) => <option key={modelId} value={modelId}>{getSpeakerModel(modelId, "sub").label}</option>)}</select></label>
-            {selectedStackMembers.length > 1 && <label className="spatial-control"><span>Stack</span><select value={selectedSpeaker.id} onChange={(event) => selectSpeaker(event.target.value)}>{selectedStackMembers.map((speaker, index) => <option key={speaker.id} value={speaker.id}>{`${String(index + 1).padStart(2, "0")} · ${speaker.label}`}</option>)}</select></label>}
+            {selectedStackMembers.length > 1 && <div className="stack-selector-block" aria-label="Stack selector"><div className="stack-selector-heading">STACK / {String(selectedStackMembers.length).padStart(2, "0")}</div><label className="spatial-control"><span>Cabinet</span><select value={selectedSpeaker.id} onChange={(event) => selectSpeaker(event.target.value)}>{selectedStackMembers.slice().reverse().map((speaker) => { const stackNumber = selectedStackMembers.findIndex((member) => member.id === speaker.id) + 1; return <option key={speaker.id} value={speaker.id}>{`${String(stackNumber).padStart(2, "0")} ${speaker.kind.toUpperCase()}`}</option>; })}</select></label></div>}
             <label className="spatial-control"><span>Level</span><input type="range" min=".02" max="1" step=".01" value={selectedSpeaker.level} onChange={(event) => updateSpeaker({ level: Number(event.target.value) })} /></label>
             {selectedSpeaker.stackParentId ? <p className="stacked-status">Stacked · drag moves the complete column</p> : <label className="spatial-control height-control"><span>Height</span><input type="range" min="0" max="1" step=".01" value={selectedSpeaker.position.z} onChange={(event) => updateSpeaker({ position: { ...selectedSpeaker.position, z: Number(event.target.value) } })} /><div className="height-stops" aria-hidden="true"><span>Floor</span><span>Ear</span><span>High</span></div></label>}
-            <div className="mobile-turn-actions" aria-label="Mobile speaker rotation"><span>Turn</span><button type="button" onClick={() => rotateSpeaker(selectedSpeaker.id, (selectedSpeaker.orientation?.yaw ?? 0) - Math.PI / 12)}>−15°</button><button type="button" onClick={() => rotateSpeaker(selectedSpeaker.id, (selectedSpeaker.orientation?.yaw ?? 0) + Math.PI / 12)}>+15°</button></div>
-            <div className="inspector-actions"><button className={selectedSpeaker.muted ? "muted" : ""} onClick={() => updateSpeaker({ muted: !selectedSpeaker.muted })}>{selectedSpeaker.muted ? <VolumeX size={14} /> : <Volume2 size={14} />}{selectedSpeaker.muted ? "Unmute" : "Mute"}</button><button onClick={() => setCustomOpen(true)}><SlidersHorizontal size={14} />Custom</button>{selectedSpeaker.stackParentId && <button onClick={() => detachSpeaker(selectedSpeaker.id)}>Detach</button>}<button className="speaker-remove-action" disabled={speakers.length <= 1} onClick={() => removeSpeaker(selectedSpeaker.id)}>Remove</button></div>
+            <div className="mobile-turn-actions" aria-label="Mobile speaker rotation"><span>Turn</span><button type="button" aria-label="Turn speaker left 15 degrees" onClick={() => rotateSpeaker(selectedSpeaker.id, (selectedSpeaker.orientation?.yaw ?? 0) - Math.PI / 12)}>↶</button><output>{yawToDegrees(selectedSpeaker.orientation?.yaw ?? 0)}°</output><button type="button" aria-label="Turn speaker right 15 degrees" onClick={() => rotateSpeaker(selectedSpeaker.id, (selectedSpeaker.orientation?.yaw ?? 0) + Math.PI / 12)}>↷</button></div>
+            <div className="inspector-actions"><button className={selectedSpeaker.muted ? "muted" : ""} onClick={() => updateSpeaker({ muted: !selectedSpeaker.muted })}>{selectedSpeaker.muted ? <VolumeX size={14} /> : <Volume2 size={14} />}{selectedSpeaker.muted ? "Unmute" : "Mute"}</button><button onClick={() => setCustomOpen(true)}><SlidersHorizontal size={14} />Custom</button>{selectedSpeaker.stackParentId && <button onClick={() => detachSpeaker(selectedSpeaker.id)}>Detach</button>}</div>
           </aside>
         </>}
       </>}
