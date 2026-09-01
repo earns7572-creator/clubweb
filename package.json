@@ -23,6 +23,7 @@
     "test:interaction": "node tests/run-speakerInteraction.mjs",
     "test:models": "tsx tests/speakerModels.test.ts",
     "test:orientation": "tsx tests/speakerOrientation.test.ts",
+    "test:product-ux": "tsx tests/productExperience.test.ts",
     "test:layout": "tsx tests/layoutFile.test.ts",
     "test:glb-assets": "node tools/validate-speaker-glb-assets.mjs",
     "generate:glb-assets": "node tools/generate-speaker-glb-assets.mjs",

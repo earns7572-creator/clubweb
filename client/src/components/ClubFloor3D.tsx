@@ -5,119 +5,1059 @@ import { Grid, Html } from "@react-three/drei";
 import { Trash2 } from "lucide-react";
 import * as THREE from "three";
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { ClubListener, ClubSpeaker, Position3D } from "@/hooks/useClubAudio";
+import type {
+  ClubListener,
+  ClubSpeaker,
+  Position3D,
+} from "@/hooks/useClubAudio";
 import { SpeakerMiniature } from "@/components/SpeakerMiniature";
-import { placeWithSmartGuides, type ModifierState, type SmartGuideState, type SmartSnapState, type WorldPoint } from "@/lib/smartPlacement";
-import { createStackResolver, findStackCandidate, mobileStackTargetMeters, stackAlignmentPoint, type StackCandidate } from "@/lib/speakerStacking";
+import {
+  placeWithSmartGuides,
+  type ModifierState,
+  type SmartGuideState,
+  type SmartSnapState,
+  type WorldPoint,
+} from "@/lib/smartPlacement";
+import {
+  createStackResolver,
+  findStackCandidate,
+  mobileStackTargetMeters,
+  stackAlignmentPoint,
+  type StackCandidate,
+} from "@/lib/speakerStacking";
 import { SimpleHumanAvatar } from "@/components/SimpleHumanAvatar";
-import { normalizeYaw, snapYaw, yawToDegrees } from "@/lib/speakerOrientation";
+import {
+  normalizeYaw,
+  snapYaw,
+  snappedYawFromScreenPointer,
+  yawToDegrees,
+} from "@/lib/speakerOrientation";
 import { getSpeakerModel } from "@/lib/speakerModels";
 import SoundFieldLayer from "@/components/SoundFieldLayer";
-import { clampStackRootPoint, exceedsDragThreshold, interactionTargetMeters, ROOM_LAYOUT_BOUNDS, resolveStackRootId } from "@/lib/speakerInteraction";
+import {
+  clampStackRootPoint,
+  exceedsDragThreshold,
+  interactionTargetMeters,
+  ROOM_LAYOUT_BOUNDS,
+  resolveStackRootId,
+} from "@/lib/speakerInteraction";
 import type { SpeakerBandActivityMap } from "@/lib/bandActivity";
-import { findSideSnapCandidate, resolvePhysicalCollisions, type SideSnapCandidate } from "@/lib/physicalPlacement";
+import {
+  findSideSnapCandidate,
+  resolvePhysicalCollisions,
+  type SideSnapCandidate,
+} from "@/lib/physicalPlacement";
 
 type Point = { x: number; y: number };
-type SpeakerDrag = { type: "speaker"; id: string; rootId: string; offset: Point; snap: SmartSnapState; candidateParentId: string | null; candidate: StackCandidate | null; sideCandidate: SideSnapCandidate | null; lastPoint: Point | null; startedAt: Point; pointerType: string; didMove: boolean };
+type SpeakerDrag = {
+  type: "speaker";
+  id: string;
+  rootId: string;
+  offset: Point;
+  snap: SmartSnapState;
+  candidateParentId: string | null;
+  candidate: StackCandidate | null;
+  sideCandidate: SideSnapCandidate | null;
+  lastPoint: Point | null;
+  startedAt: Point;
+  pointerType: string;
+  didMove: boolean;
+};
 type DragTarget = SpeakerDrag | { type: "listener"; offset: Point } | null;
-type PendingDrag = { raw: Point; screen: Point; modifiers: ModifierState } | null;
+type PendingDrag = {
+  raw: Point;
+  screen: Point;
+  modifiers: ModifierState;
+} | null;
 export type SurfaceTone = "paper" | "sand" | "slate" | "night";
-type Props = { speakers: ClubSpeaker[]; activityBySpeaker: Readonly<Record<string, number>>; bandActivityBySpeaker: SpeakerBandActivityMap; listener: ClubListener; selectedSpeakerId: string; sourceColor?: string; signalActive?: boolean; surfaceTone: SurfaceTone; canRemove: boolean; materialStaging?: boolean; onSpeakerSelect: (id: string) => void; onSpeakerRemove: (id: string) => void; onSpeakerMove: (id: string, position: Point) => void; onSpeakerRotate: (id: string, yaw: number) => void; onSpeakerStack: (id: string, parentId: string, alignment: StackCandidate["alignment"]) => void; onListenerMove: (position: Point) => void; onListenerNameChange: (name: string) => void; onFloorPlace?: (point: Point) => void };
+type Props = {
+  speakers: ClubSpeaker[];
+  activityBySpeaker: Readonly<Record<string, number>>;
+  bandActivityBySpeaker: SpeakerBandActivityMap;
+  listener: ClubListener;
+  selectedSpeakerId: string;
+  sourceColor?: string;
+  signalActive?: boolean;
+  surfaceTone: SurfaceTone;
+  canRemove: boolean;
+  showChannelLabels?: boolean;
+  onSpeakerSelect: (id: string) => void;
+  onSpeakerRemove: (id: string) => void;
+  onSpeakerMove: (id: string, position: Point) => void;
+  onSpeakerRotate: (id: string, yaw: number) => void;
+  onSpeakerStack: (
+    id: string,
+    parentId: string,
+    alignment: StackCandidate["alignment"]
+  ) => void;
+  onListenerMove: (position: Point) => void;
+  onListenerNameChange: (name: string) => void;
+  onFloorPlace?: (point: Point) => void;
+};
 
 const roomWidth = 13;
 const roomDepth = 8;
 const floorDragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const dragIntersection = new THREE.Vector3();
-const guideLineMaterial = new THREE.MeshBasicMaterial({ color: "#d5cbb8", transparent: true, opacity: .24, depthWrite: false });
-const guideRingMaterial = new THREE.MeshBasicMaterial({ color: "#d5cbb8", transparent: true, opacity: .16, depthWrite: false, side: THREE.DoubleSide });
-const orientationRailMaterial = new THREE.MeshBasicMaterial({ color: "#343632", transparent: true, opacity: .9, depthTest: false });
-const orientationPixelMaterial = new THREE.MeshBasicMaterial({ color: "#343632", depthTest: false });
-const guideRing = new THREE.RingGeometry(.99, 1, 56);
+const guideLineMaterial = new THREE.MeshBasicMaterial({
+  color: "#d5cbb8",
+  transparent: true,
+  opacity: 0.24,
+  depthWrite: false,
+});
+const guideRingMaterial = new THREE.MeshBasicMaterial({
+  color: "#d5cbb8",
+  transparent: true,
+  opacity: 0.16,
+  depthWrite: false,
+  side: THREE.DoubleSide,
+});
+const orientationRailMaterial = new THREE.MeshBasicMaterial({
+  color: "#343632",
+  transparent: true,
+  opacity: 0.9,
+  depthTest: false,
+});
+const orientationPixelMaterial = new THREE.MeshBasicMaterial({
+  color: "#343632",
+  depthTest: false,
+});
+const guideRing = new THREE.RingGeometry(0.99, 1, 56);
 const guideBox = new THREE.BoxGeometry(1, 1, 1);
-const surfacePalette: Record<SurfaceTone, { background: string; floor: string; minorGrid: string; majorGrid: string; stage: string; stageTop: string; sky: string; ground: string }> = {
-  paper: { background: "#f6f4ee", floor: "#e9e7df", minorGrid: "#d4d2c9", majorGrid: "#aaa9a0", stage: "#706f68", stageTop: "#cbc7ba", sky: "#f4f1e8", ground: "#9e9f98" },
-  sand: { background: "#e9e1d4", floor: "#ded4c4", minorGrid: "#cbc0af", majorGrid: "#9d927f", stage: "#6c665c", stageTop: "#c8bda9", sky: "#eee6da", ground: "#a49b8d" },
-  slate: { background: "#dde0dd", floor: "#d2d6d2", minorGrid: "#bcc1bc", majorGrid: "#929993", stage: "#616862", stageTop: "#b6bdb6", sky: "#e7eae7", ground: "#8c948d" },
-  night: { background: "#050606", floor: "#0b0d0c", minorGrid: "#343a34", majorGrid: "#626b62", stage: "#111310", stageTop: "#282d28", sky: "#111511", ground: "#020302" },
+const surfacePalette: Record<
+  SurfaceTone,
+  {
+    background: string;
+    floor: string;
+    minorGrid: string;
+    majorGrid: string;
+    stage: string;
+    stageTop: string;
+    sky: string;
+    ground: string;
+  }
+> = {
+  paper: {
+    background: "#f6f4ee",
+    floor: "#e9e7df",
+    minorGrid: "#d4d2c9",
+    majorGrid: "#aaa9a0",
+    stage: "#706f68",
+    stageTop: "#cbc7ba",
+    sky: "#f4f1e8",
+    ground: "#9e9f98",
+  },
+  sand: {
+    background: "#e9e1d4",
+    floor: "#ded4c4",
+    minorGrid: "#cbc0af",
+    majorGrid: "#9d927f",
+    stage: "#6c665c",
+    stageTop: "#c8bda9",
+    sky: "#eee6da",
+    ground: "#a49b8d",
+  },
+  slate: {
+    background: "#dde0dd",
+    floor: "#d2d6d2",
+    minorGrid: "#bcc1bc",
+    majorGrid: "#929993",
+    stage: "#616862",
+    stageTop: "#b6bdb6",
+    sky: "#e7eae7",
+    ground: "#8c948d",
+  },
+  night: {
+    background: "#050606",
+    floor: "#0b0d0c",
+    minorGrid: "#343a34",
+    majorGrid: "#626b62",
+    stage: "#111310",
+    stageTop: "#282d28",
+    sky: "#111511",
+    ground: "#020302",
+  },
 };
 
-const toWorld = (point: Pick<Position3D, "x" | "y">): [number, number, number] => [(point.x - .5) * roomWidth, 0, (point.y - .5) * roomDepth];
-const toPoint = (position: THREE.Vector3): Point => ({ x: Math.max(ROOM_LAYOUT_BOUNDS.minX, Math.min(ROOM_LAYOUT_BOUNDS.maxX, position.x / roomWidth + .5)), y: Math.max(ROOM_LAYOUT_BOUNDS.minY, Math.min(ROOM_LAYOUT_BOUNDS.maxY, position.z / roomDepth + .5)) });
-const pointerPointOnFloor = (event: ThreeEvent<PointerEvent>) => event.ray.intersectPlane(floorDragPlane, dragIntersection) ? toPoint(dragIntersection) : null;
+const toWorld = (
+  point: Pick<Position3D, "x" | "y">
+): [number, number, number] => [
+  (point.x - 0.5) * roomWidth,
+  0,
+  (point.y - 0.5) * roomDepth,
+];
+const toPoint = (position: THREE.Vector3): Point => ({
+  x: Math.max(
+    ROOM_LAYOUT_BOUNDS.minX,
+    Math.min(ROOM_LAYOUT_BOUNDS.maxX, position.x / roomWidth + 0.5)
+  ),
+  y: Math.max(
+    ROOM_LAYOUT_BOUNDS.minY,
+    Math.min(ROOM_LAYOUT_BOUNDS.maxY, position.z / roomDepth + 0.5)
+  ),
+});
+const pointerPointOnFloor = (event: ThreeEvent<PointerEvent>) =>
+  event.ray.intersectPlane(floorDragPlane, dragIntersection)
+    ? toPoint(dragIntersection)
+    : null;
 
-function SpeakerObject({ speaker, activity, bandActivity, selected, centerY, xy, canRemove, worldPerPixel, mobile, onSelect, onRemove, onRotate, onDragStart, onDragMove, onDragEnd }: { speaker: ClubSpeaker; activity: number; bandActivity: SpeakerBandActivityMap[string] | undefined; selected: boolean; centerY: number; xy: Point; canRemove: boolean; worldPerPixel: number; mobile: boolean; onSelect: () => void; onRemove: () => void; onRotate: (id: string, yaw: number) => void; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: (event: ThreeEvent<PointerEvent>) => void }) {
-  const modelBody = getSpeakerModel(speaker.modelId, speaker.kind).body; const [width, height, depth] = [modelBody.width, modelBody.height, modelBody.depth]; const yaw = speaker.orientation?.yaw ?? 0; const stacked = Boolean(speaker.stackParentId); const hit = interactionTargetMeters(speaker, stacked, worldPerPixel, mobile); const railLength = Math.max(.38, depth * .38);
-  const [x, , z] = toWorld(xy); const controlClearance = mobile ? worldPerPixel * 28 : 0; const deleteSide = x + width / 2 + .18 + controlClearance > roomWidth / 2 ? -1 : 1; const deleteFront = z + depth / 2 + .08 + controlClearance > roomDepth / 2 ? -1 : 1;
-  const stopControlPointer = (event: React.PointerEvent) => { event.stopPropagation(); };
-  const turn = () => { const baseYaw = speaker.orientation?.yaw ?? 0; const yaw = snapYaw(baseYaw + Math.PI / 12); onRotate(speaker.id, yaw); };
+function SpeakerObject({
+  speaker,
+  activity,
+  bandActivity,
+  selected,
+  centerY,
+  xy,
+  canRemove,
+  worldPerPixel,
+  mobile,
+  channelLabel,
+  onSelect,
+  onRemove,
+  onRotate,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+}: {
+  speaker: ClubSpeaker;
+  activity: number;
+  bandActivity: SpeakerBandActivityMap[string] | undefined;
+  selected: boolean;
+  centerY: number;
+  xy: Point;
+  canRemove: boolean;
+  worldPerPixel: number;
+  mobile: boolean;
+  channelLabel?: string;
+  onSelect: () => void;
+  onRemove: () => void;
+  onRotate: (id: string, yaw: number) => void;
+  onDragStart: (event: ThreeEvent<PointerEvent>) => void;
+  onDragMove: (event: ThreeEvent<PointerEvent>) => void;
+  onDragEnd: (event: ThreeEvent<PointerEvent>) => void;
+}) {
+  const { camera, gl } = useThree();
+  const turningPointer = useRef<number | null>(null);
+  const modelBody = getSpeakerModel(speaker.modelId, speaker.kind).body;
+  const [width, height, depth] = [
+    modelBody.width,
+    modelBody.height,
+    modelBody.depth,
+  ];
+  const yaw = speaker.orientation?.yaw ?? 0;
+  const stacked = Boolean(speaker.stackParentId);
+  const hit = interactionTargetMeters(speaker, stacked, worldPerPixel, mobile);
+  const railLength = Math.max(0.38, depth * 0.38);
+  const [x, , z] = toWorld(xy);
+  const controlClearance = mobile ? worldPerPixel * 28 : 0;
+  const deleteSide =
+    x + width / 2 + 0.18 + controlClearance > roomWidth / 2 ? -1 : 1;
+  const deleteFront =
+    z + depth / 2 + 0.08 + controlClearance > roomDepth / 2 ? -1 : 1;
+  const stopControlPointer = (event: React.PointerEvent) => {
+    event.stopPropagation();
+  };
+  const turnFromPointer = (event: React.PointerEvent) => {
+    const projected = new THREE.Vector3(x, centerY, z).project(camera);
+    const bounds = gl.domElement.getBoundingClientRect();
+    const center = {
+      x: bounds.left + ((projected.x + 1) / 2) * bounds.width,
+      y: bounds.top + ((1 - projected.y) / 2) * bounds.height,
+    };
+    onRotate(
+      speaker.id,
+      snappedYawFromScreenPointer(center, {
+        x: event.clientX,
+        y: event.clientY,
+      })
+    );
+  };
   // TURN {yawToDegrees(yaw)}° is anchored at the speaker's front rail, not in a distant inspector.
-  return <group position={[x, centerY, z]} onPointerDown={(event) => { event.stopPropagation(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(event); }}>
-    <group rotation={[0, yaw, 0]}><mesh><boxGeometry args={[hit.width, height, hit.depth]} /><meshBasicMaterial transparent opacity={0} depthWrite={false} /></mesh>{selected && <><mesh position={[0, height / 2 + .025, depth / 2 + railLength / 2]} scale={[.025, .028, railLength]} geometry={guideBox} material={orientationRailMaterial} /><mesh position={[0, height / 2 + .025, depth / 2 + railLength + .075]} scale={[.14, .04, .14]} geometry={guideBox} material={orientationPixelMaterial} /><Html position={[0, height / 2 + .04, depth / 2 + railLength + .25]} center sprite><button className="speaker-turn-handle" type="button" onPointerDown={stopControlPointer} onPointerUp={stopControlPointer} onClick={(event) => { event.stopPropagation(); turn(); }} aria-label={`Turn ${speaker.label} 15 degrees`}><span>TURN</span><output>{yawToDegrees(yaw)}°</output></button></Html><Html position={[deleteSide * (width / 2 + .18), height / 2 + .18, deleteFront * (depth / 2 + .08)]} center sprite><button className="speaker-delete-button" type="button" disabled={!canRemove} onPointerDown={stopControlPointer} onPointerUp={stopControlPointer} onClick={(event) => { event.stopPropagation(); if (canRemove) onRemove(); }} aria-label={`Delete ${speaker.label}`}><Trash2 size={15} strokeWidth={1.8} /></button></Html></> }<SpeakerMiniature kind={speaker.kind} modelId={speaker.modelId} activity={activity} bandActivity={bandActivity} selected={selected} idleVisible glowStrength={.90} /></group>
-  </group>;
+  return (
+    <group
+      position={[x, centerY, z]}
+      onPointerDown={event => {
+        event.stopPropagation();
+        onDragStart(event);
+      }}
+      onPointerMove={event => {
+        event.stopPropagation();
+        onDragMove(event);
+      }}
+      onPointerUp={event => {
+        event.stopPropagation();
+        onDragEnd(event);
+      }}
+    >
+      <group rotation={[0, yaw, 0]}>
+        <mesh>
+          <boxGeometry args={[hit.width, height, hit.depth]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+        </mesh>
+        {selected && (
+          <>
+            <mesh
+              position={[0, height / 2 + 0.025, depth / 2 + railLength / 2]}
+              scale={[0.025, 0.028, railLength]}
+              geometry={guideBox}
+              material={orientationRailMaterial}
+            />
+            <mesh
+              position={[0, height / 2 + 0.025, depth / 2 + railLength + 0.075]}
+              scale={[0.14, 0.04, 0.14]}
+              geometry={guideBox}
+              material={orientationPixelMaterial}
+            />
+            <Html
+              position={[0, height / 2 + 0.04, depth / 2 + railLength + 0.25]}
+              center
+              sprite
+            >
+              <button
+                className="speaker-turn-handle"
+                type="button"
+                onPointerDown={event => {
+                  event.stopPropagation();
+                  onSelect();
+                  turningPointer.current = event.pointerId;
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  turnFromPointer(event);
+                }}
+                onPointerMove={event => {
+                  if (turningPointer.current !== event.pointerId) return;
+                  event.stopPropagation();
+                  turnFromPointer(event);
+                }}
+                onPointerUp={event => {
+                  event.stopPropagation();
+                  if (turningPointer.current !== event.pointerId) return;
+                  event.currentTarget.releasePointerCapture(event.pointerId);
+                  turningPointer.current = null;
+                }}
+                onPointerCancel={() => {
+                  turningPointer.current = null;
+                }}
+                onClick={event => event.stopPropagation()}
+                aria-label={`Aim ${speaker.label}`}
+              >
+                <span>TURN</span>
+                <output>{yawToDegrees(yaw)}°</output>
+              </button>
+            </Html>
+            <Html
+              position={[
+                deleteSide * (width / 2 + 0.18),
+                height / 2 + 0.18,
+                deleteFront * (depth / 2 + 0.08),
+              ]}
+              center
+              sprite
+            >
+              <button
+                className="speaker-delete-button"
+                type="button"
+                disabled={!canRemove}
+                onPointerDown={stopControlPointer}
+                onPointerUp={stopControlPointer}
+                onClick={event => {
+                  event.stopPropagation();
+                  if (canRemove) onRemove();
+                }}
+                aria-label={`Delete ${speaker.label}`}
+              >
+                <Trash2 size={15} strokeWidth={1.8} />
+              </button>
+            </Html>
+          </>
+        )}
+        {channelLabel && (
+          <Html
+            position={[-width / 2, height / 2 + 0.16, -depth / 2]}
+            center
+            sprite
+          >
+            <span className="club-channel-label">{channelLabel}</span>
+          </Html>
+        )}
+        <SpeakerMiniature
+          kind={speaker.kind}
+          modelId={speaker.modelId}
+          activity={activity}
+          bandActivity={bandActivity}
+          selected={selected}
+          idleVisible
+          glowStrength={0.9}
+        />
+      </group>
+    </group>
+  );
 }
 
-function ListenerNameTag({ name, onChange }: { name: string; onChange: (name: string) => void }) {
-  const [editing, setEditing] = useState(false); const [draft, setDraft] = useState(name);
-  useEffect(() => { if (!editing) setDraft(name); }, [editing, name]);
-  const commit = () => { onChange(draft.trim().slice(0, 24) || "Listener"); setEditing(false); };
-  const cancel = () => { setDraft(name); setEditing(false); };
-  return <Html position={[0, 1.63, 0]} center sprite><span className="listener-name-anchor" onPointerDown={(event) => event.stopPropagation()}>{editing ? <input className="listener-name-input" autoFocus value={draft} maxLength={24} aria-label="Listener name" onChange={(event) => setDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); commit(); } if (event.key === "Escape") { event.preventDefault(); cancel(); } }} onBlur={commit} /> : <button className="listener-name-tag" onClick={() => setEditing(true)} aria-label={`Edit listener name: ${name}`}>{name}</button>}</span></Html>;
+function ListenerNameTag({
+  name,
+  onChange,
+}: {
+  name: string;
+  onChange: (name: string) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(name);
+  useEffect(() => {
+    if (!editing) setDraft(name);
+  }, [editing, name]);
+  const commit = () => {
+    onChange(draft.trim().slice(0, 24) || "Listener");
+    setEditing(false);
+  };
+  const cancel = () => {
+    setDraft(name);
+    setEditing(false);
+  };
+  return (
+    <Html position={[0, 1.63, 0]} center sprite>
+      <span
+        className="listener-name-anchor"
+        onPointerDown={event => event.stopPropagation()}
+      >
+        {editing ? (
+          <input
+            className="listener-name-input"
+            autoFocus
+            value={draft}
+            maxLength={24}
+            aria-label="Listener name"
+            onChange={event => setDraft(event.target.value)}
+            onKeyDown={event => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                commit();
+              }
+              if (event.key === "Escape") {
+                event.preventDefault();
+                cancel();
+              }
+            }}
+            onBlur={commit}
+          />
+        ) : (
+          <button
+            className="listener-name-tag"
+            onClick={() => setEditing(true)}
+            aria-label={`Edit listener name: ${name}`}
+          >
+            {name}
+          </button>
+        )}
+      </span>
+    </Html>
+  );
 }
 
-function ListenerObject({ listener, onNameChange, onDragStart, onDragMove, onDragEnd }: { listener: ClubListener; onNameChange: (name: string) => void; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: (event: ThreeEvent<PointerEvent>) => void }) {
+function ListenerObject({
+  listener,
+  onNameChange,
+  onDragStart,
+  onDragMove,
+  onDragEnd,
+}: {
+  listener: ClubListener;
+  onNameChange: (name: string) => void;
+  onDragStart: (event: ThreeEvent<PointerEvent>) => void;
+  onDragMove: (event: ThreeEvent<PointerEvent>) => void;
+  onDragEnd: (event: ThreeEvent<PointerEvent>) => void;
+}) {
   const [x, , z] = toWorld(listener.position);
-  return <group position={[x, 0, z]} onPointerDown={(event) => { event.stopPropagation(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(event); }}><mesh position={[0, .015, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.38, .39, 48]} /><meshBasicMaterial color="#a69f91" transparent opacity={.12} side={THREE.DoubleSide} /></mesh><mesh position={[0, .8, 0]}><cylinderGeometry args={[.32, .32, 1.6, 8]} /><meshBasicMaterial transparent opacity={0} depthWrite={false} /></mesh><group rotation={[0, listener.orientation.yaw, 0]}><SimpleHumanAvatar variant="listener" /></group><ListenerNameTag name={listener.name} onChange={onNameChange} /></group>;
+  return (
+    <group
+      position={[x, 0, z]}
+      onPointerDown={event => {
+        event.stopPropagation();
+        onDragStart(event);
+      }}
+      onPointerMove={event => {
+        event.stopPropagation();
+        onDragMove(event);
+      }}
+      onPointerUp={event => {
+        event.stopPropagation();
+        onDragEnd(event);
+      }}
+    >
+      <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.38, 0.39, 48]} />
+        <meshBasicMaterial
+          color="#a69f91"
+          transparent
+          opacity={0.12}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      <mesh position={[0, 0.8, 0]}>
+        <cylinderGeometry args={[0.32, 0.32, 1.6, 8]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
+      <group rotation={[0, listener.orientation.yaw, 0]}>
+        <SimpleHumanAvatar variant="listener" />
+      </group>
+      <ListenerNameTag name={listener.name} onChange={onNameChange} />
+    </group>
+  );
 }
 
-function GuideLabel({ point, children }: { point: WorldPoint; children: string }) { const [x, , z] = toWorld(point); return <Html position={[x, .12, z]} center sprite><span className="smart-guide-label">{children}</span></Html>; }
-function SmartGuides({ guides, listener }: { guides: SmartGuideState | null; listener: ClubListener }) {
+function GuideLabel({
+  point,
+  children,
+}: {
+  point: WorldPoint;
+  children: string;
+}) {
+  const [x, , z] = toWorld(point);
+  return (
+    <Html position={[x, 0.12, z]} center sprite>
+      <span className="smart-guide-label">{children}</span>
+    </Html>
+  );
+}
+function SmartGuides({
+  guides,
+  listener,
+}: {
+  guides: SmartGuideState | null;
+  listener: ClubListener;
+}) {
   if (!guides) return null;
-  const [listenerX, , listenerZ] = toWorld(listener.position); const distanceGuide = guides.distance; const from = distanceGuide ? toWorld(distanceGuide.from) : null; const to = distanceGuide ? toWorld(distanceGuide.to) : null; const dx = from && to ? to[0] - from[0] : 0; const dz = from && to ? to[2] - from[2] : 0; const length = Math.hypot(dx, dz); const midpoint = distanceGuide ? { x: (distanceGuide.from.x + distanceGuide.to.x) / 2, y: (distanceGuide.from.y + distanceGuide.to.y) / 2 } : null;
-  return <group>{guides.x && <mesh geometry={guideBox} position={[(guides.x.value - .5) * roomWidth, .028, 0]} scale={[.015, .008, roomDepth * 1.06]} material={guideLineMaterial} />}{guides.y && <mesh geometry={guideBox} position={[0, .028, (guides.y.value - .5) * roomDepth]} scale={[roomWidth * 1.06, .008, .015]} material={guideLineMaterial} />}{guides.radial && <mesh geometry={guideRing} position={[listenerX, .026, listenerZ]} rotation={[-Math.PI / 2, 0, 0]} scale={[guides.radial.radiusMeters, guides.radial.radiusMeters, 1]} material={guideRingMaterial} />}{from && to && length > .08 && <mesh geometry={guideBox} position={[(from[0] + to[0]) / 2, .032, (from[2] + to[2]) / 2]} rotation={[0, -Math.atan2(dz, dx), 0]} scale={[length, .008, .014]} material={guideLineMaterial} />}{midpoint && distanceGuide && <GuideLabel point={midpoint}>{`${distanceGuide.equal ? "=" : ""}${distanceGuide.meters.toFixed(1)} m`}</GuideLabel>}{guides.radial && <GuideLabel point={{ x: listener.position.x + guides.radial.radiusMeters / roomWidth, y: listener.position.y }}>same distance</GuideLabel>}</group>;
+  const [listenerX, , listenerZ] = toWorld(listener.position);
+  const distanceGuide = guides.distance;
+  const from = distanceGuide ? toWorld(distanceGuide.from) : null;
+  const to = distanceGuide ? toWorld(distanceGuide.to) : null;
+  const dx = from && to ? to[0] - from[0] : 0;
+  const dz = from && to ? to[2] - from[2] : 0;
+  const length = Math.hypot(dx, dz);
+  const midpoint = distanceGuide
+    ? {
+        x: (distanceGuide.from.x + distanceGuide.to.x) / 2,
+        y: (distanceGuide.from.y + distanceGuide.to.y) / 2,
+      }
+    : null;
+  return (
+    <group>
+      {guides.x && (
+        <mesh
+          geometry={guideBox}
+          position={[(guides.x.value - 0.5) * roomWidth, 0.028, 0]}
+          scale={[0.015, 0.008, roomDepth * 1.06]}
+          material={guideLineMaterial}
+        />
+      )}
+      {guides.y && (
+        <mesh
+          geometry={guideBox}
+          position={[0, 0.028, (guides.y.value - 0.5) * roomDepth]}
+          scale={[roomWidth * 1.06, 0.008, 0.015]}
+          material={guideLineMaterial}
+        />
+      )}
+      {guides.radial && (
+        <mesh
+          geometry={guideRing}
+          position={[listenerX, 0.026, listenerZ]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          scale={[guides.radial.radiusMeters, guides.radial.radiusMeters, 1]}
+          material={guideRingMaterial}
+        />
+      )}
+      {from && to && length > 0.08 && (
+        <mesh
+          geometry={guideBox}
+          position={[(from[0] + to[0]) / 2, 0.032, (from[2] + to[2]) / 2]}
+          rotation={[0, -Math.atan2(dz, dx), 0]}
+          scale={[length, 0.008, 0.014]}
+          material={guideLineMaterial}
+        />
+      )}
+      {midpoint && distanceGuide && (
+        <GuideLabel
+          point={midpoint}
+        >{`${distanceGuide.equal ? "=" : ""}${distanceGuide.meters.toFixed(1)} m`}</GuideLabel>
+      )}
+      {guides.radial && (
+        <GuideLabel
+          point={{
+            x: listener.position.x + guides.radial.radiusMeters / roomWidth,
+            y: listener.position.y,
+          }}
+        >
+          same distance
+        </GuideLabel>
+      )}
+    </group>
+  );
 }
-function StackPreview({ candidate, dragged, resolver }: { candidate: StackCandidate | null; dragged: ClubSpeaker | undefined; resolver: ReturnType<typeof createStackResolver> }) {
+function StackPreview({
+  candidate,
+  dragged,
+  resolver,
+}: {
+  candidate: StackCandidate | null;
+  dragged: ClubSpeaker | undefined;
+  resolver: ReturnType<typeof createStackResolver>;
+}) {
   if (!candidate || !dragged) return null;
-  const parent = resolver.byId.get(candidate.parentId); if (!parent) return null;
-  const draggedBody = getSpeakerModel(dragged.modelId, dragged.kind).body; const parentBody = getSpeakerModel(parent.modelId, parent.kind).body; const [width, height, depth] = [draggedBody.width, draggedBody.height, draggedBody.depth]; const [x, , z] = toWorld(stackAlignmentPoint(parent, dragged, resolver.getXY(parent), candidate.alignment)); const centerY = resolver.getBottomMeters(parent) + parentBody.height + height / 2;
-  return <group position={[x, centerY, z]}><mesh><boxGeometry args={[width, height, depth]} /><meshBasicMaterial color="#b8aa91" transparent opacity={.12} wireframe /></mesh><Html position={[0, height / 2 + .14, 0]} center sprite><span className="smart-guide-label">STACK · {candidate.alignment.toUpperCase()}</span></Html></group>;
+  const parent = resolver.byId.get(candidate.parentId);
+  if (!parent) return null;
+  const draggedBody = getSpeakerModel(dragged.modelId, dragged.kind).body;
+  const parentBody = getSpeakerModel(parent.modelId, parent.kind).body;
+  const [width, height, depth] = [
+    draggedBody.width,
+    draggedBody.height,
+    draggedBody.depth,
+  ];
+  const [x, , z] = toWorld(
+    stackAlignmentPoint(
+      parent,
+      dragged,
+      resolver.getXY(parent),
+      candidate.alignment
+    )
+  );
+  const centerY =
+    resolver.getBottomMeters(parent) + parentBody.height + height / 2;
+  return (
+    <group position={[x, centerY, z]}>
+      <mesh>
+        <boxGeometry args={[width, height, depth]} />
+        <meshBasicMaterial
+          color="#b8aa91"
+          transparent
+          opacity={0.12}
+          wireframe
+        />
+      </mesh>
+      <Html position={[0, height / 2 + 0.14, 0]} center sprite>
+        <span className="smart-guide-label">
+          STACK · {candidate.alignment.toUpperCase()}
+        </span>
+      </Html>
+    </group>
+  );
 }
-function SideSnapPreview({ candidate, resolver }: { candidate: SideSnapCandidate | null; resolver: ReturnType<typeof createStackResolver> }) {
+function SideSnapPreview({
+  candidate,
+  resolver,
+}: {
+  candidate: SideSnapCandidate | null;
+  resolver: ReturnType<typeof createStackResolver>;
+}) {
   if (!candidate) return null;
-  const target = resolver.byId.get(candidate.targetRootId); if (!target) return null;
-  const targetPoint = resolver.getXY(target); const [fromX, , fromZ] = toWorld(targetPoint); const [toX, , toZ] = toWorld(candidate.point); const length = Math.hypot(toX - fromX, toZ - fromZ); const angle = Math.atan2(toZ - fromZ, toX - fromX);
-  return <group><mesh geometry={guideBox} position={[(fromX + toX) / 2, .034, (fromZ + toZ) / 2]} rotation={[0, -angle, 0]} scale={[Math.max(.05, length), .008, .014]} material={guideLineMaterial} /><Html position={[(fromX + toX) / 2, .12, (fromZ + toZ) / 2]} center sprite><span className="smart-guide-label">SNAP · SIDE</span></Html></group>;
+  const target = resolver.byId.get(candidate.targetRootId);
+  if (!target) return null;
+  const targetPoint = resolver.getXY(target);
+  const [fromX, , fromZ] = toWorld(targetPoint);
+  const [toX, , toZ] = toWorld(candidate.point);
+  const length = Math.hypot(toX - fromX, toZ - fromZ);
+  const angle = Math.atan2(toZ - fromZ, toX - fromX);
+  return (
+    <group>
+      <mesh
+        geometry={guideBox}
+        position={[(fromX + toX) / 2, 0.034, (fromZ + toZ) / 2]}
+        rotation={[0, -angle, 0]}
+        scale={[Math.max(0.05, length), 0.008, 0.014]}
+        material={guideLineMaterial}
+      />
+      <Html
+        position={[(fromX + toX) / 2, 0.12, (fromZ + toZ) / 2]}
+        center
+        sprite
+      >
+        <span className="smart-guide-label">SNAP · SIDE</span>
+      </Html>
+    </group>
+  );
 }
-function ResponsiveFloorCamera() { const { camera, size, invalidate } = useThree(); useEffect(() => { const orthographic = camera as THREE.OrthographicCamera; orthographic.position.set(0, 14, 3.2); orthographic.zoom = size.width < 760 ? 52 : 108; orthographic.lookAt(0, 0, 0); orthographic.updateProjectionMatrix(); invalidate(); }, [camera, invalidate, size.width, size.height]); return null; }
+function ResponsiveFloorCamera() {
+  const { camera, size, invalidate } = useThree();
+  useEffect(() => {
+    const orthographic = camera as THREE.OrthographicCamera;
+    orthographic.position.set(0, 14, 3.2);
+    orthographic.zoom = size.width < 760 ? 52 : 108;
+    orthographic.lookAt(0, 0, 0);
+    orthographic.updateProjectionMatrix();
+    invalidate();
+  }, [camera, invalidate, size.width, size.height]);
+  return null;
+}
 
 function RoomScene(props: Props) {
-  const { camera, size, invalidate } = useThree(); const drag = useRef<DragTarget>(null); const pending = useRef<PendingDrag>(null); const frame = useRef<number | null>(null); const [guides, setGuides] = useState<SmartGuideState | null>(null); const [stackCandidate, setStackCandidate] = useState<StackCandidate | null>(null); const [sideSnapCandidate, setSideSnapCandidate] = useState<SideSnapCandidate | null>(null); const stackResolver = useMemo(() => createStackResolver(props.speakers), [props.speakers]); const surface = surfacePalette[props.surfaceTone];
-  const pointerTarget = (event: ThreeEvent<PointerEvent>) => event.target as (EventTarget & { setPointerCapture?: (pointerId: number) => void; releasePointerCapture?: (pointerId: number) => void }) | null;
-  const worldPerPixel = () => { const orthographic = camera as THREE.OrthographicCamera; return Math.abs(orthographic.right - orthographic.left) / Math.max(1, orthographic.zoom) / Math.max(1, size.width); };
-  const applyPending = () => {
-    frame.current = null; const active = drag.current; const movement = pending.current; pending.current = null; if (!active || !movement) return;
-    const raw = { x: movement.raw.x + active.offset.x, y: movement.raw.y + active.offset.y };
-    if (active.type === "listener") { setGuides(null); props.onListenerMove({ x: Math.max(ROOM_LAYOUT_BOUNDS.minX, Math.min(ROOM_LAYOUT_BOUNDS.maxX, raw.x)), y: Math.max(ROOM_LAYOUT_BOUNDS.minY, Math.min(ROOM_LAYOUT_BOUNDS.maxY, raw.y)) }); invalidate(); return; }
-    if (!active.didMove) { if (!exceedsDragThreshold(active.startedAt, movement.screen, active.pointerType)) return; active.didMove = true; props.onSpeakerSelect(active.id); }
-    const dragged = stackResolver.byId.get(active.rootId); if (!dragged) return; const safeRaw = clampStackRootPoint(props.speakers, active.rootId, raw); const previousPoint = active.lastPoint ?? stackResolver.getXY(dragged);
-    const movingExistingStack = active.id !== active.rootId || stackResolver.getSubtreeIds(active.rootId).size > 1;
-    const candidate = movingExistingStack ? null : findStackCandidate({ dragged, point: safeRaw, speakers: props.speakers, previousParentId: active.candidateParentId, minimumTargetMeters: mobileStackTargetMeters(worldPerPixel(), size.width < 760) });
-    active.candidateParentId = candidate?.parentId ?? null; active.candidate = candidate; setStackCandidate(candidate);
-    if (candidate) { active.sideCandidate = null; setSideSnapCandidate(null); setGuides(null); invalidate(); return; }
-    const sideCandidate = findSideSnapCandidate({ speakers: props.speakers, movingRootId: active.rootId, rawRootPoint: safeRaw, previous: active.sideCandidate });
-    active.sideCandidate = sideCandidate; setSideSnapCandidate(sideCandidate);
-    if (sideCandidate) { const snappedPoint = clampStackRootPoint(props.speakers, active.rootId, sideCandidate.point); active.lastPoint = snappedPoint; setGuides(null); props.onSpeakerMove(active.rootId, snappedPoint); invalidate(); return; }
-    const pixelWorld = worldPerPixel(); const result = placeWithSmartGuides({ raw: safeRaw, draggedId: active.rootId, speakers: props.speakers.map((speaker) => ({ id: speaker.id, point: stackResolver.getXY(speaker) })), listener: { x: props.listener.position.x, y: props.listener.position.y }, bounds: ROOM_LAYOUT_BOUNDS, scale: { x: roomWidth, y: roomDepth }, enter: { x: pixelWorld * 8 / roomWidth, y: pixelWorld * 8 / roomDepth }, release: { x: pixelWorld * 13 / roomWidth, y: pixelWorld * 13 / roomDepth }, radialEnterMeters: pixelWorld * 8, radialReleaseMeters: pixelWorld * 13, modifiers: movement.modifiers, previous: active.snap });
-    active.snap = result.snap; const collision = resolvePhysicalCollisions({ speakers: props.speakers, movingRootId: active.rootId, requestedRootPoint: result.point, previousRootPoint: previousPoint }); const finalPoint = clampStackRootPoint(props.speakers, active.rootId, collision.point); active.lastPoint = finalPoint; setGuides(result.guides); props.onSpeakerMove(active.rootId, finalPoint); invalidate();
+  const { camera, size, invalidate } = useThree();
+  const drag = useRef<DragTarget>(null);
+  const pending = useRef<PendingDrag>(null);
+  const frame = useRef<number | null>(null);
+  const [guides, setGuides] = useState<SmartGuideState | null>(null);
+  const [stackCandidate, setStackCandidate] = useState<StackCandidate | null>(
+    null
+  );
+  const [sideSnapCandidate, setSideSnapCandidate] =
+    useState<SideSnapCandidate | null>(null);
+  const stackResolver = useMemo(
+    () => createStackResolver(props.speakers),
+    [props.speakers]
+  );
+  const surface = surfacePalette[props.surfaceTone];
+  const pointerTarget = (event: ThreeEvent<PointerEvent>) =>
+    event.target as
+      | (EventTarget & {
+          setPointerCapture?: (pointerId: number) => void;
+          releasePointerCapture?: (pointerId: number) => void;
+        })
+      | null;
+  const worldPerPixel = () => {
+    const orthographic = camera as THREE.OrthographicCamera;
+    return (
+      Math.abs(orthographic.right - orthographic.left) /
+      Math.max(1, orthographic.zoom) /
+      Math.max(1, size.width)
+    );
   };
-  const queue = () => { if (frame.current === null) frame.current = requestAnimationFrame(applyPending); };
-  const start = (target: DragTarget, event: ThreeEvent<PointerEvent>) => { pointerTarget(event)?.setPointerCapture?.(event.pointerId); pending.current = null; setGuides(null); setStackCandidate(null); setSideSnapCandidate(null); drag.current = target; invalidate(); };
-  const move = (event: ThreeEvent<PointerEvent>) => { if (!drag.current) return; const point = pointerPointOnFloor(event); if (!point) return; pending.current = { raw: point, screen: { x: event.nativeEvent.clientX, y: event.nativeEvent.clientY }, modifiers: { alt: event.nativeEvent.altKey, shift: event.nativeEvent.shiftKey } }; queue(); };
-  const stop = (event: ThreeEvent<PointerEvent>) => { if (frame.current !== null) { cancelAnimationFrame(frame.current); applyPending(); } const active = drag.current; if (active?.type === "speaker") { if (active.didMove && active.candidate) props.onSpeakerStack(active.rootId, active.candidate.parentId, active.candidate.alignment); if (active.didMove && active.sideCandidate?.yawAligned) { const root = stackResolver.byId.get(active.rootId); const yawDelta = root ? normalizeYaw(active.sideCandidate.yaw - (root.orientation?.yaw ?? 0)) : 0; if (Math.abs(yawDelta) > .0001) stackResolver.getSubtreeIds(active.rootId).forEach((id) => { const member = stackResolver.byId.get(id); if (member) props.onSpeakerRotate(id, snapYaw((member.orientation?.yaw ?? 0) + yawDelta)); }); } if (!active.didMove) props.onSpeakerSelect(active.id); } pointerTarget(event)?.releasePointerCapture?.(event.pointerId); pending.current = null; drag.current = null; setGuides(null); setStackCandidate(null); setSideSnapCandidate(null); invalidate(); };
-  useEffect(() => () => { if (frame.current !== null) cancelAnimationFrame(frame.current); }, []);
-  const activeSpeaker = drag.current?.type === "speaker" ? stackResolver.byId.get(drag.current.id) : undefined;
+  const applyPending = () => {
+    frame.current = null;
+    const active = drag.current;
+    const movement = pending.current;
+    pending.current = null;
+    if (!active || !movement) return;
+    const raw = {
+      x: movement.raw.x + active.offset.x,
+      y: movement.raw.y + active.offset.y,
+    };
+    if (active.type === "listener") {
+      setGuides(null);
+      props.onListenerMove({
+        x: Math.max(
+          ROOM_LAYOUT_BOUNDS.minX,
+          Math.min(ROOM_LAYOUT_BOUNDS.maxX, raw.x)
+        ),
+        y: Math.max(
+          ROOM_LAYOUT_BOUNDS.minY,
+          Math.min(ROOM_LAYOUT_BOUNDS.maxY, raw.y)
+        ),
+      });
+      invalidate();
+      return;
+    }
+    if (!active.didMove) {
+      if (
+        !exceedsDragThreshold(
+          active.startedAt,
+          movement.screen,
+          active.pointerType
+        )
+      )
+        return;
+      active.didMove = true;
+      props.onSpeakerSelect(active.id);
+    }
+    const dragged = stackResolver.byId.get(active.rootId);
+    if (!dragged) return;
+    const safeRaw = clampStackRootPoint(props.speakers, active.rootId, raw);
+    const previousPoint = active.lastPoint ?? stackResolver.getXY(dragged);
+    const movingExistingStack =
+      active.id !== active.rootId ||
+      stackResolver.getSubtreeIds(active.rootId).size > 1;
+    const candidate = movingExistingStack
+      ? null
+      : findStackCandidate({
+          dragged,
+          point: safeRaw,
+          speakers: props.speakers,
+          previousParentId: active.candidateParentId,
+          minimumTargetMeters: mobileStackTargetMeters(
+            worldPerPixel(),
+            size.width < 760
+          ),
+        });
+    active.candidateParentId = candidate?.parentId ?? null;
+    active.candidate = candidate;
+    setStackCandidate(candidate);
+    if (candidate) {
+      active.sideCandidate = null;
+      setSideSnapCandidate(null);
+      setGuides(null);
+      invalidate();
+      return;
+    }
+    const sideCandidate = findSideSnapCandidate({
+      speakers: props.speakers,
+      movingRootId: active.rootId,
+      rawRootPoint: safeRaw,
+      previous: active.sideCandidate,
+    });
+    active.sideCandidate = sideCandidate;
+    setSideSnapCandidate(sideCandidate);
+    if (sideCandidate) {
+      const snappedPoint = clampStackRootPoint(
+        props.speakers,
+        active.rootId,
+        sideCandidate.point
+      );
+      active.lastPoint = snappedPoint;
+      setGuides(null);
+      props.onSpeakerMove(active.rootId, snappedPoint);
+      invalidate();
+      return;
+    }
+    const pixelWorld = worldPerPixel();
+    const result = placeWithSmartGuides({
+      raw: safeRaw,
+      draggedId: active.rootId,
+      speakers: props.speakers.map(speaker => ({
+        id: speaker.id,
+        point: stackResolver.getXY(speaker),
+      })),
+      listener: { x: props.listener.position.x, y: props.listener.position.y },
+      bounds: ROOM_LAYOUT_BOUNDS,
+      scale: { x: roomWidth, y: roomDepth },
+      enter: {
+        x: (pixelWorld * 8) / roomWidth,
+        y: (pixelWorld * 8) / roomDepth,
+      },
+      release: {
+        x: (pixelWorld * 13) / roomWidth,
+        y: (pixelWorld * 13) / roomDepth,
+      },
+      radialEnterMeters: pixelWorld * 8,
+      radialReleaseMeters: pixelWorld * 13,
+      modifiers: movement.modifiers,
+      previous: active.snap,
+    });
+    active.snap = result.snap;
+    const collision = resolvePhysicalCollisions({
+      speakers: props.speakers,
+      movingRootId: active.rootId,
+      requestedRootPoint: result.point,
+      previousRootPoint: previousPoint,
+    });
+    const finalPoint = clampStackRootPoint(
+      props.speakers,
+      active.rootId,
+      collision.point
+    );
+    active.lastPoint = finalPoint;
+    setGuides(result.guides);
+    props.onSpeakerMove(active.rootId, finalPoint);
+    invalidate();
+  };
+  const queue = () => {
+    if (frame.current === null)
+      frame.current = requestAnimationFrame(applyPending);
+  };
+  const start = (target: DragTarget, event: ThreeEvent<PointerEvent>) => {
+    pointerTarget(event)?.setPointerCapture?.(event.pointerId);
+    pending.current = null;
+    setGuides(null);
+    setStackCandidate(null);
+    setSideSnapCandidate(null);
+    drag.current = target;
+    invalidate();
+  };
+  const move = (event: ThreeEvent<PointerEvent>) => {
+    if (!drag.current) return;
+    const point = pointerPointOnFloor(event);
+    if (!point) return;
+    pending.current = {
+      raw: point,
+      screen: { x: event.nativeEvent.clientX, y: event.nativeEvent.clientY },
+      modifiers: {
+        alt: event.nativeEvent.altKey,
+        shift: event.nativeEvent.shiftKey,
+      },
+    };
+    queue();
+  };
+  const stop = (event: ThreeEvent<PointerEvent>) => {
+    if (frame.current !== null) {
+      cancelAnimationFrame(frame.current);
+      applyPending();
+    }
+    const active = drag.current;
+    if (active?.type === "speaker") {
+      if (active.didMove && active.candidate)
+        props.onSpeakerStack(
+          active.rootId,
+          active.candidate.parentId,
+          active.candidate.alignment
+        );
+      if (active.didMove && active.sideCandidate?.yawAligned) {
+        const root = stackResolver.byId.get(active.rootId);
+        const yawDelta = root
+          ? normalizeYaw(
+              active.sideCandidate.yaw - (root.orientation?.yaw ?? 0)
+            )
+          : 0;
+        if (Math.abs(yawDelta) > 0.0001)
+          stackResolver.getSubtreeIds(active.rootId).forEach(id => {
+            const member = stackResolver.byId.get(id);
+            if (member)
+              props.onSpeakerRotate(
+                id,
+                snapYaw((member.orientation?.yaw ?? 0) + yawDelta)
+              );
+          });
+      }
+      if (!active.didMove) props.onSpeakerSelect(active.id);
+    }
+    pointerTarget(event)?.releasePointerCapture?.(event.pointerId);
+    pending.current = null;
+    drag.current = null;
+    setGuides(null);
+    setStackCandidate(null);
+    setSideSnapCandidate(null);
+    invalidate();
+  };
+  useEffect(
+    () => () => {
+      if (frame.current !== null) cancelAnimationFrame(frame.current);
+    },
+    []
+  );
+  const activeSpeaker =
+    drag.current?.type === "speaker"
+      ? stackResolver.byId.get(drag.current.id)
+      : undefined;
   const mobile = size.width < 760;
   const pixelWorld = worldPerPixel();
-  return <><ambientLight intensity={1.08} /><hemisphereLight args={[surface.sky, surface.ground, .82]} /><directionalLight position={[4, 9, 5]} intensity={1.12} color="#fffaf0" /><mesh rotation={[-Math.PI / 2, 0, 0]} onPointerDown={() => props.onSpeakerSelect("")} onPointerMove={move} onPointerUp={stop}><planeGeometry args={[roomWidth * 1.9, roomDepth * 1.9]} /><meshStandardMaterial color={surface.floor} roughness={.98} /></mesh><SoundFieldLayer speakers={props.speakers} activityBySpeaker={props.activityBySpeaker} bandActivityBySpeaker={props.bandActivityBySpeaker} roomWidth={roomWidth} roomDepth={roomDepth} hazeColor={surface.majorGrid} darkSurface={props.surfaceTone === "night"} /><Grid args={[roomWidth, roomDepth]} cellSize={.5} cellThickness={.07} cellColor={surface.minorGrid} sectionSize={1} sectionThickness={.18} sectionColor={surface.majorGrid} fadeDistance={30} fadeStrength={1.2} position={[0, .012, 0]} /><SmartGuides guides={guides} listener={props.listener} /><StackPreview candidate={stackCandidate} dragged={activeSpeaker} resolver={stackResolver} /><SideSnapPreview candidate={sideSnapCandidate} resolver={stackResolver} />{props.materialStaging && <Html position={[-roomWidth * .33, .06, -roomDepth * .39]} center sprite><span className="recipe-material-label">MATERIALS</span></Html>}{props.speakers.map((speaker) => <SpeakerObject key={speaker.id} speaker={speaker} activity={props.activityBySpeaker[speaker.id] ?? 0} bandActivity={props.bandActivityBySpeaker[speaker.id]} selected={speaker.id === props.selectedSpeakerId} centerY={stackResolver.getCenterMeters(speaker)} xy={stackResolver.getXY(speaker)} canRemove={props.canRemove} worldPerPixel={pixelWorld} mobile={mobile} onSelect={() => props.onSpeakerSelect(speaker.id)} onRemove={() => props.onSpeakerRemove(speaker.id)} onRotate={props.onSpeakerRotate} onDragStart={(event) => { const point = pointerPointOnFloor(event); if (!point) return; const rootId = resolveStackRootId(props.speakers, speaker.id); const root = stackResolver.byId.get(rootId); if (!root) return; const rootXY = stackResolver.getXY(root); start({ type: "speaker", id: speaker.id, rootId, offset: { x: rootXY.x - point.x, y: rootXY.y - point.y }, snap: {}, candidateParentId: null, candidate: null, sideCandidate: null, lastPoint: null, startedAt: { x: event.nativeEvent.clientX, y: event.nativeEvent.clientY }, pointerType: event.nativeEvent.pointerType, didMove: false }, event); }} onDragMove={move} onDragEnd={stop} />)}<ListenerObject listener={props.listener} onNameChange={props.onListenerNameChange} onDragStart={(event) => { const point = pointerPointOnFloor(event); if (!point) return; start({ type: "listener", offset: { x: props.listener.position.x - point.x, y: props.listener.position.y - point.y } }, event); }} onDragMove={move} onDragEnd={stop} /></>;
+  return (
+    <>
+      <ambientLight intensity={1.08} />
+      <hemisphereLight args={[surface.sky, surface.ground, 0.82]} />
+      <directionalLight position={[4, 9, 5]} intensity={1.12} color="#fffaf0" />
+      <mesh
+        rotation={[-Math.PI / 2, 0, 0]}
+        onPointerDown={() => props.onSpeakerSelect("")}
+        onPointerMove={move}
+        onPointerUp={stop}
+      >
+        <planeGeometry args={[roomWidth * 1.9, roomDepth * 1.9]} />
+        <meshStandardMaterial color={surface.floor} roughness={0.98} />
+      </mesh>
+      <SoundFieldLayer
+        speakers={props.speakers}
+        activityBySpeaker={props.activityBySpeaker}
+        bandActivityBySpeaker={props.bandActivityBySpeaker}
+        roomWidth={roomWidth}
+        roomDepth={roomDepth}
+        hazeColor={surface.majorGrid}
+        darkSurface={props.surfaceTone === "night"}
+      />
+      <Grid
+        args={[roomWidth, roomDepth]}
+        cellSize={0.5}
+        cellThickness={0.07}
+        cellColor={surface.minorGrid}
+        sectionSize={1}
+        sectionThickness={0.18}
+        sectionColor={surface.majorGrid}
+        fadeDistance={30}
+        fadeStrength={1.2}
+        position={[0, 0.012, 0]}
+      />
+      <SmartGuides guides={guides} listener={props.listener} />
+      <StackPreview
+        candidate={stackCandidate}
+        dragged={activeSpeaker}
+        resolver={stackResolver}
+      />
+      <SideSnapPreview candidate={sideSnapCandidate} resolver={stackResolver} />
+      {props.speakers.map((speaker, index) => (
+        <SpeakerObject
+          key={speaker.id}
+          speaker={speaker}
+          activity={props.activityBySpeaker[speaker.id] ?? 0}
+          bandActivity={props.bandActivityBySpeaker[speaker.id]}
+          selected={speaker.id === props.selectedSpeakerId}
+          centerY={stackResolver.getCenterMeters(speaker)}
+          xy={stackResolver.getXY(speaker)}
+          canRemove={props.canRemove}
+          worldPerPixel={pixelWorld}
+          mobile={mobile}
+          channelLabel={
+            props.showChannelLabels
+              ? `CH ${String(index + 1).padStart(2, "0")}`
+              : undefined
+          }
+          onSelect={() => props.onSpeakerSelect(speaker.id)}
+          onRemove={() => props.onSpeakerRemove(speaker.id)}
+          onRotate={props.onSpeakerRotate}
+          onDragStart={event => {
+            const point = pointerPointOnFloor(event);
+            if (!point) return;
+            const rootId = resolveStackRootId(props.speakers, speaker.id);
+            const root = stackResolver.byId.get(rootId);
+            if (!root) return;
+            const rootXY = stackResolver.getXY(root);
+            start(
+              {
+                type: "speaker",
+                id: speaker.id,
+                rootId,
+                offset: { x: rootXY.x - point.x, y: rootXY.y - point.y },
+                snap: {},
+                candidateParentId: null,
+                candidate: null,
+                sideCandidate: null,
+                lastPoint: null,
+                startedAt: {
+                  x: event.nativeEvent.clientX,
+                  y: event.nativeEvent.clientY,
+                },
+                pointerType: event.nativeEvent.pointerType,
+                didMove: false,
+              },
+              event
+            );
+          }}
+          onDragMove={move}
+          onDragEnd={stop}
+        />
+      ))}
+      <ListenerObject
+        listener={props.listener}
+        onNameChange={props.onListenerNameChange}
+        onDragStart={event => {
+          const point = pointerPointOnFloor(event);
+          if (!point) return;
+          start(
+            {
+              type: "listener",
+              offset: {
+                x: props.listener.position.x - point.x,
+                y: props.listener.position.y - point.y,
+              },
+            },
+            event
+          );
+        }}
+        onDragMove={move}
+        onDragEnd={stop}
+      />
+    </>
+  );
 }
 
-export default function ClubFloor3D(props: Props) { const surface = surfacePalette[props.surfaceTone]; return <div className="club-floor-3d"><Canvas frameloop="demand" orthographic camera={{ position: [0, 14, 3.2], zoom: 108 }} dpr={[1, 1.25]} gl={{ antialias: true, alpha: true }}><color attach="background" args={[surface.background]} /><ResponsiveFloorCamera /><RoomScene {...props} /></Canvas></div>; }
+export default function ClubFloor3D(props: Props) {
+  const surface = surfacePalette[props.surfaceTone];
+  return (
+    <div className="club-floor-3d">
+      <Canvas
+        frameloop="demand"
+        orthographic
+        camera={{ position: [0, 14, 3.2], zoom: 108 }}
+        dpr={[1, 1.25]}
+        gl={{ antialias: true, alpha: true }}
+      >
+        <color attach="background" args={[surface.background]} />
+        <ResponsiveFloorCamera />
+        <RoomScene {...props} />
+      </Canvas>
+    </div>
+  );
+}
