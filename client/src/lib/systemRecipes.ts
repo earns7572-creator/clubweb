@@ -31,7 +31,7 @@ export const SYSTEM_RECIPES: SystemRecipe[] = [
   },
   {
     id: "steppers-stack",
-    name: "Steppers Stack",
+    name: "Steppers Stereo Stack",
     description: "A compact dub-oriented material set with dedicated bass, kick, mid and top sections.",
     ingredients: [
       { modelId: "steppers-reflex-sub", quantity: 2 },
@@ -41,6 +41,19 @@ export const SYSTEM_RECIPES: SystemRecipe[] = [
     ],
     tags: ["steppers", "dub", "single-tower"],
     suggestedLayout: { towers: 1, notes: "Use vertical stacking as a starting point; arrangement remains user-defined." },
+  },
+  {
+    id: "freeparty-wall",
+    name: "Free Party Stack",
+    description: "A three-column free-party material set with W-bin, kick, mid and high cabinets.",
+    ingredients: [
+      { modelId: "freeparty-wbin", quantity: 3 },
+      { modelId: "freeparty-kick-horn", quantity: 3 },
+      { modelId: "freeparty-mid-horn", quantity: 3 },
+      { modelId: "freeparty-top", quantity: 3 },
+    ],
+    tags: ["freeparty", "multi-way", "stack"],
+    suggestedLayout: { towers: 3, notes: "Build columns manually; placement and stack relationships remain user-defined." },
   },
 ];
 

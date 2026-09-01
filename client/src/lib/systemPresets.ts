@@ -1,8 +1,12 @@
 import type { SpeakerFamily, SpeakerModelId } from "@/lib/speakerModels";
+import { getSpeakerModel } from "@/lib/speakerModels";
 import type { StackAlignment } from "@/lib/speakerStacking";
+import { SYSTEM_RECIPES, type SystemRecipe } from "@/lib/systemRecipes";
 
 export type PresetSpeaker = { key: string; modelId: SpeakerModelId; x?: number; y?: number; z?: number; yaw?: number; level: number; stackOn?: string; stackAlign?: StackAlignment };
 export type SystemPreset = { id: string; label: string; family: SpeakerFamily; description: string; speakers: PresetSpeaker[] };
+export type ClubLayout = SystemPreset & { ownership: "club" };
+export type SoundSystemRecipe = SystemRecipe & { family: SpeakerFamily; ownership: "sound-system" };
 const p = (key: string, modelId: SpeakerModelId, x: number, y: number, level: number, stackOn?: string, yaw?: number): PresetSpeaker => ({ key, modelId, x, y, level, ...(stackOn ? { stackOn } : {}), ...(yaw === undefined ? {} : { yaw }) });
 const stacked = (key: string, modelId: SpeakerModelId, level: number, stackOn: string, stackAlign: StackAlignment): PresetSpeaker => ({ key, modelId, level, stackOn, stackAlign });
 
@@ -40,3 +44,13 @@ export const STEPPERS_STEREO: SystemPreset = { id: "steppers-stereo", label: "St
 
 export const SYSTEM_PRESETS: SystemPreset[] = [REGGAE_WALL, FREEPARTY_WALL, MODERN_FOUR_POINT, FESTIVAL_MAIN_STAGE, HIFI_LISTENING_PAIR, STEPPERS_STEREO];
 export const presetsForFamily = (family: SpeakerFamily) => SYSTEM_PRESETS.filter((preset) => preset.family === family);
+
+export const CLUB_LAYOUTS: ClubLayout[] = [MODERN_FOUR_POINT, FESTIVAL_MAIN_STAGE, HIFI_LISTENING_PAIR].map((preset) => ({ ...preset, ownership: "club" as const }));
+
+const ingredientCounts = (preset: SystemPreset) => Array.from(preset.speakers.reduce((counts, speaker) => counts.set(speaker.modelId, (counts.get(speaker.modelId) ?? 0) + 1), new Map<SpeakerModelId, number>())).map(([modelId, quantity]) => ({ modelId, quantity }));
+const recipeFamily = (recipe: SystemRecipe): SpeakerFamily => getSpeakerModel(recipe.ingredients[0]?.modelId ?? "modern-full", "full").family;
+const freePartyRecipe: SoundSystemRecipe = { id: "freeparty-wall", name: FREEPARTY_WALL.label, family: FREEPARTY_WALL.family, ownership: "sound-system", description: FREEPARTY_WALL.description, ingredients: ingredientCounts(FREEPARTY_WALL) };
+
+// Recipes deliberately contain ingredients only. Placement, yaw, and stack relations remain user-built scene state.
+const soundSystemRecipesById = new Map<string, SoundSystemRecipe>([...SYSTEM_RECIPES.map((recipe) => [recipe.id, { ...recipe, family: recipeFamily(recipe), ownership: "sound-system" as const }] as const), [freePartyRecipe.id, freePartyRecipe]]);
+export const SOUND_SYSTEM_RECIPES: SoundSystemRecipe[] = ["reggae-sound-system", "freeparty-wall", "steppers-stack"].flatMap((id) => { const recipe = soundSystemRecipesById.get(id); return recipe ? [recipe] : []; });
