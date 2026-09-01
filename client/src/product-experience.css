@@ -6,15 +6,216 @@
   --product-line: rgba(37, 38, 34, 0.2);
 }
 
+/* Mode identity stays within one SYSTM control language; RGB remains audio-only. */
+.product-experience .instrument-header,
+.product-experience .instrument-stage,
+.product-experience .product-popover,
+.product-experience .club-layout-library,
+.product-experience .systm-library,
+.product-experience .spatial-inspector {
+  transition:
+    background-color 280ms ease,
+    border-color 280ms ease,
+    color 280ms ease;
+}
+
+.product-experience[data-systm-mode="club"] .club-layout-library,
+.product-experience[data-systm-mode="club"] .spatial-inspector {
+  box-shadow: 0 10px 24px rgba(38, 42, 41, 0.08);
+}
+
+.product-experience[data-systm-mode="sound-system"] .instrument-header,
+.product-experience[data-systm-mode="sound-system"] .systm-library,
+.product-experience[data-systm-mode="sound-system"] .spatial-inspector,
+.product-experience[data-systm-mode="sound-system"] .product-popover {
+  border-color: rgba(235, 233, 225, 0.3);
+  box-shadow: none;
+}
+
+.product-experience[data-systm-mode="sound-system"] .systm-equipment-item,
+.product-experience[data-systm-mode="sound-system"] .recipe-required {
+  border-color: rgba(235, 233, 225, 0.34);
+}
+
+.product-experience[data-systm-mode="sound-system"] .speaker-turn-handle {
+  border-color: rgba(235, 233, 225, 0.5);
+  background: #30322e;
+  color: #efede4;
+}
+
+.product-experience[data-systm-mode="sound-system"] .spatial-word b,
+.product-experience[data-systm-mode="sound-system"] .spatial-brand > small {
+  color: var(--text);
+}
+
+.product-experience[data-systm-mode="sound-system"] .spatial-brand img {
+  filter: invert(1) brightness(1.45) grayscale(0.35);
+}
+
+.cabinet-color-control {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.cabinet-color-heading,
+.cabinet-custom-color,
+.cabinet-color-scope {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.cabinet-color-heading span,
+.cabinet-custom-color span {
+  font: 650 9px/1 monospace;
+  letter-spacing: 0.1em;
+}
+
+.cabinet-color-heading output,
+.cabinet-custom-color > input {
+  color: var(--text-muted);
+  font: 550 9px/1 monospace;
+  text-transform: uppercase;
+}
+
+.cabinet-color-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.cabinet-color-presets button {
+  min-width: 0;
+  min-height: 42px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 5px 2px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+}
+
+.cabinet-color-presets button i {
+  width: 20px;
+  height: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: var(--swatch);
+}
+
+.cabinet-color-presets button span {
+  overflow: hidden;
+  font: 600 6px/1 monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cabinet-color-presets button.active,
+.cabinet-color-scope button.active {
+  border-color: currentColor;
+  background: var(--control-active);
+}
+
+.cabinet-custom-color label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cabinet-custom-color input[type="color"] {
+  width: 38px;
+  height: 30px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+.cabinet-custom-color > input {
+  width: 76px;
+  height: 30px;
+  padding: 0 7px;
+  border: 1px solid var(--border);
+  background: transparent;
+}
+
+.cabinet-color-scope button {
+  flex: 1;
+  min-height: 34px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font: 650 8px/1 monospace;
+}
+
+@media (max-width: 760px) {
+  .cabinet-color-presets button,
+  .cabinet-color-scope button {
+    min-height: 48px;
+  }
+}
+
+.product-experience[data-systm-mode="club"] {
+  --scene-bg: #efeee8;
+  --surface: #f4f2ec;
+  --surface-secondary: #e4e5e1;
+  --border: rgba(42, 46, 46, 0.2);
+  --text: #292d2d;
+  --text-muted: #727877;
+  --grid: #c6cbc8;
+  --control-active: #d6dad7;
+  --surface-elevated: rgba(244, 242, 236, 0.94);
+  --surface-glass: rgba(244, 242, 236, 0.9);
+  --product-paper: var(--scene-bg);
+  --product-paper-2: var(--surface-secondary);
+  --product-graphite: var(--text);
+  --product-mid: var(--text-muted);
+  --product-line: var(--border);
+  --systm-ink: var(--text);
+  --systm-muted: var(--text-muted);
+  --systm-panel: var(--surface);
+  --systm-line: var(--border);
+  --systm-line-strong: color-mix(in srgb, var(--text) 42%, transparent);
+}
+
+.product-experience[data-systm-mode="sound-system"] {
+  --scene-bg: #222320;
+  --surface: #2b2c29;
+  --surface-secondary: #1d1f1d;
+  --border: rgba(235, 233, 225, 0.24);
+  --text: #ece9df;
+  --text-muted: #a5a79f;
+  --grid: #494c47;
+  --control-active: #42443f;
+  --surface-elevated: rgba(43, 44, 41, 0.96);
+  --surface-glass: rgba(38, 39, 36, 0.92);
+  --product-paper: var(--scene-bg);
+  --product-paper-2: var(--surface-secondary);
+  --product-graphite: var(--text);
+  --product-mid: var(--text-muted);
+  --product-line: var(--border);
+  --systm-ink: var(--text);
+  --systm-muted: var(--text-muted);
+  --systm-panel: var(--surface);
+  --systm-line: var(--border);
+  --systm-line-strong: color-mix(in srgb, var(--text) 46%, transparent);
+}
+
 .product-experience {
   height: 100svh;
   min-height: 620px;
   display: grid;
   grid-template-rows: 64px minmax(0, 1fr);
   overflow: hidden;
-  color: var(--product-graphite);
-  background: var(--product-paper);
+  color: var(--text);
+  background: var(--scene-bg);
   font-family: "Space Grotesk", "Noto Sans", system-ui, sans-serif;
+  transition:
+    background-color 280ms ease,
+    color 280ms ease;
 }
 
 .product-experience button {
@@ -30,7 +231,7 @@
   align-items: stretch;
   padding: 0 14px;
   border-bottom: 1px solid var(--product-line);
-  background: rgba(239, 237, 230, 0.97);
+  background: var(--surface);
   backdrop-filter: none;
 }
 
@@ -83,7 +284,7 @@
   border: 0;
   border-left: 1px solid var(--product-line);
   background: transparent;
-  color: var(--product-graphite);
+  color: var(--text);
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -102,7 +303,7 @@
 }
 .product-header-control:hover,
 .product-header-control[aria-expanded="true"] {
-  background: #dad8d1;
+  background: var(--control-active);
 }
 .mode-control .product-header-control {
   min-width: 138px;
@@ -132,9 +333,9 @@
   max-height: min(68vh, 590px);
   overflow: auto;
   padding: 8px;
-  border: 1px solid rgba(37, 38, 34, 0.34);
+  border: 1px solid var(--border);
   border-radius: 2px;
-  background: #eeece5;
+  background: var(--surface);
   box-shadow: 0 14px 34px rgba(28, 29, 26, 0.15);
 }
 
@@ -163,7 +364,7 @@
 .product-popover > button.active,
 .product-experience .preset-popover > button:hover,
 .product-experience .preset-popover > button.active {
-  background: #dcdad3;
+  background: var(--control-active);
 }
 .product-popover button > b {
   min-width: 64px;
@@ -232,20 +433,20 @@
   gap: 7px;
   border: 1px solid var(--product-graphite);
   background: var(--product-graphite);
-  color: #f3f1e9;
+  color: var(--scene-bg);
   font: 650 11px/1 monospace;
   letter-spacing: 0.08em;
 }
 .product-experience .instrument-play.is-playing {
-  background: #d8d6cf;
-  color: var(--product-graphite);
+  background: var(--control-active);
+  color: var(--text);
 }
 
 .product-experience .instrument-stage {
   position: relative;
   min-height: 0;
   overflow: hidden;
-  background: var(--product-paper-2);
+  background: var(--surface-secondary);
 }
 .product-experience .scene-surface,
 .product-experience .club-floor-3d {
@@ -268,7 +469,7 @@
   padding: 0;
   overflow: visible;
   border: 1px solid var(--product-line);
-  background: rgba(237, 235, 228, 0.9);
+  background: var(--surface-glass);
 }
 .product-experience .view-switcher button {
   min-width: 54px;
@@ -310,9 +511,9 @@
   grid-template-columns: 140px minmax(0, 1fr);
   gap: 10px;
   padding: 10px;
-  border: 1px solid rgba(37, 38, 34, 0.3);
+  border: 1px solid var(--border);
   border-radius: 2px;
-  background: rgba(237, 235, 228, 0.94);
+  background: var(--surface-elevated);
   box-shadow: 0 12px 28px rgba(32, 33, 29, 0.12);
 }
 .club-layout-library > div:first-child,
@@ -347,7 +548,7 @@
   text-align: left;
 }
 .club-layout-options button:hover {
-  background: #dad8d1;
+  background: var(--control-active);
 }
 .club-layout-options strong {
   font: 650 11px/1 monospace;
@@ -403,7 +604,7 @@
   font: 600 8px/1 monospace;
 }
 .scene-family-switch button.active {
-  background: #d5d3cc;
+  background: var(--control-active);
 }
 .model-choices {
   display: flex;
@@ -429,7 +630,7 @@
   text-align: left;
 }
 .systm-equipment-item:hover {
-  background: #d8d6cf;
+  background: var(--control-active);
 }
 .systm-equipment-item > span {
   display: grid;
@@ -455,7 +656,7 @@
 .recipe-progress-strip {
   bottom: 255px;
   border-radius: 2px;
-  background: rgba(235, 233, 226, 0.92);
+  background: var(--surface-glass);
   color: var(--product-graphite);
 }
 .recipe-progress-strip small {
@@ -464,8 +665,8 @@
 .club-channel-label {
   padding: 3px 5px;
   border: 1px solid rgba(37, 38, 34, 0.32);
-  background: rgba(239, 237, 230, 0.88);
-  color: #292a26;
+  background: var(--surface-glass);
+  color: var(--text);
   font: 600 8px/1 monospace;
   letter-spacing: 0.08em;
   white-space: nowrap;
@@ -495,9 +696,9 @@
   max-height: calc(100% - 272px);
   padding: 14px;
   overflow: auto;
-  border: 1px solid rgba(37, 38, 34, 0.3);
+  border: 1px solid var(--border);
   border-radius: 2px;
-  background: rgba(237, 235, 228, 0.94);
+  background: var(--surface-elevated);
   box-shadow: 0 12px 28px rgba(32, 33, 29, 0.12);
   transform: none;
 }
@@ -624,11 +825,12 @@
     flex-flow: row nowrap;
     padding: 0;
     transform: none;
-    background: rgba(237, 235, 228, 0.92);
+    background: var(--surface-glass);
   }
   .product-experience .view-switcher button {
     min-width: 48px;
     min-height: 48px;
+    color: var(--text);
   }
   .product-experience .club-layout-library,
   .product-experience .speaker-composer.speaker-library.systm-library {
@@ -644,6 +846,8 @@
     border-right: 0;
     border-bottom: 0;
     border-left: 0;
+    background: var(--surface-elevated);
+    color: var(--text);
     overflow: auto;
   }
   .club-layout-library > div:first-child,

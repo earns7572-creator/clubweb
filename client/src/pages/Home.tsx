@@ -55,6 +55,13 @@ import {
 } from "@/lib/speakerInteraction";
 import { yawToDegrees } from "@/lib/speakerOrientation";
 import {
+  CABINET_COLOR_PRESETS,
+  DEFAULT_CABINET_COLOR,
+  cabinetColorTargetIds,
+  normalizeCabinetColor,
+  type CabinetColorScope,
+} from "@/lib/speakerCabinetColor";
+import {
   defaultModelForKind,
   getSpeakerModel,
   modelIdsForFamily,
@@ -88,6 +95,7 @@ import {
   autoAdvanceProductOnboarding,
   demoModeFromSearch,
   firstProductOnboardingStep,
+  productOnboardingAutoDelay,
   type ProductOnboardingEvent,
 } from "@/lib/productOnboarding";
 import {
@@ -139,6 +147,7 @@ const makeSpeaker = (
     position: { x, y, z: 0 },
     orientation: { yaw: 0 },
     stackParentId: null,
+    cabinetColor: DEFAULT_CABINET_COLOR,
     level,
     muted: false,
     responseProfileId: modelId,
@@ -251,6 +260,7 @@ const SceneProjection = memo(function SceneProjection({
     <div className={`scene-surface surface-${surfaceTone}`} key={view}>
       {view === "top" && (
         <ClubFloor3D
+          mode={mode}
           speakers={speakers}
           activityBySpeaker={activityBySpeaker}
           bandActivityBySpeaker={bandActivityBySpeaker}
@@ -289,7 +299,7 @@ const SceneProjection = memo(function SceneProjection({
           lowActivityBySpeaker={lowActivityBySpeaker}
           bandActivityBySpeaker={bandActivityBySpeaker}
           listener={listener}
-          surfaceTone={surfaceTone}
+          surfaceTone={mode === "sound-system" ? "slate" : surfaceTone}
           onLook={onLook}
           onLookAbsolute={onLookAbsolute}
         />
@@ -492,6 +502,7 @@ function ExperienceWorkspace({
   onSceneChange,
   onModeChange,
 }: ExperienceProps) {
+  const isDemo = demoModeFromSearch(window.location.search) === mode;
   const [fileValidationError, setFileValidationError] = useState<string | null>(
     null
   );
@@ -541,7 +552,10 @@ function ExperienceWorkspace({
   const [sources, setSources] = useState<ClubSource[]>(clubTracks);
   const [selectedSourceId, setSelectedSourceId] = useState("sweep");
   const [surfaceTone, setSurfaceTone] = useState<SurfaceTone>(
-    () => (localStorage.getItem("club-craft-surface") as SurfaceTone) || "paper"
+    () =>
+      isDemo
+        ? "paper"
+        : (localStorage.getItem("club-craft-surface") as SurfaceTone) || "paper"
   );
   const [activeHeaderPopover, setActiveHeaderPopover] =
     useState<HeaderPopover>(null);
@@ -549,6 +563,8 @@ function ExperienceWorkspace({
   const [mixerOpen, setMixerOpenState] = useState(false);
   const [customOpen, setCustomOpenState] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
+  const [cabinetColorScope, setCabinetColorScope] =
+    useState<CabinetColorScope>("this");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const layoutInputRef = useRef<HTMLInputElement>(null);
   const localUrlsRef = useRef(new Set<string>());
@@ -803,8 +819,9 @@ function ExperienceWorkspace({
     []
   );
   useEffect(() => {
+    if (isDemo) return;
     localStorage.setItem("club-craft-surface", surfaceTone);
-  }, [surfaceTone]);
+  }, [isDemo, surfaceTone]);
   useEffect(() => {
     if (mode !== "sound-system") return;
     if (currentRecipeId)
@@ -820,7 +837,7 @@ function ExperienceWorkspace({
     if (next === undefined) return;
     const timer = window.setTimeout(
       () => setOnboardingStep(next),
-      next ? 720 : 520
+      productOnboardingAutoDelay(onboardingStep)
     );
     return () => window.clearTimeout(timer);
   }, [onboardingStep]);
@@ -861,6 +878,20 @@ function ExperienceWorkspace({
         };
       })
     );
+  };
+  const applyCabinetColor = (value: string) => {
+    if (!selectedSpeaker) return;
+    const color = normalizeCabinetColor(value);
+    setSpeakers(now => {
+      const targets = cabinetColorTargetIds(
+        now,
+        selectedSpeaker.id,
+        cabinetColorScope
+      );
+      return now.map(speaker =>
+        targets.has(speaker.id) ? { ...speaker, cabinetColor: color } : speaker
+      );
+    });
   };
   const updateSpeakerLevels = (levels: Record<string, number>) =>
     setSpeakers(now =>
@@ -998,6 +1029,7 @@ function ExperienceWorkspace({
     <main
       className={`instrument-app product-experience product-mode-${mode} spatial-installation dark-club surface-${surfaceTone} scene-view-${view} onboarding-${onboardingStep ?? "idle"}`}
       data-mode={mode}
+      data-systm-mode={mode}
       data-onboarding-step={onboardingStep ?? "complete"}
     >
       {onboardingStep && (
@@ -1465,6 +1497,70 @@ function ExperienceWorkspace({
                       </label>
                     </div>
                   )}
+                  <section className="cabinet-color-control" aria-label="Cabinet color">
+                    <div className="cabinet-color-heading">
+                      <span>COLOR</span>
+                      <output>{normalizeCabinetColor(selectedSpeaker.cabinetColor)}</output>
+                    </div>
+                    <div className="cabinet-color-presets">
+                      {CABINET_COLOR_PRESETS.map(preset => (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          className={
+                            normalizeCabinetColor(selectedSpeaker.cabinetColor) ===
+                            preset.value
+                              ? "active"
+                              : ""
+                          }
+                          style={{ "--swatch": preset.value } as React.CSSProperties}
+                          onClick={() => applyCabinetColor(preset.value)}
+                          aria-label={`Apply ${preset.label} cabinet color`}
+                          title={preset.label}
+                        >
+                          <i />
+                          <span>{preset.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="cabinet-custom-color">
+                      <label>
+                        <span>CUSTOM</span>
+                        <input
+                          type="color"
+                          value={normalizeCabinetColor(selectedSpeaker.cabinetColor)}
+                          onChange={event => applyCabinetColor(event.target.value)}
+                          aria-label="Custom cabinet color picker"
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        value={normalizeCabinetColor(selectedSpeaker.cabinetColor)}
+                        onChange={event => {
+                          if (/^#[0-9a-fA-F]{6}$/.test(event.target.value))
+                            applyCabinetColor(event.target.value);
+                        }}
+                        aria-label="Custom cabinet hex color"
+                      />
+                    </div>
+                    <div className="cabinet-color-scope" aria-label="Apply color to">
+                      {(["this", "stack", "all"] as CabinetColorScope[]).map(
+                        scope => (
+                          <button
+                            key={scope}
+                            type="button"
+                            className={cabinetColorScope === scope ? "active" : ""}
+                            disabled={
+                              scope === "stack" && selectedStackMembers.length <= 1
+                            }
+                            onClick={() => setCabinetColorScope(scope)}
+                          >
+                            {scope.toUpperCase()}
+                          </button>
+                        )
+                      )}
+                    </div>
+                  </section>
                   <label className="spatial-control">
                     <span>Level</span>
                     <input

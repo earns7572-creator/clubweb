@@ -3,6 +3,7 @@ import { createDefaultEq } from "@/lib/speakerEq";
 import { getSpeakerModel, type SpeakerFamily, type SpeakerModelId } from "@/lib/speakerModels";
 import type { SurfaceTone } from "@/components/ClubFloor3D";
 import type { StackAlignment } from "@/lib/speakerStacking";
+import { normalizeCabinetColor } from "@/lib/speakerCabinetColor";
 
 export const LAYOUT_SCHEMA = "club-craft-layout" as const;
 export const LAYOUT_VERSION = 1 as const;
@@ -15,7 +16,7 @@ const modelIds = new Set<SpeakerModelId>([
   "hifi-woofer", "hifi-mid-horn", "hifi-tweeter", "steppers-reflex-sub", "steppers-kick", "steppers-mid", "steppers-top",
 ]);
 
-export type LayoutSpeaker = { key: string; modelId: SpeakerModelId; x: number; y: number; z: number; yaw: number; level: number; muted: boolean; stackOn: string | null; stackAlign?: StackAlignment };
+export type LayoutSpeaker = { key: string; modelId: SpeakerModelId; x: number; y: number; z: number; yaw: number; level: number; muted: boolean; cabinetColor?: string; stackOn: string | null; stackAlign?: StackAlignment };
 export type ClubCraftLayoutFile = { schema: typeof LAYOUT_SCHEMA; version: typeof LAYOUT_VERSION; name: string; createdAt: string; family?: SpeakerFamily; surfaceTone?: SurfaceTone; speakers: LayoutSpeaker[]; listener?: { x: number; y: number; z: number; yaw: number; pitch: number } };
 export type PresetDataSpeaker = Omit<LayoutSpeaker, "muted" | "stackOn"> & { stackOn?: string };
 
@@ -35,14 +36,15 @@ function assertNoStackCycles(speakers: LayoutSpeaker[]) {
 function parseSpeaker(value: unknown, keys: Set<string>): LayoutSpeaker {
   if (!isRecord(value)) fail("speaker is not an object");
   const record = value as Record<string, unknown>;
-  const { key, modelId, x, y, z, yaw, level, muted, stackOn, stackAlign } = record;
+  const { key, modelId, x, y, z, yaw, level, muted, cabinetColor, stackOn, stackAlign } = record;
   if (typeof key !== "string" || !/^speaker-\d{2}$/.test(key) || keys.has(key)) fail("speaker key");
   if (typeof modelId !== "string" || !modelIds.has(modelId as SpeakerModelId)) fail("speaker modelId");
   if (!isScenePoint(x) || !isScenePoint(y) || !isScenePoint(z) || !isFiniteNumber(yaw) || !isFiniteNumber(level) || level < .02 || level > 1 || typeof muted !== "boolean") fail("speaker values");
   if (stackOn !== null && typeof stackOn !== "string") fail("stackOn");
   if (stackAlign !== undefined && stackAlign !== "left" && stackAlign !== "center" && stackAlign !== "right") fail("stackAlign");
   if (stackAlign !== undefined && !stackOn) fail("stackAlign");
-  keys.add(key as string); return { key: key as string, modelId: modelId as SpeakerModelId, x: x as number, y: y as number, z: z as number, yaw: yaw as number, level: level as number, muted: muted as boolean, stackOn: stackOn as string | null, ...(stackOn ? { stackAlign: (stackAlign ?? "center") as StackAlignment } : {}) };
+  if (cabinetColor !== undefined && (typeof cabinetColor !== "string" || !/^#[0-9a-fA-F]{6}$/.test(cabinetColor))) fail("cabinetColor");
+  keys.add(key as string); return { key: key as string, modelId: modelId as SpeakerModelId, x: x as number, y: y as number, z: z as number, yaw: yaw as number, level: level as number, muted: muted as boolean, ...(cabinetColor ? { cabinetColor: normalizeCabinetColor(cabinetColor as string) } : {}), stackOn: stackOn as string | null, ...(stackOn ? { stackAlign: (stackAlign ?? "center") as StackAlignment } : {}) };
 }
 
 export function createLayoutFile({ speakers, listener, surfaceTone, name = "My Club Craft Layout" }: { speakers: ClubSpeaker[]; listener?: ClubListener; surfaceTone?: SurfaceTone; name?: string }): ClubCraftLayoutFile {
@@ -51,7 +53,7 @@ export function createLayoutFile({ speakers, listener, surfaceTone, name = "My C
   const family = models.length && models.every((model) => model.family === models[0].family) ? models[0].family : undefined;
   return {
     schema: LAYOUT_SCHEMA, version: LAYOUT_VERSION, name, createdAt: new Date().toISOString(), ...(family ? { family } : {}), ...(surfaceTone ? { surfaceTone } : {}),
-    speakers: speakers.map((speaker, index) => ({ key: `speaker-${String(index + 1).padStart(2, "0")}`, modelId: getSpeakerModel(speaker.modelId, speaker.kind).id, x: speaker.position.x, y: speaker.position.y, z: speaker.position.z, yaw: speaker.orientation?.yaw ?? 0, level: speaker.level, muted: speaker.muted, stackOn: speaker.stackParentId ? keyById.get(speaker.stackParentId) ?? null : null, ...(speaker.stackParentId ? { stackAlign: speaker.stackAlign ?? "center" } : {}) })),
+    speakers: speakers.map((speaker, index) => ({ key: `speaker-${String(index + 1).padStart(2, "0")}`, modelId: getSpeakerModel(speaker.modelId, speaker.kind).id, x: speaker.position.x, y: speaker.position.y, z: speaker.position.z, yaw: speaker.orientation?.yaw ?? 0, level: speaker.level, muted: speaker.muted, ...(speaker.cabinetColor ? { cabinetColor: normalizeCabinetColor(speaker.cabinetColor) } : {}), stackOn: speaker.stackParentId ? keyById.get(speaker.stackParentId) ?? null : null, ...(speaker.stackParentId ? { stackAlign: speaker.stackAlign ?? "center" } : {}) })),
     ...(listener ? { listener: { x: listener.position.x, y: listener.position.y, z: listener.position.z, yaw: listener.orientation.yaw, pitch: listener.orientation.pitch } } : {}),
   };
 }
@@ -77,7 +79,7 @@ export function parseLayoutFile(text: string): ClubCraftLayoutFile {
 
 export function layoutToClubSpeakers(layout: ClubCraftLayoutFile, runtimeSeed = Date.now()): ClubSpeaker[] {
   const idByKey = new Map(layout.speakers.map((speaker, index) => [speaker.key, `${speaker.modelId}-${runtimeSeed}-${index}`]));
-  return layout.speakers.map((speaker) => { const model = getSpeakerModel(speaker.modelId, "sub"); return { id: idByKey.get(speaker.key)!, modelId: speaker.modelId, kind: model.kind, label: model.label, position: { x: speaker.x, y: speaker.y, z: speaker.z }, orientation: { yaw: speaker.yaw }, stackParentId: speaker.stackOn ? idByKey.get(speaker.stackOn) ?? null : null, ...(speaker.stackOn ? { stackAlign: speaker.stackAlign ?? "center" } : {}), level: speaker.level, muted: speaker.muted, responseProfileId: speaker.modelId, activity: 0, eq: createDefaultEq() }; });
+  return layout.speakers.map((speaker) => { const model = getSpeakerModel(speaker.modelId, "sub"); return { id: idByKey.get(speaker.key)!, modelId: speaker.modelId, kind: model.kind, label: model.label, position: { x: speaker.x, y: speaker.y, z: speaker.z }, orientation: { yaw: speaker.yaw }, stackParentId: speaker.stackOn ? idByKey.get(speaker.stackOn) ?? null : null, ...(speaker.stackOn ? { stackAlign: speaker.stackAlign ?? "center" } : {}), ...(speaker.cabinetColor ? { cabinetColor: normalizeCabinetColor(speaker.cabinetColor) } : {}), level: speaker.level, muted: speaker.muted, responseProfileId: speaker.modelId, activity: 0, eq: createDefaultEq() }; });
 }
 
 export const layoutToPresetData = (layout: ClubCraftLayoutFile): PresetDataSpeaker[] => layout.speakers.map(({ key, modelId, x, y, z, yaw, level, stackOn, stackAlign }) => ({ key, modelId, x, y, z, yaw, level, ...(stackOn ? { stackOn, stackAlign: stackAlign ?? "center" } : {}) }));

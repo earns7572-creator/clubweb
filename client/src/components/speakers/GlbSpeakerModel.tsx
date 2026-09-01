@@ -1,13 +1,152 @@
-/* Club Craft GLB rule: scale each generic cabinet to the physical model registry, keep its base on the floor, and illuminate named drivers only. */
+/* Club Craft GLB rule: only cloned Cabinet* shell materials accept cabinet color; named emitters retain RGB activity. */
 import * as THREE from "three";
 import { useGLTF } from "@react-three/drei";
 import { useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
 import type { SpeakerGlbVisual } from "@/lib/speakerModels";
 import type { SpeakerBandActivity } from "@/lib/bandActivity";
+import {
+  isGlbCabinetShellName,
+  normalizeCabinetColor,
+} from "@/lib/speakerCabinetColor";
 
-type Props = { visual: SpeakerGlbVisual; body: { width: number; height: number; depth: number }; activity: number; bandActivity?: SpeakerBandActivity };
-const bandColors = { low: new THREE.Color("#ff3b30"), mid: new THREE.Color("#ffd60a"), high: new THREE.Color("#32d05b") } as const;
-function cloneMaterials(scene: THREE.Object3D) { const materials: THREE.Material[] = []; scene.traverse((object) => { if (!(object instanceof THREE.Mesh)) return; if (Array.isArray(object.material)) { object.material = object.material.map((material) => { const clone = material.clone(); materials.push(clone); return clone; }); } else { const clone = object.material.clone(); object.material = clone; materials.push(clone); } }); return materials; }
-function namedEmitters(scene: THREE.Object3D, visual: SpeakerGlbVisual) { const emitters: Array<{ mesh: THREE.Mesh; color: THREE.Color; band: keyof typeof bandColors }> = []; (Object.entries(visual.emitterMeshes ?? {}) as Array<[keyof typeof bandColors, string[] | undefined]>).forEach(([band, names]) => names?.forEach((name) => { const mesh = scene.getObjectByName(name); if (mesh instanceof THREE.Mesh) emitters.push({ mesh, color: bandColors[band], band }); })); return emitters; }
-export default function GlbSpeakerModel({ visual, body, activity, bandActivity }: Props) { const gltf = useGLTF(visual.src); const { invalidate } = useThree(); const instance = useMemo(() => { const scene = gltf.scene.clone(true); const materials = cloneMaterials(scene); const beforeFit = new THREE.Box3().setFromObject(scene); const sourceSize = beforeFit.getSize(new THREE.Vector3()); const fit = Math.min(body.width / Math.max(sourceSize.x, .0001), body.height / Math.max(sourceSize.y, .0001), body.depth / Math.max(sourceSize.z, .0001)); scene.scale.setScalar(fit); const fitted = new THREE.Box3().setFromObject(scene); const center = fitted.getCenter(new THREE.Vector3()); scene.position.set(-center.x, -fitted.min.y - body.height / 2, -center.z); return { scene, materials, emitters: namedEmitters(scene, visual) }; }, [body.depth, body.height, body.width, gltf.scene, visual]); useEffect(() => () => instance.materials.forEach((material) => material.dispose()), [instance]); useEffect(() => { instance.emitters.forEach(({ mesh, color, band }) => { const bandValue = bandActivity ? bandActivity[band] : activity; const strength = Math.pow(THREE.MathUtils.clamp(bandValue, 0, 1), 1.05); const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material]; materials.forEach((material) => { if (material instanceof THREE.MeshStandardMaterial || material instanceof THREE.MeshPhysicalMaterial) { material.emissive.copy(color); material.emissiveIntensity = strength * .9; } }); }); invalidate(); }, [activity, bandActivity, instance, invalidate]); return <primitive object={instance.scene} />; }
+type Props = {
+  visual: SpeakerGlbVisual;
+  body: { width: number; height: number; depth: number };
+  activity: number;
+  bandActivity?: SpeakerBandActivity;
+  cabinetColor?: string;
+};
+
+const bandColors = {
+  low: new THREE.Color("#ff3b30"),
+  mid: new THREE.Color("#ffd60a"),
+  high: new THREE.Color("#32d05b"),
+} as const;
+
+function cloneMaterials(scene: THREE.Object3D) {
+  const materials: THREE.Material[] = [];
+  scene.traverse(object => {
+    if (!(object instanceof THREE.Mesh)) return;
+    if (Array.isArray(object.material)) {
+      object.material = object.material.map(material => {
+        const clone = material.clone();
+        materials.push(clone);
+        return clone;
+      });
+    } else {
+      const clone = object.material.clone();
+      object.material = clone;
+      materials.push(clone);
+    }
+  });
+  return materials;
+}
+
+function namedEmitters(scene: THREE.Object3D, visual: SpeakerGlbVisual) {
+  const emitters: Array<{
+    mesh: THREE.Mesh;
+    color: THREE.Color;
+    band: keyof typeof bandColors;
+  }> = [];
+  (
+    Object.entries(visual.emitterMeshes ?? {}) as Array<
+      [keyof typeof bandColors, string[] | undefined]
+    >
+  ).forEach(([band, names]) =>
+    names?.forEach(name => {
+      const mesh = scene.getObjectByName(name);
+      if (mesh instanceof THREE.Mesh)
+        emitters.push({ mesh, color: bandColors[band], band });
+    })
+  );
+  return emitters;
+}
+
+function cabinetShells(scene: THREE.Object3D) {
+  const shells: THREE.Mesh[] = [];
+  scene.traverse(object => {
+    if (object instanceof THREE.Mesh && isGlbCabinetShellName(object.name)) {
+      shells.push(object);
+    }
+  });
+  return shells;
+}
+
+export default function GlbSpeakerModel({
+  visual,
+  body,
+  activity,
+  bandActivity,
+  cabinetColor,
+}: Props) {
+  const gltf = useGLTF(visual.src);
+  const { invalidate } = useThree();
+  const instance = useMemo(() => {
+    const scene = gltf.scene.clone(true);
+    const materials = cloneMaterials(scene);
+    const beforeFit = new THREE.Box3().setFromObject(scene);
+    const sourceSize = beforeFit.getSize(new THREE.Vector3());
+    const fit = Math.min(
+      body.width / Math.max(sourceSize.x, 0.0001),
+      body.height / Math.max(sourceSize.y, 0.0001),
+      body.depth / Math.max(sourceSize.z, 0.0001)
+    );
+    scene.scale.setScalar(fit);
+    const fitted = new THREE.Box3().setFromObject(scene);
+    const center = fitted.getCenter(new THREE.Vector3());
+    scene.position.set(-center.x, -fitted.min.y - body.height / 2, -center.z);
+    return {
+      scene,
+      materials,
+      emitters: namedEmitters(scene, visual),
+      cabinetShells: cabinetShells(scene),
+    };
+  }, [body.depth, body.height, body.width, gltf.scene, visual]);
+
+  useEffect(
+    () => () => instance.materials.forEach(material => material.dispose()),
+    [instance]
+  );
+
+  useEffect(() => {
+    if (!cabinetColor) return;
+    const color = new THREE.Color(normalizeCabinetColor(cabinetColor));
+    instance.cabinetShells.forEach(mesh => {
+      const materials = Array.isArray(mesh.material)
+        ? mesh.material
+        : [mesh.material];
+      materials.forEach(material => {
+        if (
+          material instanceof THREE.MeshStandardMaterial ||
+          material instanceof THREE.MeshPhysicalMaterial
+        ) {
+          material.color.copy(color);
+        }
+      });
+    });
+    invalidate();
+  }, [cabinetColor, instance, invalidate]);
+
+  useEffect(() => {
+    instance.emitters.forEach(({ mesh, color, band }) => {
+      const bandValue = bandActivity ? bandActivity[band] : activity;
+      const strength = Math.pow(THREE.MathUtils.clamp(bandValue, 0, 1), 1.05);
+      const materials = Array.isArray(mesh.material)
+        ? mesh.material
+        : [mesh.material];
+      materials.forEach(material => {
+        if (
+          material instanceof THREE.MeshStandardMaterial ||
+          material instanceof THREE.MeshPhysicalMaterial
+        ) {
+          material.emissive.copy(color);
+          material.emissiveIntensity = strength * 0.9;
+        }
+      });
+    });
+    invalidate();
+  }, [activity, bandActivity, instance, invalidate]);
+
+  return <primitive object={instance.scene} />;
+}

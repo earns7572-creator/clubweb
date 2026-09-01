@@ -3,7 +3,7 @@
   inset: 0;
   z-index: 80;
   pointer-events: none;
-  color: #242521;
+  color: var(--text);
 }
 
 .product-guide-skip {
@@ -12,8 +12,8 @@
   right: 18px;
   min-width: 96px;
   min-height: 36px;
-  border: 1px solid rgba(37, 38, 34, 0.35);
-  background: rgba(243, 241, 234, 0.9);
+  border: 1px solid var(--border);
+  background: var(--surface-glass);
   color: inherit;
   border-radius: 2px;
   font: 600 10px/1 monospace;
@@ -31,11 +31,47 @@
   justify-items: center;
   gap: 5px;
   padding: 13px 18px 12px;
-  border-top: 1px solid rgba(39, 40, 36, 0.5);
-  border-bottom: 1px solid rgba(39, 40, 36, 0.24);
-  background: rgba(241, 239, 232, 0.87);
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-glass);
   text-align: center;
   animation: product-guide-enter 420ms ease both;
+}
+
+@keyframes product-target-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent); }
+}
+
+.onboarding-club-layout .layout-control .product-header-control,
+.onboarding-sound-recipe .recipe-control .product-header-control,
+.onboarding-club-play .instrument-play,
+.onboarding-sound-play .instrument-play,
+.onboarding-club-pov .view-switcher,
+.onboarding-sound-pick .systm-library,
+.onboarding-sound-low .systm-library,
+.onboarding-sound-build .systm-library,
+.onboarding-club-aim .speaker-turn-handle,
+.onboarding-sound-aim .speaker-turn-handle,
+.onboarding-club-listener .listener-name-anchor,
+.onboarding-sound-listener .listener-name-anchor {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  animation: product-target-pulse 1.5s ease-in-out infinite;
+}
+
+.product-experience[data-systm-mode="sound-system"] .product-guide-caption {
+  border-top-width: 2px;
+}
+
+.onboarding-club-listener .listener-name-anchor,
+.onboarding-sound-listener .listener-name-anchor {
+  pointer-events: none;
+}
+
+.onboarding-club-listener .listener-name-wrapper,
+.onboarding-sound-listener .listener-name-wrapper {
+  pointer-events: none !important;
 }
 
 .product-guide-caption span,

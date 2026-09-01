@@ -46,32 +46,32 @@ export const PRODUCT_ONBOARDING_COPY: Record<
   ProductOnboardingStep,
   { verb: string; hint: string }
 > = {
-  "club-layout": { verb: "CHOOSE A LAYOUT", hint: "START WITH THE SPACE" },
+  "club-layout": { verb: "CHOOSE LAYOUT", hint: "START WITH THE SPACE" },
   "club-build": {
-    verb: "BUILD THE SPACE",
-    hint: "THE ROOM IS YOUR INSTRUMENT",
+    verb: "SPACE APPEARS",
+    hint: "FOUR SPEAKERS · ONE LISTENER",
   },
   "club-listener": {
-    verb: "MOVE THE LISTENER",
+    verb: "MOVE LISTENER",
     hint: "DRAG THE LISTENING POINT",
   },
-  "club-aim": { verb: "AIM THE FIELD", hint: "SELECT A SPEAKER · DRAG TURN" },
-  "club-play": { verb: "PLAY SOUND", hint: "START THE SIGNAL" },
-  "club-field": { verb: "SEE THE FIELD", hint: "RGB SHOWS LIVE ENERGY" },
+  "club-aim": { verb: "AIM", hint: "SELECT SPEAKER · USE TURN" },
+  "club-play": { verb: "PLAY", hint: "START THE SIGNAL" },
+  "club-field": { verb: "SEE RGB", hint: "LOW · MID · HIGH" },
   "club-pov": { verb: "ENTER POV", hint: "LISTEN FROM THE FLOOR" },
-  "club-move": { verb: "MOVE THROUGH SPACE", hint: "DRAG TO LOOK AROUND" },
+  "club-move": { verb: "MOVE", hint: "DRAG TO LOOK AROUND" },
   "club-listen": { verb: "LISTEN", hint: "THE SPACE IS LIVE" },
-  "sound-recipe": { verb: "CHOOSE A RECIPE", hint: "A GUIDE · NOT A LIMIT" },
-  "sound-pick": { verb: "PICK A CABINET", hint: "ADD ONE FROM THE LIBRARY" },
-  "sound-low": { verb: "BUILD LOW END", hint: "ADD ANOTHER LOW CABINET" },
-  "sound-snap": { verb: "SIDE SNAP", hint: "DRAG IT BESIDE THE FIRST" },
-  "sound-stack": { verb: "STACK THE KICK", hint: "DRAG A CABINET ON TOP" },
+  "sound-recipe": { verb: "CHOOSE RECIPE", hint: "A GUIDE · NOT A LIMIT" },
+  "sound-pick": { verb: "ADD CABINET", hint: "PICK ONE FROM THE LIBRARY" },
+  "sound-low": { verb: "ADD SECOND", hint: "BUILD THE LOW END" },
+  "sound-snap": { verb: "SNAP", hint: "DRAG IT BESIDE THE FIRST" },
+  "sound-stack": { verb: "STACK", hint: "DRAG A CABINET ON TOP" },
   "sound-build": { verb: "ADD MID / HIGH", hint: "KEEP BUILDING THE STACK" },
-  "sound-aim": { verb: "AIM THE STACK", hint: "SELECT A CABINET · DRAG TURN" },
-  "sound-play": { verb: "PLAY SOUND", hint: "START THE SIGNAL" },
-  "sound-field": { verb: "SEE THE BANDS", hint: "RGB SHOWS LIVE ENERGY" },
+  "sound-aim": { verb: "AIM", hint: "SELECT CABINET · USE TURN" },
+  "sound-play": { verb: "PLAY", hint: "START THE SIGNAL" },
+  "sound-field": { verb: "SEE RGB", hint: "LOW · MID · HIGH" },
   "sound-listener": {
-    verb: "MOVE THE LISTENER",
+    verb: "MOVE LISTENER",
     hint: "DRAG THE LISTENING POINT",
   },
   "sound-listen": { verb: "LISTEN", hint: "THE STACK IS LIVE" },
@@ -127,6 +127,13 @@ export function autoAdvanceProductOnboarding(
   if (step === "sound-field") return "sound-listener";
   if (step === "sound-listen") return null;
   return undefined;
+}
+
+export function productOnboardingAutoDelay(step: ProductOnboardingStep) {
+  if (step === "club-build") return 1100;
+  if (step === "club-field" || step === "sound-field") return 1700;
+  if (step === "club-listen" || step === "sound-listen") return 700;
+  return 720;
 }
 
 export function demoModeFromSearch(search: string): SystmMode | null {

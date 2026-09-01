@@ -44,7 +44,7 @@ assert.equal(demoModeFromSearch("?demo=club"), "club");
 assert.equal(demoModeFromSearch("?demo=sound-system"), "sound-system");
 assert.equal(demoModeFromSearch("?demo=unknown"), null);
 assert.equal(PRODUCT_ONBOARDING_COPY["club-pov"].verb, "ENTER POV");
-assert.equal(PRODUCT_ONBOARDING_COPY["sound-snap"].verb, "SIDE SNAP");
+assert.equal(PRODUCT_ONBOARDING_COPY["sound-snap"].verb, "SNAP");
 assert.match(guide, /SKIP INTRO/);
 assert.doesNotMatch(guide, /WELCOME|SUCCESS|READY|BUILD YOUR SYSTEM/);
 assert.match(styles, /pointer-events: none/);

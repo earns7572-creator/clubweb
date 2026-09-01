@@ -10,7 +10,11 @@ const page = read("client/index.html");
 const home = read("client/src/pages/Home.tsx");
 
 assert.ok(!floor.includes("DjBooth"));
-assert.ok(floor.includes("orthographic.zoom = size.width < 760 ? 52 : 108"));
+assert.ok(
+  floor.includes(
+    'orthographic.zoom = size.width < 760 ? (mode === "club" ? 32 : 52) : 108'
+  )
+);
 assert.match(floor, /snappedYawFromScreenPointer/);
 assert.match(floor, /setPointerCapture/);
 assert.match(floor, /aria-label=\{`Aim \$\{speaker\.label\}`\}/);

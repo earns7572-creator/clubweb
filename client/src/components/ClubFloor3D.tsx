@@ -71,6 +71,7 @@ type PendingDrag = {
 } | null;
 export type SurfaceTone = "paper" | "sand" | "slate" | "night";
 type Props = {
+  mode?: "club" | "sound-system";
   speakers: ClubSpeaker[];
   activityBySpeaker: Readonly<Record<string, number>>;
   bandActivityBySpeaker: SpeakerBandActivityMap;
@@ -120,6 +121,16 @@ const orientationRailMaterial = new THREE.MeshBasicMaterial({
 });
 const orientationPixelMaterial = new THREE.MeshBasicMaterial({
   color: "#343632",
+  depthTest: false,
+});
+const darkOrientationRailMaterial = new THREE.MeshBasicMaterial({
+  color: "#e8e5dc",
+  transparent: true,
+  opacity: 0.92,
+  depthTest: false,
+});
+const darkOrientationPixelMaterial = new THREE.MeshBasicMaterial({
+  color: "#e8e5dc",
   depthTest: false,
 });
 const guideRing = new THREE.RingGeometry(0.99, 1, 56);
@@ -179,6 +190,18 @@ const surfacePalette: Record<
   },
 };
 
+const soundSystemSurfacePalette: typeof surfacePalette = {
+  paper: { background: "#30322f", floor: "#292b28", minorGrid: "#444741", majorGrid: "#686c64", stage: "#20221f", stageTop: "#484b45", sky: "#5a5e56", ground: "#181a17" },
+  sand: { background: "#292722", floor: "#211f1c", minorGrid: "#3e3a33", majorGrid: "#625b50", stage: "#181714", stageTop: "#403b34", sky: "#514b41", ground: "#12110f" },
+  slate: { background: "#232625", floor: "#1d201f", minorGrid: "#37403d", majorGrid: "#56635e", stage: "#151817", stageTop: "#35403c", sky: "#46514d", ground: "#101211" },
+  night: { background: "#121311", floor: "#171815", minorGrid: "#30332e", majorGrid: "#565b52", stage: "#0c0d0b", stageTop: "#2c2f2a", sky: "#343832", ground: "#070806" },
+};
+
+const surfaceFor = (mode: Props["mode"], tone: SurfaceTone) =>
+  mode === "sound-system"
+    ? soundSystemSurfacePalette[tone]
+    : surfacePalette[tone];
+
 const toWorld = (
   point: Pick<Position3D, "x" | "y">
 ): [number, number, number] => [
@@ -211,6 +234,7 @@ function SpeakerObject({
   canRemove,
   worldPerPixel,
   mobile,
+  darkTheme,
   channelLabel,
   onSelect,
   onRemove,
@@ -228,6 +252,7 @@ function SpeakerObject({
   canRemove: boolean;
   worldPerPixel: number;
   mobile: boolean;
+  darkTheme: boolean;
   channelLabel?: string;
   onSelect: () => void;
   onRemove: () => void;
@@ -300,13 +325,13 @@ function SpeakerObject({
               position={[0, height / 2 + 0.025, depth / 2 + railLength / 2]}
               scale={[0.025, 0.028, railLength]}
               geometry={guideBox}
-              material={orientationRailMaterial}
+              material={darkTheme ? darkOrientationRailMaterial : orientationRailMaterial}
             />
             <mesh
               position={[0, height / 2 + 0.025, depth / 2 + railLength + 0.075]}
               scale={[0.14, 0.04, 0.14]}
               geometry={guideBox}
-              material={orientationPixelMaterial}
+              material={darkTheme ? darkOrientationPixelMaterial : orientationPixelMaterial}
             />
             <Html
               position={[0, height / 2 + 0.04, depth / 2 + railLength + 0.25]}
@@ -384,6 +409,7 @@ function SpeakerObject({
           modelId={speaker.modelId}
           activity={activity}
           bandActivity={bandActivity}
+          cabinetColor={speaker.cabinetColor}
           selected={selected}
           idleVisible
           glowStrength={0.9}
@@ -414,7 +440,12 @@ function ListenerNameTag({
     setEditing(false);
   };
   return (
-    <Html position={[0, 1.63, 0]} center sprite>
+    <Html
+      position={[0, 1.63, 0]}
+      center
+      sprite
+      wrapperClass="listener-name-wrapper"
+    >
       <span
         className="listener-name-anchor"
         onPointerDown={event => event.stopPropagation()}
@@ -493,7 +524,7 @@ function ListenerObject({
         />
       </mesh>
       <mesh position={[0, 0.8, 0]}>
-        <cylinderGeometry args={[0.32, 0.32, 1.6, 8]} />
+        <cylinderGeometry args={[0.62, 0.62, 1.6, 12]} />
         <meshBasicMaterial transparent opacity={0} depthWrite={false} />
       </mesh>
       <group rotation={[0, listener.orientation.yaw, 0]}>
@@ -675,16 +706,16 @@ function SideSnapPreview({
     </group>
   );
 }
-function ResponsiveFloorCamera() {
+function ResponsiveFloorCamera({ mode }: { mode?: "club" | "sound-system" }) {
   const { camera, size, invalidate } = useThree();
   useEffect(() => {
     const orthographic = camera as THREE.OrthographicCamera;
     orthographic.position.set(0, 14, 3.2);
-    orthographic.zoom = size.width < 760 ? 52 : 108;
+    orthographic.zoom = size.width < 760 ? (mode === "club" ? 32 : 52) : 108;
     orthographic.lookAt(0, 0, 0);
     orthographic.updateProjectionMatrix();
     invalidate();
-  }, [camera, invalidate, size.width, size.height]);
+  }, [camera, invalidate, mode, size.width, size.height]);
   return null;
 }
 
@@ -703,7 +734,7 @@ function RoomScene(props: Props) {
     () => createStackResolver(props.speakers),
     [props.speakers]
   );
-  const surface = surfacePalette[props.surfaceTone];
+  const surface = surfaceFor(props.mode, props.surfaceTone);
   const pointerTarget = (event: ThreeEvent<PointerEvent>) =>
     event.target as
       | (EventTarget & {
@@ -979,6 +1010,7 @@ function RoomScene(props: Props) {
           canRemove={props.canRemove}
           worldPerPixel={pixelWorld}
           mobile={mobile}
+          darkTheme={props.mode === "sound-system"}
           channelLabel={
             props.showChannelLabels
               ? `CH ${String(index + 1).padStart(2, "0")}`
@@ -1044,7 +1076,7 @@ function RoomScene(props: Props) {
 }
 
 export default function ClubFloor3D(props: Props) {
-  const surface = surfacePalette[props.surfaceTone];
+  const surface = surfaceFor(props.mode, props.surfaceTone);
   return (
     <div className="club-floor-3d">
       <Canvas
@@ -1055,7 +1087,7 @@ export default function ClubFloor3D(props: Props) {
         gl={{ antialias: true, alpha: true }}
       >
         <color attach="background" args={[surface.background]} />
-        <ResponsiveFloorCamera />
+        <ResponsiveFloorCamera mode={props.mode} />
         <RoomScene {...props} />
       </Canvas>
     </div>

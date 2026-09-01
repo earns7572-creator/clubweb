@@ -54,7 +54,11 @@ assert.match(
   /lazy\(\(\) => import\("\.\/components\/SpeakerModelValidation"\)\)/
 );
 assert.match(miniature, /const cabinet = makeChamferCabinet/);
-assert.match(miniature, /useMemo\(createSpeakerMaterials, \[\]\)/);
+assert.match(
+  miniature,
+  /useMemo\(\(\) => createSpeakerMaterials\(resolved\), \[resolved\]\)/
+);
+assert.match(miniature, /Object\.values\(materials\).*material\.dispose\(\)/);
 assert.match(miniature, /bandActivity/);
 assert.match(miniature, /SpeakerEmitterGlow/);
 assert.match(miniature, /band="low"/);
@@ -82,8 +86,8 @@ assert.match(miniature, /<GlbSpeakerModel visual=\{model\.visual\}/);
 assert.match(miniature, /<Suspense fallback=\{fallback\}>/);
 assert.match(glbSpeaker, /useGLTF\(visual\.src\)/);
 assert.match(glbSpeaker, /gltf\.scene\.clone\(true\)/);
-assert.match(glbSpeaker, /Math\.min\(body\.width/);
-assert.match(glbSpeaker, /emissiveIntensity = strength \* \.9/);
+assert.match(glbSpeaker, /Math\.min\(\s*body\.width/);
+assert.match(glbSpeaker, /emissiveIntensity = strength \* (?:\.9|0\.9)/);
 assert.match(emitterGlow, /function SpeakerEmitterGlow/);
 assert.match(emitterGlow, /new THREE\.SpriteMaterial/);
 assert.match(emitterGlow, /depthTest: true/);
