@@ -506,6 +506,7 @@
   height: auto;
   display: flex;
   flex-flow: row nowrap;
+  transform: none;
   padding: 0;
   overflow: visible;
   border: 1px solid var(--product-line);

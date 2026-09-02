@@ -118,6 +118,7 @@ import "../mobile.css";
 import "../product-experience.css";
 
 type SceneView = SystmSceneView;
+const SCENE_VIEWS: readonly SceneView[] = ["top", "side", "pov"];
 type HeaderPopover =
   | "mode"
   | "layout"
@@ -1341,7 +1342,7 @@ function ExperienceWorkspace({
       </header>
       <section className="instrument-stage">
         <div className="view-switcher" aria-label="Scene view">
-          {(["top", "side", "pov"] as SceneView[]).map(item => (
+          {SCENE_VIEWS.map(item => (
             <button
               key={item}
               className={view === item ? "active" : ""}
