@@ -169,6 +169,10 @@
   --control-active: #d6dad7;
   --surface-elevated: rgba(244, 242, 236, 0.94);
   --surface-glass: rgba(244, 242, 236, 0.9);
+  --surface-panel-bg: #f4f2ec;
+  --surface-panel-text: #292d2d;
+  --surface-popover-bg: #f8f6f0;
+  --surface-popover-text: #292d2d;
   --product-paper: var(--scene-bg);
   --product-paper-2: var(--surface-secondary);
   --product-graphite: var(--text);
@@ -192,6 +196,10 @@
   --control-active: #42443f;
   --surface-elevated: rgba(43, 44, 41, 0.96);
   --surface-glass: rgba(38, 39, 36, 0.92);
+  --surface-panel-bg: #2b2c29;
+  --surface-panel-text: #ece9df;
+  --surface-popover-bg: #30322e;
+  --surface-popover-text: #ece9df;
   --product-paper: var(--scene-bg);
   --product-paper-2: var(--surface-secondary);
   --product-graphite: var(--text);
@@ -212,6 +220,7 @@
   overflow: hidden;
   color: var(--text);
   background: var(--scene-bg);
+  isolation: isolate;
   font-family: "Space Grotesk", "Noto Sans", system-ui, sans-serif;
   transition:
     background-color 280ms ease,
@@ -224,7 +233,7 @@
 
 .product-experience .instrument-header {
   position: relative;
-  z-index: 100;
+  z-index: 20;
   height: 64px;
   display: grid;
   grid-template-columns: minmax(152px, 0.7fr) minmax(540px, 3fr) auto;
@@ -233,6 +242,14 @@
   border-bottom: 1px solid var(--product-line);
   background: var(--surface);
   backdrop-filter: none;
+}
+
+/* Explicit interaction layers: coaching sits underneath controls, popovers
+   sit above the stage, and no full-screen guide can intercept normal input. */
+.product-experience .header-controls,
+.product-experience .header-actions {
+  position: relative;
+  z-index: 21;
 }
 
 .product-experience .spatial-brand {
@@ -328,15 +345,37 @@
   position: absolute;
   top: calc(100% + 1px);
   left: 0;
-  z-index: 130;
+  z-index: 30;
   width: min(360px, calc(100vw - 28px));
   max-height: min(68vh, 590px);
   overflow: auto;
   padding: 8px;
   border: 1px solid var(--border);
   border-radius: 2px;
-  background: var(--surface);
+  background: var(--surface-popover-bg);
+  color: var(--surface-popover-text);
   box-shadow: 0 14px 34px rgba(28, 29, 26, 0.15);
+}
+
+/* Keep legacy SYSTM surface declarations from leaking into the mode tokens. */
+.product-experience .product-popover,
+.product-experience .preset-popover {
+  background: var(--surface-popover-bg) !important;
+  color: var(--surface-popover-text) !important;
+}
+.product-experience .product-popover > button,
+.product-experience .preset-popover > button {
+  color: var(--surface-popover-text);
+}
+.product-experience .product-popover > button:hover,
+.product-experience .product-popover > button.active,
+.product-experience .preset-popover > button:hover,
+.product-experience .preset-popover > button.active {
+  background: var(--control-active) !important;
+}
+.product-experience .recipe-popover .recipe-free {
+  background: var(--control-active) !important;
+  color: var(--surface-popover-text);
 }
 
 .product-popover > p,
@@ -444,6 +483,7 @@
 
 .product-experience .instrument-stage {
   position: relative;
+  z-index: 1;
   min-height: 0;
   overflow: hidden;
   background: var(--surface-secondary);
@@ -461,7 +501,7 @@
   left: 14px;
   right: auto;
   bottom: auto;
-  z-index: 35;
+  z-index: 12;
   width: auto;
   height: auto;
   display: flex;
@@ -502,7 +542,7 @@
 .club-layout-library,
 .systm-library {
   position: absolute;
-  z-index: 42;
+  z-index: 14;
   left: 14px;
   right: 14px;
   bottom: 14px;
@@ -513,8 +553,14 @@
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 2px;
-  background: var(--surface-elevated);
+  background: var(--surface-panel-bg);
+  color: var(--surface-panel-text);
   box-shadow: 0 12px 28px rgba(32, 33, 29, 0.12);
+}
+
+.product-experience[data-systm-mode="club"] .club-layout-library {
+  bottom: 198px;
+  max-height: 100px;
 }
 .club-layout-library > div:first-child,
 .systm-library-title {
@@ -562,7 +608,7 @@
 .systm-library-title {
   grid-row: 1 / 5;
 }
-.recipe-required-row {
+.recipe-guide-row {
   min-width: 0;
   grid-column: 2;
   grid-row: 1;
@@ -580,6 +626,53 @@
 .library-section-label span {
   font: 500 8px/1 monospace;
   color: var(--product-mid);
+}
+
+.recipe-sections {
+  display: flex;
+  min-width: 0;
+  gap: 5px;
+  overflow-x: auto;
+}
+
+.recipe-section {
+  flex: 0 0 150px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 7px;
+  min-height: 42px;
+  padding: 5px 7px;
+  border: 1px solid var(--product-line);
+}
+
+.recipe-section > b,
+.recipe-section > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 8px/1 monospace;
+}
+
+.recipe-section > b {
+  color: var(--product-mid);
+}
+
+.recipe-section > button {
+  grid-column: 1 / -1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  border: 1px solid var(--product-line);
+  background: transparent;
+  color: inherit;
+  font: 650 8px/1 monospace;
+  letter-spacing: 0.08em;
+}
+
+.recipe-section > button:hover {
+  background: var(--control-active);
 }
 .other-cabinets-label {
   display: flex;
@@ -653,6 +746,10 @@
   border-color: rgba(37, 38, 34, 0.55);
 }
 
+.recipe-guide-model {
+  border-color: currentColor;
+}
+
 .recipe-progress-strip {
   bottom: 255px;
   border-radius: 2px;
@@ -690,7 +787,7 @@
   right: 14px;
   bottom: auto;
   left: auto;
-  z-index: 48;
+  z-index: 18;
   width: 264px;
   max-width: calc(100% - 28px);
   max-height: calc(100% - 272px);
@@ -698,15 +795,25 @@
   overflow: auto;
   border: 1px solid var(--border);
   border-radius: 2px;
-  background: var(--surface-elevated);
+  background: var(--surface-panel-bg);
+  color: var(--surface-panel-text);
   box-shadow: 0 12px 28px rgba(32, 33, 29, 0.12);
   transform: none;
 }
 .product-experience .mixer-trigger,
 .product-experience .instrument-footer,
 .product-experience .intro-reset {
-  z-index: 50;
+  z-index: 22;
   border-radius: 2px;
+}
+.product-experience .mixer-trigger {
+  border: 1px solid var(--border);
+  background: var(--surface-panel-bg);
+  color: var(--surface-panel-text);
+}
+.product-experience .mixer-trigger:hover,
+.product-experience .mixer-trigger.is-open {
+  background: var(--control-active);
 }
 .product-experience .intro-reset {
   font: 600 9px/1 monospace;
@@ -734,6 +841,7 @@
     grid-template-rows: 98px minmax(0, 1fr);
   }
   .product-experience .instrument-header {
+    z-index: 20;
     height: 98px;
     grid-template-columns: 1fr auto;
     grid-template-rows: 46px 52px;
@@ -767,11 +875,19 @@
   .product-experience .header-controls {
     grid-column: 1 / 3;
     grid-row: 2;
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    overflow: visible;
+    display: flex;
+    flex-flow: row nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    overflow-y: visible;
+    scrollbar-width: none;
     border-top: 1px solid var(--product-line);
+  }
+  .product-experience .header-controls::-webkit-scrollbar {
+    display: none;
+  }
+  .product-experience .background-control {
+    display: flex;
   }
   .product-popover-owner {
     position: static;
@@ -868,7 +984,7 @@
   .systm-library {
     grid-template-rows: auto auto auto auto;
   }
-  .recipe-required-row {
+  .recipe-guide-row {
     grid-column: auto;
     grid-row: auto;
   }
@@ -923,7 +1039,13 @@
     width: 100%;
     max-width: none;
     max-height: calc(100svh - 98px);
-    z-index: 140;
+    z-index: 18;
+  }
+  .product-experience .spatial-inspector,
+  .product-experience .dark-club .spatial-inspector {
+    z-index: 18;
+    background: var(--surface-panel-bg);
+    color: var(--surface-panel-text);
   }
   .mobile-turn-actions button {
     min-width: 48px !important;
@@ -937,6 +1059,13 @@
   }
   .product-experience .mixer-trigger {
     bottom: calc(31svh + 10px);
+  }
+
+  .product-experience[data-systm-mode="club"] .club-layout-library {
+    bottom: calc(31svh + 8px);
+    height: 106px;
+    min-height: 0;
+    max-height: 106px;
   }
   .product-experience .mobile-speaker-edit {
     bottom: calc(31svh + 68px);

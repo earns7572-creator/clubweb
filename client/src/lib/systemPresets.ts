@@ -47,10 +47,14 @@ export const presetsForFamily = (family: SpeakerFamily) => SYSTEM_PRESETS.filter
 
 export const CLUB_LAYOUTS: ClubLayout[] = [MODERN_FOUR_POINT, FESTIVAL_MAIN_STAGE, HIFI_LISTENING_PAIR].map((preset) => ({ ...preset, ownership: "club" as const }));
 
-const ingredientCounts = (preset: SystemPreset) => Array.from(preset.speakers.reduce((counts, speaker) => counts.set(speaker.modelId, (counts.get(speaker.modelId) ?? 0) + 1), new Map<SpeakerModelId, number>())).map(([modelId, quantity]) => ({ modelId, quantity }));
-const recipeFamily = (recipe: SystemRecipe): SpeakerFamily => getSpeakerModel(recipe.ingredients[0]?.modelId ?? "modern-full", "full").family;
-const freePartyRecipe: SoundSystemRecipe = { id: "freeparty-wall", name: FREEPARTY_WALL.label, family: FREEPARTY_WALL.family, ownership: "sound-system", description: FREEPARTY_WALL.description, ingredients: ingredientCounts(FREEPARTY_WALL) };
+const recipeFamily = (recipe: SystemRecipe): SpeakerFamily => getSpeakerModel(recipe.sections[0]?.recommendedModelIds[0] ?? "modern-full", "full").family;
+const freePartyRecipe: SoundSystemRecipe = { id: "freeparty-wall", name: FREEPARTY_WALL.label, family: FREEPARTY_WALL.family, ownership: "sound-system", description: FREEPARTY_WALL.description, sections: [
+  { band: "LOW", role: "W-BIN BASS", recommendedModelIds: ["freeparty-wbin"] },
+  { band: "LOW MID", role: "KICK HORN", recommendedModelIds: ["freeparty-kick-horn"] },
+  { band: "MID", role: "MID HORN", recommendedModelIds: ["freeparty-mid-horn"] },
+  { band: "HIGH", role: "HF HORN", recommendedModelIds: ["freeparty-top"] },
+] };
 
-// Recipes deliberately contain ingredients only. Placement, yaw, and stack relations remain user-built scene state.
+// Recipes deliberately contain guides only. Placement, yaw, quantity and stack relations remain user-built scene state.
 const soundSystemRecipesById = new Map<string, SoundSystemRecipe>([...SYSTEM_RECIPES.map((recipe) => [recipe.id, { ...recipe, family: recipeFamily(recipe), ownership: "sound-system" as const }] as const), [freePartyRecipe.id, freePartyRecipe]]);
 export const SOUND_SYSTEM_RECIPES: SoundSystemRecipe[] = ["reggae-sound-system", "freeparty-wall", "steppers-stack"].flatMap((id) => { const recipe = soundSystemRecipesById.get(id); return recipe ? [recipe] : []; });

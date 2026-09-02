@@ -1,7 +1,7 @@
 .product-guide {
   position: absolute;
   inset: 0;
-  z-index: 80;
+  z-index: 2;
   pointer-events: none;
   color: var(--text);
 }
@@ -25,17 +25,34 @@
   position: absolute;
   left: 50%;
   top: 18%;
-  width: min(340px, calc(100% - 40px));
+  width: min(280px, calc(100% - 40px));
   transform: translateX(-50%);
   display: grid;
   justify-items: center;
   gap: 5px;
-  padding: 13px 18px 12px;
+  padding: 9px 13px 8px;
   border-top: 1px solid currentColor;
   border-bottom: 1px solid var(--border);
   background: var(--surface-glass);
   text-align: center;
   animation: product-guide-enter 420ms ease both;
+}
+
+.product-guide-coaching .product-guide-caption {
+  width: min(228px, calc(100% - 52px));
+  gap: 3px;
+  padding: 7px 10px 6px;
+  border-top-width: 1px;
+  background: color-mix(in srgb, var(--surface-glass) 72%, transparent);
+  opacity: 0.82;
+}
+
+.product-guide-coaching .product-guide-caption strong {
+  font-size: clamp(13px, 1.6vw, 17px);
+}
+
+.product-guide-demo .product-guide-caption {
+  width: min(300px, calc(100% - 40px));
 }
 
 @keyframes product-target-pulse {

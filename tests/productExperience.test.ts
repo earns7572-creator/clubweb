@@ -36,12 +36,12 @@ const reggae = SOUND_SYSTEM_RECIPES.find(
 );
 assert.ok(reggae);
 assert.deepEqual(
-  reggae.ingredients.map(item => item.modelId),
+  reggae.sections.flatMap(section => section.recommendedModelIds),
   ["reggae-scoop", "reggae-kick", "reggae-mid-horn", "reggae-top"]
 );
 assert.ok(
-  home.indexOf("REQUIRED") < home.indexOf("OTHER CABINETS"),
-  "recipe requirements render before other cabinets"
+  home.indexOf("RECIPE GUIDE") < home.indexOf("OTHER CABINETS"),
+  "recipe guide renders before other cabinets"
 );
 assert.doesNotMatch(
   home,

@@ -18,5 +18,7 @@ assert.equal(getRecipeProgress(recipe, speakers).recipeId, "test-recipe", "switc
 assert.ok(SYSTEM_RECIPES.some((item) => item.id === "reggae-sound-system"), "initial recipes include the reggae example");
 assert.ok(SYSTEM_RECIPES.some((item) => item.id === "steppers-stack"), "initial recipes include the steppers example");
 assert.equal("speakers" in SYSTEM_RECIPES[0], false, "recipes do not embed preset positions");
-assert.deepEqual(SYSTEM_RECIPES.find((item) => item.id === "reggae-sound-system").ingredients.map((item) => item.quantity), [4, 2, 2, 2], "reggae recipe exposes the ten-cabinet material set");
+const reggaeGuide = SYSTEM_RECIPES.find((item) => item.id === "reggae-sound-system");
+assert.deepEqual(reggaeGuide.sections.map((section) => section.recommendedModelIds), [["reggae-scoop"], ["reggae-kick"], ["reggae-mid-horn"], ["reggae-top"]], "reggae recipe exposes a guide-only cabinet palette");
+assert.ok(reggaeGuide.sections.every((section) => !Object.hasOwn(section, "quantity") && !Object.hasOwn(section, "required") && !Object.hasOwn(section, "placed")), "built-in recipes do not carry fixed quantities or progress state");
 console.log("system recipe tests passed");

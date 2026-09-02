@@ -50,13 +50,14 @@ assert.deepEqual(
 for (const recipe of SOUND_SYSTEM_RECIPES) {
   assert.equal(recipe.ownership, "sound-system");
   assert.ok(
-    recipe.ingredients.every(
-      item =>
-        !Object.hasOwn(item, "x") &&
-        !Object.hasOwn(item, "yaw") &&
-        !Object.hasOwn(item, "stackOn")
+    recipe.sections.every(
+      section =>
+        Array.isArray(section.recommendedModelIds) &&
+        !Object.hasOwn(section, "quantity") &&
+        !Object.hasOwn(section, "placed") &&
+        !Object.hasOwn(section, "required")
     ),
-    `${recipe.name} remains ingredients-only`
+    `${recipe.name} remains a guide-only recipe`
   );
 }
 

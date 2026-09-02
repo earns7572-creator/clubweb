@@ -78,8 +78,6 @@ import {
 } from "@/lib/systemPresets";
 import {
   SYSTEM_RECIPES,
-  getRecipeProgress,
-  type RecipeProgress,
   type SystemRecipe,
 } from "@/lib/systemRecipes";
 import {
@@ -193,6 +191,15 @@ const initialViewFromUrl = (): SceneView => {
   return requested === "side" || requested === "pov" ? requested : "top";
 };
 const recipeStorageKey = "club-craft-current-recipe";
+const onboardingCompleteKey = (mode: SystmMode) =>
+  `systm-onboarding-complete:${mode}`;
+const soundSystemLibraryFamilies: SpeakerFamily[] = [
+  "reggae",
+  "freeparty",
+  "festival",
+  "hifi",
+  "steppers",
+];
 
 type ProjectionProps = {
   mode: SystmMode;
@@ -309,36 +316,36 @@ const SceneProjection = memo(function SceneProjection({
 });
 
 function FamilyLibrary({
+  mode,
   family,
   onFamilyChange,
   onAdd,
   recipe,
-  recipeProgress,
 }: {
+  mode: SystmMode;
   family: SpeakerFamily;
   onFamilyChange: (family: SpeakerFamily) => void;
   onAdd: (id: SpeakerModelId) => void;
   recipe: SoundSystemRecipe | null;
-  recipeProgress: RecipeProgress | null;
 }) {
-  const requiredModelIds = recipe?.ingredients.map(item => item.modelId) ?? [];
-  const otherModels = modelIdsForFamily(family).filter(
-    modelId => !requiredModelIds.includes(modelId)
-  );
-  const renderModel = (
-    modelId: SpeakerModelId,
-    index: number,
-    required: boolean
-  ) => {
+  const allowedFamilies =
+    mode === "club"
+      ? orderedSpeakerFamilies().map(definition => definition.id)
+      : soundSystemLibraryFamilies;
+  const guideModelIds = recipe
+    ? Array.from(
+        new Set(
+          recipe.sections.flatMap(section => section.recommendedModelIds)
+        )
+      )
+    : [];
+  const renderModel = (modelId: SpeakerModelId, index: number) => {
     const model = getSpeakerModel(modelId, "sub");
-    const ingredient = recipeProgress?.ingredients.find(
-      item => item.modelId === modelId
-    );
     return (
       <button
         key={modelId}
         data-slot={String(index + 1).padStart(2, "0")}
-        className={`speaker-type-icon systm-equipment-item ${model.family} ${model.kind} ${required ? "recipe-required" : ""}`}
+        className={`speaker-type-icon systm-equipment-item ${model.family} ${model.kind}`}
         onClick={() => onAdd(modelId)}
         aria-label={`Add ${model.label}`}
       >
@@ -348,11 +355,6 @@ function FamilyLibrary({
           <small>
             {model.band.toUpperCase()} / {model.kind.toUpperCase()}
           </small>
-          {ingredient && (
-            <em>
-              {ingredient.placed} / {ingredient.required}
-            </em>
-          )}
         </span>
         <Plus size={16} aria-hidden="true" />
       </button>
@@ -361,51 +363,80 @@ function FamilyLibrary({
   return (
     <section
       className="speaker-composer speaker-library systm-library"
-      aria-label="System library"
+      aria-label={
+        mode === "club" ? "Club speaker library" : "System cabinet library"
+      }
     >
       <div className="systm-library-title">
-        <span>CABINET LIBRARY</span>
-        <small>{recipe ? `RECIPE / ${recipe.name}` : "FREE BUILD"}</small>
+        <span>{mode === "club" ? "SPEAKER LIBRARY" : "CABINET LIBRARY"}</span>
+        <small>
+          {mode === "club"
+            ? "MODEL-CENTRIC / BUILD THE SPACE"
+            : recipe
+              ? `GUIDE / ${recipe.name}`
+              : "FREE BUILD"}
+        </small>
       </div>
       {recipe && (
-        <div className="recipe-required-row" aria-label="Required cabinets">
+        <div className="recipe-guide-row" aria-label="Recipe guide">
           <div className="library-section-label">
-            <strong>REQUIRED</strong>
-            <span>ADD ONE BY ONE</span>
+            <strong>RECIPE GUIDE</strong>
+            <span>OPTIONAL PALETTE</span>
           </div>
-          <div className="model-choices required-models">
-            {requiredModelIds.map((modelId, index) =>
-              renderModel(modelId, index, true)
-            )}
+          <div className="recipe-sections">
+            {recipe.sections.map(section => (
+              <div
+                key={`${section.band}-${section.role}`}
+                className="recipe-section"
+              >
+                <b>{section.band}</b>
+                <span>{section.role}</span>
+                {section.recommendedModelIds.map(modelId => (
+                  <button
+                    key={modelId}
+                    onClick={() => onAdd(modelId)}
+                    aria-label={`Add ${getSpeakerModel(modelId, "sub").label}`}
+                  >
+                    <Plus size={13} aria-hidden="true" /> ADD
+                  </button>
+                ))}
+              </div>
+            ))}
           </div>
         </div>
       )}
       <div className="library-section-label other-cabinets-label">
-        <strong>OTHER CABINETS</strong>
-        <span>RECIPE DOES NOT LIMIT THE BUILD</span>
+        <strong>{mode === "club" ? "ALL CABINETS" : "OTHER CABINETS"}</strong>
+        <span>
+          {mode === "club"
+            ? "ADD ANY REGISTERED MODEL"
+            : "GUIDE DOES NOT LIMIT THE BUILD"}
+        </span>
       </div>
       <div
         className="family-switch scene-family-switch"
         role="tablist"
         aria-label="Speaker family"
       >
-        {orderedSpeakerFamilies().map(definition => (
-          <button
-            key={definition.id}
-            role="tab"
-            aria-selected={family === definition.id}
-            className={family === definition.id ? "active" : ""}
-            onClick={() => onFamilyChange(definition.id)}
-            title={definition.description}
-          >
-            {definition.shortLabel}
-          </button>
-        ))}
+        {orderedSpeakerFamilies()
+          .filter(definition => allowedFamilies.includes(definition.id))
+          .map(definition => (
+            <button
+              key={definition.id}
+              role="tab"
+              aria-selected={family === definition.id}
+              className={family === definition.id ? "active" : ""}
+              onClick={() => onFamilyChange(definition.id)}
+              title={definition.description}
+            >
+              {definition.shortLabel}
+            </button>
+          ))}
       </div>
       <div className="model-choices">
-        {otherModels.map((modelId, index) =>
-          renderModel(modelId, index, false)
-        )}
+        {modelIdsForFamily(family)
+          .filter(modelId => !guideModelIds.includes(modelId))
+          .map((modelId, index) => renderModel(modelId, index))}
       </div>
     </section>
   );
@@ -476,11 +507,8 @@ function RecipeLibrary({
         >
           <strong>{recipe.name}</strong>
           <small>
-            {recipe.ingredients
-              .map(
-                item =>
-                  `${item.quantity}× ${getSpeakerModel(item.modelId, "sub").shortLabel}`
-              )
+            {recipe.sections
+              .map(section => `${section.band} / ${section.role}`)
               .join(" · ")}
           </small>
         </button>
@@ -641,9 +669,6 @@ function ExperienceWorkspace({
     sources.find(source => source.id === selectedSourceId) ?? sources[0];
   const currentRecipe =
     SYSTEM_RECIPES.find(recipe => recipe.id === currentRecipeId) ?? null;
-  const recipeProgress = currentRecipe
-    ? getRecipeProgress(currentRecipe, speakers)
-    : null;
   const selectedSpeaker = speakers.find(
     speaker => speaker.id === selectedSpeakerId
   );
@@ -767,7 +792,10 @@ function ExperienceWorkspace({
   const selectRecipe = (recipe: SystemRecipe) => {
     setCurrentRecipeId(recipe.id);
     setSpeakerFamily(
-      getSpeakerModel(recipe.ingredients[0]?.modelId, "sub").family
+      getSpeakerModel(
+        recipe.sections[0]?.recommendedModelIds[0],
+        "sub"
+      ).family
     );
     setActiveHeaderPopover(null);
     advanceOnboarding("recipe-selected");
@@ -832,7 +860,7 @@ function ExperienceWorkspace({
     if (isPlaying) advanceOnboarding("playback-started");
   }, [isPlaying]);
   useEffect(() => {
-    if (!onboardingStep) return;
+    if (!isDemo || !onboardingStep) return;
     const next = autoAdvanceProductOnboarding(onboardingStep);
     if (next === undefined) return;
     const timer = window.setTimeout(
@@ -840,7 +868,7 @@ function ExperienceWorkspace({
       productOnboardingAutoDelay(onboardingStep)
     );
     return () => window.clearTimeout(timer);
-  }, [onboardingStep]);
+  }, [isDemo, onboardingStep]);
   useEffect(() => {
     const rotate = (event: Event) => {
       const detail = (event as CustomEvent<{ id?: string; yaw?: number }>)
@@ -1017,9 +1045,13 @@ function ExperienceWorkspace({
     setListener(current => ({ ...current, name }));
     localStorage.setItem(listenerNameKey, name);
   };
-  const finishOnboarding = () => setOnboardingStep(null);
+  const finishOnboarding = () => {
+    setOnboardingStep(null);
+    if (!isDemo) localStorage.setItem(onboardingCompleteKey(mode), "1");
+  };
   const restartIntro = () => {
     setFileValidationError(null);
+    if (!isDemo) localStorage.removeItem(onboardingCompleteKey(mode));
     setOnboardingStep(firstProductOnboardingStep(mode));
   };
   const inspectorModels = orderedSpeakerFamilies().flatMap(family =>
@@ -1037,6 +1069,7 @@ function ExperienceWorkspace({
           mode={mode}
           step={onboardingStep}
           onSkip={finishOnboarding}
+          isDemo={isDemo}
         />
       )}
       <header className="instrument-header">
@@ -1293,7 +1326,7 @@ function ExperienceWorkspace({
             <Headphones size={13} /> HEADPHONES
           </span>
           <button
-            aria-label="Listen"
+            aria-label={isPlaying ? "Pause" : "Listen"}
             className={`instrument-play ${isPlaying ? "is-playing" : ""}`}
             onClick={() => void togglePlayback()}
           >
@@ -1377,41 +1410,29 @@ function ExperienceWorkspace({
           onLook={turnListener}
           onLookAbsolute={setListenerLook}
         />
-        {currentRecipe && recipeProgress && view !== "pov" && (
-          <div
-            className="recipe-progress-strip"
-            aria-label={`${currentRecipe.name} ingredient progress`}
-          >
-            <strong>{currentRecipe.name}</strong>
-            <span>
-              {recipeProgress.ingredients
-                .map(
-                  item =>
-                    `${getSpeakerModel(item.modelId, "sub").shortLabel} ${item.placed}/${item.required}`
-                )
-                .join(" · ")}
-            </span>
-            {recipeProgress.complete && <small>INGREDIENTS COMPLETE</small>}
-          </div>
-        )}
         {view !== "pov" && (
           <>
             {mode === "club" ? (
-              <ClubLayoutLibrary
-                onLoad={loadClubLayout}
-                onFree={startFreeClub}
-              />
+              <>
+                <ClubLayoutLibrary
+                  onLoad={loadClubLayout}
+                  onFree={startFreeClub}
+                />
+                <FamilyLibrary
+                  mode={mode}
+                  family={speakerFamily}
+                  onFamilyChange={setSpeakerFamily}
+                  onAdd={addSpeakerModel}
+                  recipe={null}
+                />
+              </>
             ) : (
               <FamilyLibrary
+                mode={mode}
                 family={speakerFamily}
                 onFamilyChange={setSpeakerFamily}
                 onAdd={addSpeakerModel}
-                recipe={
-                  SOUND_SYSTEM_RECIPES.find(
-                    recipe => recipe.id === currentRecipeId
-                  ) ?? null
-                }
-                recipeProgress={recipeProgress}
+                recipe={SOUND_SYSTEM_RECIPES.find(recipe => recipe.id === currentRecipeId) ?? null}
               />
             )}
             {selectedSpeaker && selectedModel && (
@@ -1725,12 +1746,22 @@ function SystmShell() {
   );
   const [scenes, setScenes] = useState<SystmSceneStateMap>(() => {
     const initial = createInitialSceneStateMap(loadListenerName());
+    const onboardingStep = (nextMode: SystmMode) =>
+      demoMode === nextMode ||
+      localStorage.getItem(onboardingCompleteKey(nextMode)) !== "1"
+        ? firstProductOnboardingStep(nextMode)
+        : null;
     return {
-      ...initial,
-      club: { ...initial.club, view: initialViewFromUrl() },
+      club: {
+        ...initial.club,
+        view: initialViewFromUrl(),
+        modeOnboardingStep: onboardingStep("club"),
+      },
       "sound-system": {
         ...initial["sound-system"],
+        speakerFamily: "reggae",
         recipeId: demoMode ? null : localStorage.getItem(recipeStorageKey),
+        modeOnboardingStep: onboardingStep("sound-system"),
       },
     };
   });
