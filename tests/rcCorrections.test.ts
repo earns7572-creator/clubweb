@@ -12,7 +12,8 @@ const experienceCss = read("client/src/product-experience.css");
 assert.match(guideCss, /\.product-guide[\s\S]*z-index: 2/);
 assert.match(guideCss, /\.product-guide[\s\S]*pointer-events: none/);
 assert.match(guideCss, /\.product-guide-skip[\s\S]*pointer-events: auto/);
-assert.match(home, /if \(!isDemo \|\| !onboardingStep\) return/);
+assert.match(home, /if \(!onboardingStep\) return/);
+assert.match(home, /next === null && !isDemo/);
 assert.match(home, /setOnboardingStep\(null\)/);
 assert.match(home, /onboardingCompleteKey\(mode\)/);
 

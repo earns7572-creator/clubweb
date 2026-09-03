@@ -1317,15 +1317,19 @@ function ExperienceWorkspace({
     if (isPlaying) advanceOnboarding("playback-started");
   }, [isPlaying]);
   useEffect(() => {
-    if (!isDemo || !onboardingStep) return;
+    if (!onboardingStep) return;
     const next = autoAdvanceProductOnboarding(onboardingStep);
     if (next === undefined) return;
     const timer = window.setTimeout(
-      () => setOnboardingStep(next),
+      () => {
+        setOnboardingStep(next);
+        if (next === null && !isDemo)
+          localStorage.setItem(onboardingCompleteKey(mode), "1");
+      },
       productOnboardingAutoDelay(onboardingStep)
     );
     return () => window.clearTimeout(timer);
-  }, [isDemo, onboardingStep]);
+  }, [isDemo, mode, onboardingStep]);
   useEffect(() => {
     const rotate = (event: Event) => {
       const detail = (event as CustomEvent<{ id?: string; yaw?: number }>)
