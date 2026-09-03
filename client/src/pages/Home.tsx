@@ -119,6 +119,13 @@ import "../product-experience.css";
 
 type SceneView = SystmSceneView;
 const SCENE_VIEWS: readonly SceneView[] = ["top", "side", "pov"];
+type DesktopPanel =
+  | "layout"
+  | "speakers"
+  | "recipe"
+  | "cabinets"
+  | "inspector"
+  | "mix";
 type HeaderPopover =
   | "mode"
   | "layout"
@@ -518,6 +525,414 @@ function RecipeLibrary({
   );
 }
 
+type SpeakerInspectorProps = {
+  speaker: ClubSpeaker;
+  speakers: ClubSpeaker[];
+  selectedStackMembers: ClubSpeaker[];
+  inspectorModels: SpeakerModelId[];
+  cabinetColorScope: CabinetColorScope;
+  mobileOpen?: boolean;
+  onCabinetColorScopeChange: (scope: CabinetColorScope) => void;
+  onCabinetColorChange: (value: string) => void;
+  onUpdateSpeaker: (update: Partial<ClubSpeaker>) => void;
+  onSelectSpeaker: (id: string) => void;
+  onRemoveSpeaker: () => void;
+  onRotateSpeaker: (yaw: number) => void;
+  onDetachSpeaker: () => void;
+  onClose: () => void;
+  onCustomOpen: () => void;
+}
+
+function SpeakerInspector({
+  speaker,
+  speakers,
+  selectedStackMembers,
+  inspectorModels,
+  cabinetColorScope,
+  mobileOpen = false,
+  onCabinetColorScopeChange,
+  onCabinetColorChange,
+  onUpdateSpeaker,
+  onSelectSpeaker,
+  onRemoveSpeaker,
+  onRotateSpeaker,
+  onDetachSpeaker,
+  onClose,
+  onCustomOpen,
+}: SpeakerInspectorProps) {
+  const selectedModel = getSpeakerModel(speaker.modelId, speaker.kind);
+  return (
+    <aside
+      className={`spatial-inspector ${mobileOpen ? "mobile-open" : ""}`}
+      aria-label="Selected speaker"
+    >
+      <button
+        className="mobile-inspector-close"
+        onClick={onClose}
+        aria-label="Close speaker controls"
+      >
+        ×
+      </button>
+      <button
+        className="mobile-inspector-delete"
+        disabled={speakers.length <= 1}
+        onClick={onRemoveSpeaker}
+        aria-label={`Delete ${selectedModel.label}`}
+      >
+        <Trash2 size={16} />
+      </button>
+      <h2>{selectedModel.label}</h2>
+      <label className="spatial-control">
+        <span>Model</span>
+        <select
+          value={resolveModelId(speaker.modelId, speaker.kind)}
+          onChange={event =>
+            onUpdateSpeaker({ modelId: event.target.value as SpeakerModelId })
+          }
+        >
+          {inspectorModels.map(modelId => (
+            <option key={modelId} value={modelId}>
+              {getSpeakerModel(modelId, "sub").label}
+            </option>
+          ))}
+        </select>
+      </label>
+      {selectedStackMembers.length > 1 && (
+        <div className="stack-selector-block" aria-label="Stack selector">
+          <div className="stack-selector-heading">
+            STACK / {String(selectedStackMembers.length).padStart(2, "0")}
+          </div>
+          <label className="spatial-control">
+            <span>Cabinet</span>
+            <select
+              value={speaker.id}
+              onChange={event => onSelectSpeaker(event.target.value)}
+            >
+              {selectedStackMembers
+                .slice()
+                .reverse()
+                .map(stackSpeaker => {
+                  const stackNumber =
+                    selectedStackMembers.findIndex(
+                      member => member.id === stackSpeaker.id
+                    ) + 1;
+                  return (
+                    <option key={stackSpeaker.id} value={stackSpeaker.id}>
+                      {`${String(stackNumber).padStart(2, "0")} ${stackSpeaker.kind.toUpperCase()}`}
+                    </option>
+                  );
+                })}
+            </select>
+          </label>
+        </div>
+      )}
+      <section className="cabinet-color-control" aria-label="Cabinet color">
+        <div className="cabinet-color-heading">
+          <span>COLOR</span>
+          <output>{normalizeCabinetColor(speaker.cabinetColor)}</output>
+        </div>
+        <div className="cabinet-color-presets">
+          {CABINET_COLOR_PRESETS.map(preset => (
+            <button
+              key={preset.id}
+              type="button"
+              className={
+                normalizeCabinetColor(speaker.cabinetColor) === preset.value
+                  ? "active"
+                  : ""
+              }
+              style={{ "--swatch": preset.value } as React.CSSProperties}
+              onClick={() => onCabinetColorChange(preset.value)}
+              aria-label={`Apply ${preset.label} cabinet color`}
+              title={preset.label}
+            >
+              <i />
+              <span>{preset.label}</span>
+            </button>
+          ))}
+        </div>
+        <div className="cabinet-custom-color">
+          <label>
+            <span>CUSTOM</span>
+            <input
+              type="color"
+              value={normalizeCabinetColor(speaker.cabinetColor)}
+              onChange={event => onCabinetColorChange(event.target.value)}
+              aria-label="Custom cabinet color picker"
+            />
+          </label>
+          <input
+            type="text"
+            value={normalizeCabinetColor(speaker.cabinetColor)}
+            onChange={event => {
+              if (/^#[0-9a-fA-F]{6}$/.test(event.target.value))
+                onCabinetColorChange(event.target.value);
+            }}
+            aria-label="Custom cabinet hex color"
+          />
+        </div>
+        <div className="cabinet-color-scope" aria-label="Apply color to">
+          {(["this", "stack", "all"] as CabinetColorScope[]).map(scope => (
+            <button
+              key={scope}
+              type="button"
+              className={cabinetColorScope === scope ? "active" : ""}
+              disabled={scope === "stack" && selectedStackMembers.length <= 1}
+              onClick={() => onCabinetColorScopeChange(scope)}
+            >
+              {scope.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </section>
+      <label className="spatial-control">
+        <span>Level</span>
+        <input
+          type="range"
+          min=".02"
+          max="1"
+          step=".01"
+          value={speaker.level}
+          onChange={event => onUpdateSpeaker({ level: Number(event.target.value) })}
+        />
+      </label>
+      {speaker.stackParentId ? (
+        <p className="stacked-status">Stacked · drag moves the complete column</p>
+      ) : (
+        <label className="spatial-control height-control">
+          <span>Height</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step=".01"
+            value={speaker.position.z}
+            onChange={event =>
+              onUpdateSpeaker({
+                position: { ...speaker.position, z: Number(event.target.value) },
+              })
+            }
+          />
+          <div className="height-stops" aria-hidden="true">
+            <span>Floor</span>
+            <span>Ear</span>
+            <span>High</span>
+          </div>
+        </label>
+      )}
+      <div className="mobile-turn-actions" aria-label="Mobile speaker rotation">
+        <span>Turn</span>
+        <button
+          type="button"
+          aria-label="Turn speaker left 15 degrees"
+          onClick={() =>
+            onRotateSpeaker((speaker.orientation?.yaw ?? 0) - Math.PI / 12)
+          }
+        >
+          ↶
+        </button>
+        <output>{yawToDegrees(speaker.orientation?.yaw ?? 0)}°</output>
+        <button
+          type="button"
+          aria-label="Turn speaker right 15 degrees"
+          onClick={() =>
+            onRotateSpeaker((speaker.orientation?.yaw ?? 0) + Math.PI / 12)
+          }
+        >
+          ↷
+        </button>
+      </div>
+      <div className="inspector-actions">
+        <button
+          className={speaker.muted ? "muted" : ""}
+          onClick={() => onUpdateSpeaker({ muted: !speaker.muted })}
+        >
+          {speaker.muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          {speaker.muted ? "Unmute" : "Mute"}
+        </button>
+        <button onClick={onCustomOpen}>
+          <SlidersHorizontal size={14} />
+          Custom
+        </button>
+        {speaker.stackParentId && <button onClick={onDetachSpeaker}>Detach</button>}
+      </div>
+    </aside>
+  );
+}
+
+type DesktopSidePanelProps = {
+  mode: SystmMode;
+  activePanel: DesktopPanel;
+  speakers: ClubSpeaker[];
+  selectedSpeakerId: string;
+  selectedSpeaker?: ClubSpeaker;
+  selectedStackMembers: ClubSpeaker[];
+  inspectorModels: SpeakerModelId[];
+  speakerFamily: SpeakerFamily;
+  currentRecipeId: string | null;
+  activityStore: ActivityStore;
+  cabinetColorScope: CabinetColorScope;
+  onPanelChange: (panel: DesktopPanel) => void;
+  onClose: () => void;
+  onFamilyChange: (family: SpeakerFamily) => void;
+  onAdd: (modelId: SpeakerModelId) => void;
+  onLoadLayout: (layout: SystemPreset) => void;
+  onFreeLayout: () => void;
+  onChooseRecipe: (recipe: SystemRecipe) => void;
+  onFreeBuild: () => void;
+  onCabinetColorScopeChange: (scope: CabinetColorScope) => void;
+  onCabinetColorChange: (value: string) => void;
+  onUpdateSpeaker: (update: Partial<ClubSpeaker>) => void;
+  onSelectSpeaker: (id: string) => void;
+  onRemoveSpeaker: () => void;
+  onRotateSpeaker: (yaw: number) => void;
+  onDetachSpeaker: () => void;
+  onCustomOpen: () => void;
+  onLevelsChange: (levels: Record<string, number>) => void;
+  onMutedChange: (id: string, muted: boolean) => void;
+};
+
+function DesktopSidePanel({
+  mode,
+  activePanel,
+  speakers,
+  selectedSpeakerId,
+  selectedSpeaker,
+  selectedStackMembers,
+  inspectorModels,
+  speakerFamily,
+  currentRecipeId,
+  activityStore,
+  cabinetColorScope,
+  onPanelChange,
+  onClose,
+  onFamilyChange,
+  onAdd,
+  onLoadLayout,
+  onFreeLayout,
+  onChooseRecipe,
+  onFreeBuild,
+  onCabinetColorScopeChange,
+  onCabinetColorChange,
+  onUpdateSpeaker,
+  onSelectSpeaker,
+  onRemoveSpeaker,
+  onRotateSpeaker,
+  onDetachSpeaker,
+  onCustomOpen,
+  onLevelsChange,
+  onMutedChange,
+}: DesktopSidePanelProps) {
+  const panelTabs: Array<{ id: DesktopPanel; label: string }> =
+    mode === "club"
+      ? [
+          { id: "layout", label: "LAYOUT" },
+          { id: "speakers", label: "SPEAKERS" },
+          { id: "mix", label: "MIX" },
+        ]
+      : [
+          { id: "recipe", label: "RECIPE" },
+          { id: "cabinets", label: "CABINETS" },
+          { id: "mix", label: "MIX" },
+        ];
+  if (selectedSpeaker) panelTabs.splice(2, 0, { id: "inspector", label: "INSPECTOR" });
+  return (
+    <aside
+      className="desktop-side-panel"
+      aria-label={`${SYSTM_MODE_LABELS[mode].label} side panel`}
+    >
+      <header className="desktop-side-panel-head">
+        <div>
+          <span>SYSTM / WORKSPACE</span>
+          <h2>{SYSTM_MODE_LABELS[mode].descriptor}</h2>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Close side panel">
+          <X size={16} />
+        </button>
+      </header>
+      <nav className="desktop-panel-tabs" aria-label="Workspace panels">
+        {panelTabs.map(panel => (
+          <button
+            key={panel.id}
+            type="button"
+            className={activePanel === panel.id ? "active" : ""}
+            onClick={() => onPanelChange(panel.id)}
+          >
+            {panel.label}
+          </button>
+        ))}
+      </nav>
+      <div className="desktop-panel-body">
+        {activePanel === "layout" && mode === "club" && (
+          <ClubLayoutLibrary onLoad={onLoadLayout} onFree={onFreeLayout} />
+        )}
+        {activePanel === "speakers" && mode === "club" && (
+          <FamilyLibrary
+            mode={mode}
+            family={speakerFamily}
+            onFamilyChange={onFamilyChange}
+            onAdd={onAdd}
+            recipe={null}
+          />
+        )}
+        {activePanel === "recipe" && mode === "sound-system" && (
+          <RecipeLibrary
+            currentRecipeId={currentRecipeId}
+            onChoose={onChooseRecipe}
+            onFreeBuild={onFreeBuild}
+          />
+        )}
+        {activePanel === "cabinets" && mode === "sound-system" && (
+          <FamilyLibrary
+            mode={mode}
+            family={speakerFamily}
+            onFamilyChange={onFamilyChange}
+            onAdd={onAdd}
+            recipe={SOUND_SYSTEM_RECIPES.find(recipe => recipe.id === currentRecipeId) ?? null}
+          />
+        )}
+        {activePanel === "inspector" && selectedSpeaker && (
+          <SpeakerInspector
+            speaker={selectedSpeaker}
+            speakers={speakers}
+            selectedStackMembers={selectedStackMembers}
+            inspectorModels={inspectorModels}
+            cabinetColorScope={cabinetColorScope}
+            onCabinetColorScopeChange={onCabinetColorScopeChange}
+            onCabinetColorChange={onCabinetColorChange}
+            onUpdateSpeaker={onUpdateSpeaker}
+            onSelectSpeaker={onSelectSpeaker}
+            onRemoveSpeaker={onRemoveSpeaker}
+            onRotateSpeaker={onRotateSpeaker}
+            onDetachSpeaker={onDetachSpeaker}
+            onClose={onClose}
+            onCustomOpen={onCustomOpen}
+          />
+        )}
+        {activePanel === "inspector" && !selectedSpeaker && (
+          <p className="desktop-panel-empty">SELECT A SPEAKER TO OPEN INSPECTOR</p>
+        )}
+        {activePanel === "mix" && (
+          <div className="desktop-mixer-content">
+            <SpeakerMixer
+              open
+              speakers={speakers}
+              selectedSpeakerId={selectedSpeakerId}
+              activityStore={activityStore}
+              onOpenChange={open => {
+                if (!open) onClose();
+              }}
+              onSpeakerSelect={onSelectSpeaker}
+              onLevelsChange={onLevelsChange}
+              onMutedChange={onMutedChange}
+            />
+          </div>
+        )}
+      </div>
+    </aside>
+  );
+}
+
 type ExperienceProps = {
   mode: SystmMode;
   scene: SystmSceneState;
@@ -592,6 +1007,9 @@ function ExperienceWorkspace({
   const [mixerOpen, setMixerOpenState] = useState(false);
   const [customOpen, setCustomOpenState] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
+  const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(
+    mode === "club" ? "layout" : "recipe"
+  );
   const [cabinetColorScope, setCabinetColorScope] =
     useState<CabinetColorScope>("this");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -626,6 +1044,21 @@ function ExperienceWorkspace({
     setHeaderPopover("background", next);
   const setShowLayoutMenu = (next: HeaderPopoverChange) =>
     setHeaderPopover("data", next);
+  const openDesktopPanel = (panel: DesktopPanel) => {
+    setDesktopPanel(panel);
+    setMixerOpenState(false);
+  };
+  const openPanelOrPopover = (
+    panel: DesktopPanel,
+    setPopover: (next: HeaderPopoverChange) => void
+  ) => {
+    if (window.matchMedia("(min-width: 1121px)").matches) {
+      setActiveHeaderPopover(null);
+      openDesktopPanel(panel);
+    } else {
+      setPopover(open => !open);
+    }
+  };
   const setMixerOpen = (next: boolean) => {
     if (next) setActiveHeaderPopover(null);
     setMixerOpenState(next);
@@ -746,6 +1179,7 @@ function ExperienceWorkspace({
       return [...now, makeSpeaker(id, modelId, point.x, point.y, 0.68)];
     });
     setSelectedSpeakerId(id);
+    setDesktopPanel("inspector");
     advanceOnboarding("cabinet-added");
   };
   const loadSystemPreset = (preset: SystemPreset) => {
@@ -779,6 +1213,7 @@ function ExperienceWorkspace({
     setSpeakers(resolved);
     setSpeakerFamily(preset.family);
     setSelectedSpeakerId(resolved[0]?.id ?? "");
+    setDesktopPanel("inspector");
     setMobileInspectorOpen(false);
     setActiveHeaderPopover(null);
     advanceOnboarding("layout-selected");
@@ -787,6 +1222,7 @@ function ExperienceWorkspace({
   const startFreeClub = () => {
     setSpeakers([]);
     setSelectedSpeakerId("");
+    setDesktopPanel("layout");
     setActiveHeaderPopover(null);
     advanceOnboarding("layout-selected");
   };
@@ -798,6 +1234,7 @@ function ExperienceWorkspace({
         "sub"
       ).family
     );
+    setDesktopPanel("cabinets");
     setActiveHeaderPopover(null);
     advanceOnboarding("recipe-selected");
   };
@@ -1022,6 +1459,7 @@ function ExperienceWorkspace({
   };
   const selectSpeaker = (id: string) => {
     setSelectedSpeakerId(id);
+    setDesktopPanel("inspector");
     setMobileInspectorOpen(false);
   };
   const turnListener = (yaw: number, pitch: number) => {
@@ -1128,7 +1566,7 @@ function ExperienceWorkspace({
             <div className="product-popover-owner layout-control">
               <button
                 className="product-header-control"
-                onClick={() => setShowLayoutPicker(open => !open)}
+                onClick={() => openPanelOrPopover("layout", setShowLayoutPicker)}
                 aria-haspopup="dialog"
                 aria-expanded={showLayoutPicker}
               >
@@ -1169,7 +1607,7 @@ function ExperienceWorkspace({
             <div className="product-popover-owner recipe-control">
               <button
                 className="product-header-control"
-                onClick={() => setShowRecipePicker(open => !open)}
+                onClick={() => openPanelOrPopover("recipe", setShowRecipePicker)}
                 aria-haspopup="dialog"
                 aria-expanded={showRecipePicker}
               >
@@ -1183,6 +1621,7 @@ function ExperienceWorkspace({
                   onChoose={selectRecipe}
                   onFreeBuild={() => {
                     setCurrentRecipeId(null);
+                    setDesktopPanel("cabinets");
                     setActiveHeaderPopover(null);
                     advanceOnboarding("recipe-selected");
                   }}
@@ -1341,351 +1780,191 @@ function ExperienceWorkspace({
         </div>
       </header>
       <section className="instrument-stage">
-        <div className="view-switcher" aria-label="Scene view">
-          {SCENE_VIEWS.map(item => (
-            <button
-              key={item}
-              className={view === item ? "active" : ""}
-              onClick={() => setView(item)}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-        {layoutStatus && (
-          <span className="layout-status" role="status">
-            {layoutStatus}
-          </span>
-        )}
-        {(playbackError || fileValidationError) && (
-          <button
-            className="local-audio-error"
-            onClick={() => {
-              clearPlaybackError();
-              setFileValidationError(null);
-            }}
-            role="status"
-          >
-            {playbackError || fileValidationError}
-            <X size={13} />
-          </button>
-        )}
-        {speakers.length === 0 && view === "top" && (
-          <div className="mode-empty-state" aria-live="polite">
-            <span>{mode === "club" ? "CLUB" : "SOUND SYSTEM"}</span>
-            <strong>
-              {mode === "club"
-                ? "CHOOSE A LAYOUT"
-                : currentRecipe
-                  ? "ADD A CABINET"
-                  : "CHOOSE A RECIPE"}
-            </strong>
+        <div className="desktop-scene-frame">
+          <div className="view-switcher" aria-label="Scene view">
+            {SCENE_VIEWS.map(item => (
+              <button
+                key={item}
+                className={view === item ? "active" : ""}
+                onClick={() => setView(item)}
+              >
+                {item}
+              </button>
+            ))}
           </div>
-        )}
-        <SceneProjection
-          mode={mode}
-          view={view}
-          surfaceTone={surfaceTone}
-          speakers={speakers}
-          listener={listener}
-          selectedSpeakerId={selectedSpeakerId}
-          isPlaying={isPlaying}
-          canRemove={speakers.length > 1}
-          activityStore={activityStore}
-          lowActivityStore={lowActivityStore}
-          bandActivityStore={bandActivityStore}
-          onSpeakerSelect={selectSpeaker}
-          onSpeakerRemove={removeSpeaker}
-          onSpeakerMoveTop={moveSpeakerTop}
-          onSpeakerMoveSide={moveSpeakerSide}
-          onSpeakerRotate={rotateSpeaker}
-          onSpeakerStack={stackSpeaker}
-          onListenerMove={position => {
-            setListener(current => ({
-              ...current,
-              position: { ...current.position, ...position },
-            }));
-            advanceOnboarding("listener-moved");
-          }}
-          onListenerNameChange={changeListenerName}
-          onLook={turnListener}
-          onLookAbsolute={setListenerLook}
-        />
-        {view !== "pov" && (
-          <>
-            {mode === "club" ? (
-              <>
-                <ClubLayoutLibrary
-                  onLoad={loadClubLayout}
-                  onFree={startFreeClub}
-                />
+          {layoutStatus && (
+            <span className="layout-status" role="status">
+              {layoutStatus}
+            </span>
+          )}
+          {(playbackError || fileValidationError) && (
+            <button
+              className="local-audio-error"
+              onClick={() => {
+                clearPlaybackError();
+                setFileValidationError(null);
+              }}
+              role="status"
+            >
+              {playbackError || fileValidationError}
+              <X size={13} />
+            </button>
+          )}
+          {speakers.length === 0 && view === "top" && (
+            <div className="mode-empty-state" aria-live="polite">
+              <span>{mode === "club" ? "CLUB" : "SOUND SYSTEM"}</span>
+              <strong>
+                {mode === "club"
+                  ? "CHOOSE A LAYOUT"
+                  : currentRecipe
+                    ? "ADD A CABINET"
+                    : "CHOOSE A RECIPE"}
+              </strong>
+            </div>
+          )}
+          <SceneProjection
+            mode={mode}
+            view={view}
+            surfaceTone={surfaceTone}
+            speakers={speakers}
+            listener={listener}
+            selectedSpeakerId={selectedSpeakerId}
+            isPlaying={isPlaying}
+            canRemove={speakers.length > 1}
+            activityStore={activityStore}
+            lowActivityStore={lowActivityStore}
+            bandActivityStore={bandActivityStore}
+            onSpeakerSelect={selectSpeaker}
+            onSpeakerRemove={removeSpeaker}
+            onSpeakerMoveTop={moveSpeakerTop}
+            onSpeakerMoveSide={moveSpeakerSide}
+            onSpeakerRotate={rotateSpeaker}
+            onSpeakerStack={stackSpeaker}
+            onListenerMove={position => {
+              setListener(current => ({
+                ...current,
+                position: { ...current.position, ...position },
+              }));
+              advanceOnboarding("listener-moved");
+            }}
+            onListenerNameChange={changeListenerName}
+            onLook={turnListener}
+            onLookAbsolute={setListenerLook}
+          />
+          {view !== "pov" && (
+            <div className="mobile-surface-controls">
+              {mode === "club" ? (
+                <>
+                  <ClubLayoutLibrary
+                    onLoad={loadClubLayout}
+                    onFree={startFreeClub}
+                  />
+                  <FamilyLibrary
+                    mode={mode}
+                    family={speakerFamily}
+                    onFamilyChange={setSpeakerFamily}
+                    onAdd={addSpeakerModel}
+                    recipe={null}
+                  />
+                </>
+              ) : (
                 <FamilyLibrary
                   mode={mode}
                   family={speakerFamily}
                   onFamilyChange={setSpeakerFamily}
                   onAdd={addSpeakerModel}
-                  recipe={null}
+                  recipe={
+                    SOUND_SYSTEM_RECIPES.find(
+                      recipe => recipe.id === currentRecipeId
+                    ) ?? null
+                  }
                 />
-              </>
-            ) : (
-              <FamilyLibrary
-                mode={mode}
-                family={speakerFamily}
-                onFamilyChange={setSpeakerFamily}
-                onAdd={addSpeakerModel}
-                recipe={SOUND_SYSTEM_RECIPES.find(recipe => recipe.id === currentRecipeId) ?? null}
-              />
-            )}
-            {selectedSpeaker && selectedModel && (
-              <>
-                <button
-                  className="mobile-speaker-edit"
-                  onClick={() => setMobileInspectorOpen(true)}
-                  aria-label={`Edit ${selectedModel.label}`}
-                >
-                  Edit
-                </button>
-                <aside
-                  className={`spatial-inspector ${mobileInspectorOpen ? "mobile-open" : ""}`}
-                  aria-label="Selected speaker"
-                >
+              )}
+              {selectedSpeaker && selectedModel && (
+                <>
                   <button
-                    className="mobile-inspector-close"
-                    onClick={() => setMobileInspectorOpen(false)}
-                    aria-label="Close speaker controls"
+                    className="mobile-speaker-edit"
+                    onClick={() => setMobileInspectorOpen(true)}
+                    aria-label={`Edit ${selectedModel.label}`}
                   >
-                    ×
+                    Edit
                   </button>
-                  <button
-                    className="mobile-inspector-delete"
-                    disabled={speakers.length <= 1}
-                    onClick={() => removeSpeaker(selectedSpeaker.id)}
-                    aria-label={`Delete ${selectedSpeaker.label}`}
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                  <h2>{selectedModel.label}</h2>
-                  <label className="spatial-control">
-                    <span>Model</span>
-                    <select
-                      value={resolveModelId(
-                        selectedSpeaker.modelId,
-                        selectedSpeaker.kind
-                      )}
-                      onChange={event =>
-                        updateSpeaker({
-                          modelId: event.target.value as SpeakerModelId,
-                        })
-                      }
-                    >
-                      {inspectorModels.map(modelId => (
-                        <option key={modelId} value={modelId}>
-                          {getSpeakerModel(modelId, "sub").label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {selectedStackMembers.length > 1 && (
-                    <div
-                      className="stack-selector-block"
-                      aria-label="Stack selector"
-                    >
-                      <div className="stack-selector-heading">
-                        STACK /{" "}
-                        {String(selectedStackMembers.length).padStart(2, "0")}
-                      </div>
-                      <label className="spatial-control">
-                        <span>Cabinet</span>
-                        <select
-                          value={selectedSpeaker.id}
-                          onChange={event => selectSpeaker(event.target.value)}
-                        >
-                          {selectedStackMembers
-                            .slice()
-                            .reverse()
-                            .map(speaker => {
-                              const stackNumber =
-                                selectedStackMembers.findIndex(
-                                  member => member.id === speaker.id
-                                ) + 1;
-                              return (
-                                <option
-                                  key={speaker.id}
-                                  value={speaker.id}
-                                >{`${String(stackNumber).padStart(2, "0")} ${speaker.kind.toUpperCase()}`}</option>
-                              );
-                            })}
-                        </select>
-                      </label>
-                    </div>
-                  )}
-                  <section className="cabinet-color-control" aria-label="Cabinet color">
-                    <div className="cabinet-color-heading">
-                      <span>COLOR</span>
-                      <output>{normalizeCabinetColor(selectedSpeaker.cabinetColor)}</output>
-                    </div>
-                    <div className="cabinet-color-presets">
-                      {CABINET_COLOR_PRESETS.map(preset => (
-                        <button
-                          key={preset.id}
-                          type="button"
-                          className={
-                            normalizeCabinetColor(selectedSpeaker.cabinetColor) ===
-                            preset.value
-                              ? "active"
-                              : ""
-                          }
-                          style={{ "--swatch": preset.value } as React.CSSProperties}
-                          onClick={() => applyCabinetColor(preset.value)}
-                          aria-label={`Apply ${preset.label} cabinet color`}
-                          title={preset.label}
-                        >
-                          <i />
-                          <span>{preset.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="cabinet-custom-color">
-                      <label>
-                        <span>CUSTOM</span>
-                        <input
-                          type="color"
-                          value={normalizeCabinetColor(selectedSpeaker.cabinetColor)}
-                          onChange={event => applyCabinetColor(event.target.value)}
-                          aria-label="Custom cabinet color picker"
-                        />
-                      </label>
-                      <input
-                        type="text"
-                        value={normalizeCabinetColor(selectedSpeaker.cabinetColor)}
-                        onChange={event => {
-                          if (/^#[0-9a-fA-F]{6}$/.test(event.target.value))
-                            applyCabinetColor(event.target.value);
-                        }}
-                        aria-label="Custom cabinet hex color"
-                      />
-                    </div>
-                    <div className="cabinet-color-scope" aria-label="Apply color to">
-                      {(["this", "stack", "all"] as CabinetColorScope[]).map(
-                        scope => (
-                          <button
-                            key={scope}
-                            type="button"
-                            className={cabinetColorScope === scope ? "active" : ""}
-                            disabled={
-                              scope === "stack" && selectedStackMembers.length <= 1
-                            }
-                            onClick={() => setCabinetColorScope(scope)}
-                          >
-                            {scope.toUpperCase()}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </section>
-                  <label className="spatial-control">
-                    <span>Level</span>
-                    <input
-                      type="range"
-                      min=".02"
-                      max="1"
-                      step=".01"
-                      value={selectedSpeaker.level}
-                      onChange={event =>
-                        updateSpeaker({ level: Number(event.target.value) })
-                      }
-                    />
-                  </label>
-                  {selectedSpeaker.stackParentId ? (
-                    <p className="stacked-status">
-                      Stacked · drag moves the complete column
-                    </p>
-                  ) : (
-                    <label className="spatial-control height-control">
-                      <span>Height</span>
-                      <input
-                        type="range"
-                        min="0"
-                        max="1"
-                        step=".01"
-                        value={selectedSpeaker.position.z}
-                        onChange={event =>
-                          updateSpeaker({
-                            position: {
-                              ...selectedSpeaker.position,
-                              z: Number(event.target.value),
-                            },
-                          })
-                        }
-                      />
-                      <div className="height-stops" aria-hidden="true">
-                        <span>Floor</span>
-                        <span>Ear</span>
-                        <span>High</span>
-                      </div>
-                    </label>
-                  )}
-                  <div
-                    className="mobile-turn-actions"
-                    aria-label="Mobile speaker rotation"
-                  >
-                    <span>Turn</span>
-                    <button
-                      type="button"
-                      aria-label="Turn speaker left 15 degrees"
-                      onClick={() =>
-                        rotateSpeaker(
-                          selectedSpeaker.id,
-                          (selectedSpeaker.orientation?.yaw ?? 0) - Math.PI / 12
-                        )
-                      }
-                    >
-                      ↶
-                    </button>
-                    <output>
-                      {yawToDegrees(selectedSpeaker.orientation?.yaw ?? 0)}°
-                    </output>
-                    <button
-                      type="button"
-                      aria-label="Turn speaker right 15 degrees"
-                      onClick={() =>
-                        rotateSpeaker(
-                          selectedSpeaker.id,
-                          (selectedSpeaker.orientation?.yaw ?? 0) + Math.PI / 12
-                        )
-                      }
-                    >
-                      ↷
-                    </button>
-                  </div>
-                  <div className="inspector-actions">
-                    <button
-                      className={selectedSpeaker.muted ? "muted" : ""}
-                      onClick={() =>
-                        updateSpeaker({ muted: !selectedSpeaker.muted })
-                      }
-                    >
-                      {selectedSpeaker.muted ? (
-                        <VolumeX size={14} />
-                      ) : (
-                        <Volume2 size={14} />
-                      )}
-                      {selectedSpeaker.muted ? "Unmute" : "Mute"}
-                    </button>
-                    <button onClick={() => setCustomOpen(true)}>
-                      <SlidersHorizontal size={14} />
-                      Custom
-                    </button>
-                    {selectedSpeaker.stackParentId && (
-                      <button onClick={() => detachSpeaker(selectedSpeaker.id)}>
-                        Detach
-                      </button>
-                    )}
-                  </div>
-                </aside>
-              </>
-            )}
-          </>
+                  <SpeakerInspector
+                    speaker={selectedSpeaker}
+                    speakers={speakers}
+                    selectedStackMembers={selectedStackMembers}
+                    inspectorModels={inspectorModels}
+                    cabinetColorScope={cabinetColorScope}
+                    mobileOpen={mobileInspectorOpen}
+                    onCabinetColorScopeChange={setCabinetColorScope}
+                    onCabinetColorChange={applyCabinetColor}
+                    onUpdateSpeaker={updateSpeaker}
+                    onSelectSpeaker={selectSpeaker}
+                    onRemoveSpeaker={() => removeSpeaker(selectedSpeaker.id)}
+                    onRotateSpeaker={yaw =>
+                      rotateSpeaker(selectedSpeaker.id, yaw)
+                    }
+                    onDetachSpeaker={() => detachSpeaker(selectedSpeaker.id)}
+                    onClose={() => setMobileInspectorOpen(false)}
+                    onCustomOpen={() => setCustomOpen(true)}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </div>
+        {desktopPanel && (
+          <DesktopSidePanel
+            mode={mode}
+            activePanel={desktopPanel}
+            speakers={speakers}
+            selectedSpeakerId={selectedSpeakerId}
+            selectedSpeaker={selectedSpeaker}
+            selectedStackMembers={selectedStackMembers}
+            inspectorModels={inspectorModels}
+            speakerFamily={speakerFamily}
+            currentRecipeId={currentRecipeId}
+            activityStore={activityStore}
+            cabinetColorScope={cabinetColorScope}
+            onCabinetColorChange={applyCabinetColor}
+            onPanelChange={openDesktopPanel}
+            onClose={() => setDesktopPanel(null)}
+            onFamilyChange={setSpeakerFamily}
+            onAdd={addSpeakerModel}
+            onLoadLayout={loadClubLayout}
+            onFreeLayout={startFreeClub}
+            onChooseRecipe={selectRecipe}
+            onFreeBuild={() => {
+              setCurrentRecipeId(null);
+              setDesktopPanel("cabinets");
+              setActiveHeaderPopover(null);
+              advanceOnboarding("recipe-selected");
+            }}
+            onCabinetColorScopeChange={setCabinetColorScope}
+            onUpdateSpeaker={updateSpeaker}
+            onSelectSpeaker={selectSpeaker}
+            onRemoveSpeaker={() =>
+              selectedSpeaker && removeSpeaker(selectedSpeaker.id)
+            }
+            onRotateSpeaker={yaw =>
+              selectedSpeaker && rotateSpeaker(selectedSpeaker.id, yaw)
+            }
+            onDetachSpeaker={() =>
+              selectedSpeaker && detachSpeaker(selectedSpeaker.id)
+            }
+            onCustomOpen={() => setCustomOpen(true)}
+            onLevelsChange={updateSpeakerLevels}
+            onMutedChange={updateSpeakerMute}
+          />
+        )}
+        {!desktopPanel && (
+          <button
+            className="desktop-panel-open"
+            type="button"
+            onClick={() => openDesktopPanel(mode === "club" ? "speakers" : "cabinets")}
+          >
+            OPEN PANEL
+          </button>
         )}
       </section>
       <button

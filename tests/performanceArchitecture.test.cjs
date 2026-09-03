@@ -234,7 +234,9 @@ assert.match(
   home,
   /const detachSpeaker = \(id: string\) =>\s*setSpeakers\(now => detachSpeakerExplicitly\(now, id\)\)/
 );
-assert.match(home, /onClick=\{\(\) => detachSpeaker\(selectedSpeaker\.id\)\}/);
+assert.match(home, /function SpeakerInspector\(/);
+assert.match(home, /onClick=\{onDetachSpeaker\}/);
+assert.match(home, /onDetachSpeaker=\{\(\) =>/);
 assert.match(home, /modelIdsForFamily/);
 assert.match(home, /orderedSpeakerFamilies/);
 assert.match(home, /SYSTEM_RECIPES/);
@@ -303,7 +305,7 @@ assert.match(
 );
 assert.match(
   home,
-  /className=\{`spatial-inspector \$\{mobileInspectorOpen \? "mobile-open" : ""\}`\}/
+  /className=\{`spatial-inspector \$\{mobileOpen \? "mobile-open" : ""\}`\}/
 );
 assert.match(
   home,
