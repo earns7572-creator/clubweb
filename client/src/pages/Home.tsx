@@ -126,6 +126,7 @@ type DesktopPanel =
   | "cabinets"
   | "inspector"
   | "mix";
+type DesktopShelfPanel = Exclude<DesktopPanel, "inspector">;
 type HeaderPopover =
   | "mode"
   | "layout"
@@ -774,6 +775,7 @@ type DesktopSidePanelProps = {
   cabinetColorScope: CabinetColorScope;
   onPanelChange: (panel: DesktopPanel) => void;
   onClose: () => void;
+  onInspectorClose: () => void;
   onFamilyChange: (family: SpeakerFamily) => void;
   onAdd: (modelId: SpeakerModelId) => void;
   onLoadLayout: (layout: SystemPreset) => void;
@@ -806,6 +808,7 @@ function DesktopSidePanel({
   cabinetColorScope,
   onPanelChange,
   onClose,
+  onInspectorClose,
   onFamilyChange,
   onAdd,
   onLoadLayout,
@@ -905,7 +908,7 @@ function DesktopSidePanel({
             onRemoveSpeaker={onRemoveSpeaker}
             onRotateSpeaker={onRotateSpeaker}
             onDetachSpeaker={onDetachSpeaker}
-            onClose={onClose}
+            onClose={onInspectorClose}
             onCustomOpen={onCustomOpen}
           />
         )}
@@ -1007,9 +1010,15 @@ function ExperienceWorkspace({
   const [mixerOpen, setMixerOpenState] = useState(false);
   const [customOpen, setCustomOpenState] = useState(false);
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
+  const initialDesktopPanel: DesktopShelfPanel =
+    mode === "club" ? "layout" : "recipe";
   const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(
-    mode === "club" ? "layout" : "recipe"
+    initialDesktopPanel
   );
+  const [lastShelfPanel, setLastShelfPanel] =
+    useState<DesktopShelfPanel>(initialDesktopPanel);
+  const [inspectorReturnPanel, setInspectorReturnPanel] =
+    useState<DesktopShelfPanel>(initialDesktopPanel);
   const [cabinetColorScope, setCabinetColorScope] =
     useState<CabinetColorScope>("this");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1045,9 +1054,17 @@ function ExperienceWorkspace({
   const setShowLayoutMenu = (next: HeaderPopoverChange) =>
     setHeaderPopover("data", next);
   const openDesktopPanel = (panel: DesktopPanel) => {
+    if (panel !== "inspector") setLastShelfPanel(panel);
     setDesktopPanel(panel);
     setMixerOpenState(false);
   };
+  const closeDesktopPanel = () => setDesktopPanel(null);
+  const rememberInspectorReturnPanel = () => {
+    if (desktopPanel && desktopPanel !== "inspector")
+      setInspectorReturnPanel(desktopPanel);
+    else setInspectorReturnPanel(lastShelfPanel);
+  };
+  const closeInspector = () => openDesktopPanel(inspectorReturnPanel);
   const openPanelOrPopover = (
     panel: DesktopPanel,
     setPopover: (next: HeaderPopoverChange) => void
@@ -1179,7 +1196,8 @@ function ExperienceWorkspace({
       return [...now, makeSpeaker(id, modelId, point.x, point.y, 0.68)];
     });
     setSelectedSpeakerId(id);
-    setDesktopPanel("inspector");
+    rememberInspectorReturnPanel();
+    openDesktopPanel("inspector");
     advanceOnboarding("cabinet-added");
   };
   const loadSystemPreset = (preset: SystemPreset) => {
@@ -1213,7 +1231,8 @@ function ExperienceWorkspace({
     setSpeakers(resolved);
     setSpeakerFamily(preset.family);
     setSelectedSpeakerId(resolved[0]?.id ?? "");
-    setDesktopPanel("inspector");
+    rememberInspectorReturnPanel();
+    openDesktopPanel("inspector");
     setMobileInspectorOpen(false);
     setActiveHeaderPopover(null);
     advanceOnboarding("layout-selected");
@@ -1222,7 +1241,7 @@ function ExperienceWorkspace({
   const startFreeClub = () => {
     setSpeakers([]);
     setSelectedSpeakerId("");
-    setDesktopPanel("layout");
+    openDesktopPanel("layout");
     setActiveHeaderPopover(null);
     advanceOnboarding("layout-selected");
   };
@@ -1234,7 +1253,7 @@ function ExperienceWorkspace({
         "sub"
       ).family
     );
-    setDesktopPanel("cabinets");
+    openDesktopPanel("cabinets");
     setActiveHeaderPopover(null);
     advanceOnboarding("recipe-selected");
   };
@@ -1459,8 +1478,13 @@ function ExperienceWorkspace({
   };
   const selectSpeaker = (id: string) => {
     setSelectedSpeakerId(id);
-    setDesktopPanel("inspector");
     setMobileInspectorOpen(false);
+    if (!id) {
+      if (desktopPanel === "inspector") closeInspector();
+      return;
+    }
+    rememberInspectorReturnPanel();
+    openDesktopPanel("inspector");
   };
   const turnListener = (yaw: number, pitch: number) => {
     setListener(current => ({
@@ -1621,7 +1645,7 @@ function ExperienceWorkspace({
                   onChoose={selectRecipe}
                   onFreeBuild={() => {
                     setCurrentRecipeId(null);
-                    setDesktopPanel("cabinets");
+                    openDesktopPanel("cabinets");
                     setActiveHeaderPopover(null);
                     advanceOnboarding("recipe-selected");
                   }}
@@ -1779,7 +1803,11 @@ function ExperienceWorkspace({
           </button>
         </div>
       </header>
-      <section className="instrument-stage">
+      <section
+        className={`instrument-stage ${
+          desktopPanel ? "desktop-panel-is-open" : "desktop-panel-is-closed"
+        }`}
+      >
         <div className="desktop-scene-frame">
           <div className="view-switcher" aria-label="Scene view">
             {SCENE_VIEWS.map(item => (
@@ -1928,7 +1956,8 @@ function ExperienceWorkspace({
             cabinetColorScope={cabinetColorScope}
             onCabinetColorChange={applyCabinetColor}
             onPanelChange={openDesktopPanel}
-            onClose={() => setDesktopPanel(null)}
+            onClose={closeDesktopPanel}
+            onInspectorClose={closeInspector}
             onFamilyChange={setSpeakerFamily}
             onAdd={addSpeakerModel}
             onLoadLayout={loadClubLayout}
@@ -1936,7 +1965,7 @@ function ExperienceWorkspace({
             onChooseRecipe={selectRecipe}
             onFreeBuild={() => {
               setCurrentRecipeId(null);
-              setDesktopPanel("cabinets");
+              openDesktopPanel("cabinets");
               setActiveHeaderPopover(null);
               advanceOnboarding("recipe-selected");
             }}
@@ -1961,9 +1990,9 @@ function ExperienceWorkspace({
           <button
             className="desktop-panel-open"
             type="button"
-            onClick={() => openDesktopPanel(mode === "club" ? "speakers" : "cabinets")}
+            onClick={() => openDesktopPanel(lastShelfPanel)}
           >
-            OPEN PANEL
+            OPEN SHELF
           </button>
         )}
       </section>
