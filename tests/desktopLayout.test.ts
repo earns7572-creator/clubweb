@@ -29,7 +29,6 @@ assert.match(
 assert.match(home, /lastShelfPanel/);
 assert.match(home, /inspectorReturnPanel/);
 assert.match(home, /onInspectorClose/);
-assert.match(home, /desktop-drawer-trigger/);
 assert.match(home, /desktop-drawer-handle/);
 assert.match(home, /if \(!id\) \{[\s\S]*closeInspector\(\)/);
 
@@ -39,19 +38,24 @@ for (const label of ["LAYOUT", "SPEAKERS", "RECIPE", "CABINETS", "INSPECTOR"]) {
 assert.match(home, /aria-label="Open mix panel"/);
 
 const desktop = css.slice(css.indexOf("@media (min-width: 1121px)"));
-assert.match(desktop, /--desktop-drawer-width:\s*clamp\(320px, 24vw, 380px\)/);
+assert.match(desktop, /--desktop-drawer-width:\s*clamp\(300px, 24vw, 400px\)/);
+assert.match(desktop, /--desktop-drawer-handle-width:\s*16px/);
+assert.match(desktop, /\.desktop-scene-frame[\s\S]*inset:\s*14px/);
+assert.doesNotMatch(desktop, /desktop-panel-is-open[\s\S]*desktop-scene-frame/);
+assert.doesNotMatch(desktop, /\.desktop-scene-frame[\s\S]*transition:\s*(?:right|width|height)/);
+assert.match(desktop, /\.desktop-side-panel[\s\S]*position:\s*absolute/);
+assert.match(desktop, /\.desktop-side-panel[\s\S]*right:\s*14px/);
 assert.match(
   desktop,
-  /\.instrument-stage\.desktop-panel-is-open[\s\S]*?\.desktop-scene-frame[\s\S]*?right:\s*calc\(var\(--desktop-drawer-width\) \+ 18px\)/
-);
-assert.match(
-  desktop,
-  /\.desktop-side-panel[\s\S]*transform:\s*translateX\(calc\(100% - 16px\)\)/
+  /\.desktop-side-panel[\s\S]*transform:\s*translateX\(calc\(100% - var\(--desktop-drawer-handle-width\)\)\)/
 );
 assert.match(
   desktop,
   /\.desktop-side-panel\.is-open[\s\S]*transform:\s*translateX\(0\)/
 );
+assert.match(desktop, /\.desktop-side-panel[\s\S]*transition:\s*transform 200ms ease-out/);
+assert.match(desktop, /\.desktop-side-panel[\s\S]*pointer-events:\s*auto/);
+assert.doesNotMatch(desktop, /\.desktop-drawer-trigger\s*\{/);
 assert.match(
   desktop,
   /\.desktop-scene-frame > \.scene-surface[\s\S]*width: 100%/

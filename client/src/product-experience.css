@@ -829,14 +829,14 @@
 }
 
 .desktop-side-panel,
-.desktop-panel-open,
-.desktop-drawer-trigger {
+.desktop-panel-open {
   display: none;
 }
 
 @media (min-width: 1121px) {
   .product-experience .instrument-stage {
-    --desktop-drawer-width: clamp(320px, 24vw, 380px);
+    --desktop-drawer-width: clamp(300px, 24vw, 400px);
+    --desktop-drawer-handle-width: 16px;
     display: block;
     height: calc(100dvh - 64px);
     padding: 0;
@@ -845,7 +845,7 @@
 
   .desktop-scene-frame {
     position: absolute;
-    inset: 14px 30px 14px 14px;
+    inset: 14px;
     display: grid;
     width: auto;
     height: auto;
@@ -855,13 +855,6 @@
     overflow: hidden;
     border: 1px solid var(--border);
     background: var(--surface-secondary);
-    transition: right 220ms ease;
-  }
-
-  .product-experience
-    .instrument-stage.desktop-panel-is-open
-    .desktop-scene-frame {
-    right: calc(var(--desktop-drawer-width) + 18px);
   }
 
   .desktop-scene-frame > .scene-surface {
@@ -899,7 +892,7 @@
     position: absolute;
     z-index: 24;
     top: 14px;
-    right: 0;
+    right: 14px;
     bottom: 14px;
     min-width: 0;
     width: var(--desktop-drawer-width);
@@ -912,23 +905,15 @@
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
-    transform: translateX(calc(100% - 16px));
-    transition: transform 220ms ease;
+    box-shadow: -8px 0 18px rgba(24, 26, 23, 0.1);
+    pointer-events: auto;
+    transform: translateX(calc(100% - var(--desktop-drawer-handle-width)));
+    transition: transform 200ms ease-out;
     will-change: transform;
   }
 
   .desktop-side-panel.is-open {
     transform: translateX(0);
-  }
-
-  .desktop-drawer-trigger {
-    display: block;
-    position: absolute;
-    z-index: 23;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    width: 30px;
   }
 
   .desktop-drawer-handle {
@@ -937,7 +922,7 @@
     top: -1px;
     bottom: -1px;
     left: -1px;
-    width: 17px;
+    width: var(--desktop-drawer-handle-width);
     display: grid;
     place-items: center;
     padding: 0;

@@ -1418,6 +1418,7 @@ function ExperienceWorkspace({
         preview.modelId === active.modelId
       ) {
         placeSpeakerModel(active.modelId, preview.point);
+        scheduleDrawerClose();
         return;
       }
       scheduleDrawerClose();
@@ -2041,9 +2042,7 @@ function ExperienceWorkspace({
         </div>
       </header>
       <section
-        className={`instrument-stage ${
-          drawerOpen ? "desktop-panel-is-open" : "desktop-panel-is-closed"
-        }`}
+        className="instrument-stage"
         data-drawer-dragging={drawerDrag ? "true" : "false"}
       >
         <div className="desktop-scene-frame">
@@ -2181,18 +2180,6 @@ function ExperienceWorkspace({
             </div>
           )}
         </div>
-        <div
-          className="desktop-drawer-trigger"
-          onPointerEnter={() => {
-            if (drawerHoverSuppressedRef.current) return;
-            cancelDrawerClose();
-            setDrawerOpen(true);
-          }}
-          onPointerLeave={() => {
-            drawerHoverSuppressedRef.current = false;
-          }}
-          aria-hidden="true"
-        />
         <DesktopSidePanel
           mode={mode}
           activePanel={desktopPanel}

@@ -21,6 +21,7 @@ assert.doesNotMatch(home, /draggable=|onDragStart=\{\(event: DragEvent/);
 assert.match(home, /preview\?\.valid/);
 assert.match(home, /placeSpeakerModel\(active\.modelId, preview\.point\)/);
 assert.match(home, /setView\("top"\)/);
+assert.match(home, /placeSpeakerModel\(active\.modelId, preview\.point\);\s*scheduleDrawerClose\(\);/);
 
 for (const label of ["LAYOUT", "SPEAKERS", "RECIPE", "CABINETS"]) {
   assert.ok(
@@ -49,20 +50,14 @@ assert.match(floor, /physicalFootprintsPenetrate/);
 assert.match(floor, /DrawerPlacementGhost/);
 assert.match(floor, /valid: insideBounds && !overlaps/);
 
-assert.match(css, /\.desktop-drawer-trigger[\s\S]*width:\s*30px/);
 assert.match(
   css,
-  /\.desktop-side-panel[\s\S]*transition:\s*transform 220ms ease/
+  /\.desktop-side-panel[\s\S]*transition:\s*transform 200ms ease-out/
 );
 assert.match(
   css,
   /\.desktop-panel-body \.systm-equipment-item[\s\S]*touch-action:\s*none/
 );
-const mobile = css.slice(css.lastIndexOf("@media (max-width: 760px)"));
-assert.match(css, /\.desktop-drawer-trigger[\s\S]*display:\s*none/);
-assert.doesNotMatch(
-  mobile,
-  /\.desktop-drawer-trigger\s*\{[\s\S]*display:\s*block/
-);
+assert.doesNotMatch(css, /\.desktop-drawer-trigger\s*\{/);
 
 console.log("speaker drawer tests passed");
