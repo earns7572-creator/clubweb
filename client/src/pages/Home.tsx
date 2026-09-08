@@ -3,6 +3,7 @@ import {
   memo,
   type Dispatch,
   type SetStateAction,
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -13,6 +14,7 @@ import {
   Music2,
   Palette,
   Pause,
+  Pin,
   Play,
   Plus,
   RotateCcw,
@@ -28,7 +30,11 @@ import {
   type ClubSpeaker,
   useClubAudio,
 } from "@/hooks/useClubAudio";
-import ClubFloor3D, { type SurfaceTone } from "@/components/ClubFloor3D";
+import ClubFloor3D, {
+  type DrawerPlacementDrag,
+  type DrawerPlacementPreview,
+  type SurfaceTone,
+} from "@/components/ClubFloor3D";
 import SideScene from "@/components/SideScene";
 import PovPreview from "@/components/PovPreview";
 import SpeakerMixer from "@/components/SpeakerMixer";
@@ -49,6 +55,7 @@ import {
 } from "@/lib/speakerStacking";
 import {
   detachSpeakerExplicitly,
+  exceedsDragThreshold,
   moveStackRoot,
   resolveStackRootId,
   rotateSpeakerWithoutDetach,
@@ -76,10 +83,7 @@ import {
   type SoundSystemRecipe,
   type SystemPreset,
 } from "@/lib/systemPresets";
-import {
-  SYSTEM_RECIPES,
-  type SystemRecipe,
-} from "@/lib/systemRecipes";
+import { SYSTEM_RECIPES, type SystemRecipe } from "@/lib/systemRecipes";
 import {
   createLayoutFile,
   layoutToClubSpeakers,
@@ -137,6 +141,12 @@ type HeaderPopover =
   | null;
 type HeaderPopoverChange = boolean | ((open: boolean) => boolean);
 type Point = { x: number; y: number };
+type DrawerPointerDrag = DrawerPlacementDrag & {
+  pointerId: number;
+  pointerType: string;
+  startedAt: Point;
+  didMove: boolean;
+};
 const logoMark = "/assets/brand/systm-mark-header.png";
 const makeSpeaker = (
   id: string,
@@ -200,6 +210,7 @@ const initialViewFromUrl = (): SceneView => {
   return requested === "side" || requested === "pov" ? requested : "top";
 };
 const recipeStorageKey = "club-craft-current-recipe";
+const drawerPinStorageKey = "systm-desktop-drawer-pinned";
 const onboardingCompleteKey = (mode: SystmMode) =>
   `systm-onboarding-complete:${mode}`;
 const soundSystemLibraryFamilies: SpeakerFamily[] = [
@@ -238,6 +249,8 @@ type ProjectionProps = {
   onLook: (yaw: number, pitch: number) => void;
   onLookAbsolute: (yaw: number, pitch: number) => void;
   onFloorPlace?: (point: Point) => void;
+  drawerPlacement?: DrawerPlacementDrag | null;
+  onDrawerPlacementPreview?: (preview: DrawerPlacementPreview | null) => void;
 };
 const SceneProjection = memo(function SceneProjection({
   mode,
@@ -262,6 +275,8 @@ const SceneProjection = memo(function SceneProjection({
   onLook,
   onLookAbsolute,
   onFloorPlace,
+  drawerPlacement,
+  onDrawerPlacementPreview,
 }: ProjectionProps) {
   const activityBySpeaker = useSpeakerActivity(activityStore);
   const lowActivityBySpeaker = useSpeakerActivity(lowActivityStore);
@@ -294,6 +309,8 @@ const SceneProjection = memo(function SceneProjection({
           onListenerMove={onListenerMove}
           onListenerNameChange={onListenerNameChange}
           onFloorPlace={onFloorPlace}
+          drawerPlacement={drawerPlacement}
+          onDrawerPlacementPreview={onDrawerPlacementPreview}
         />
       )}
       {view === "side" && (
@@ -329,12 +346,17 @@ function FamilyLibrary({
   family,
   onFamilyChange,
   onAdd,
+  onDragStart,
   recipe,
 }: {
   mode: SystmMode;
   family: SpeakerFamily;
   onFamilyChange: (family: SpeakerFamily) => void;
   onAdd: (id: SpeakerModelId) => void;
+  onDragStart?: (
+    event: React.PointerEvent<HTMLButtonElement>,
+    id: SpeakerModelId
+  ) => void;
   recipe: SoundSystemRecipe | null;
 }) {
   const allowedFamilies =
@@ -343,9 +365,7 @@ function FamilyLibrary({
       : soundSystemLibraryFamilies;
   const guideModelIds = recipe
     ? Array.from(
-        new Set(
-          recipe.sections.flatMap(section => section.recommendedModelIds)
-        )
+        new Set(recipe.sections.flatMap(section => section.recommendedModelIds))
       )
     : [];
   const renderModel = (modelId: SpeakerModelId, index: number) => {
@@ -355,8 +375,17 @@ function FamilyLibrary({
         key={modelId}
         data-slot={String(index + 1).padStart(2, "0")}
         className={`speaker-type-icon systm-equipment-item ${model.family} ${model.kind}`}
-        onClick={() => onAdd(modelId)}
-        aria-label={`Add ${model.label}`}
+        onPointerDown={event => onDragStart?.(event, modelId)}
+        onClick={event => {
+          if (onDragStart && event.detail > 0) {
+            event.preventDefault();
+            return;
+          }
+          onAdd(modelId);
+        }}
+        aria-label={
+          onDragStart ? `Drag ${model.label} to scene` : `Add ${model.label}`
+        }
       >
         <i />
         <span>
@@ -365,7 +394,13 @@ function FamilyLibrary({
             {model.band.toUpperCase()} / {model.kind.toUpperCase()}
           </small>
         </span>
-        <Plus size={16} aria-hidden="true" />
+        {onDragStart ? (
+          <span className="equipment-drag-mark" aria-hidden="true">
+            DRAG
+          </span>
+        ) : (
+          <Plus size={16} aria-hidden="true" />
+        )}
       </button>
     );
   };
@@ -403,10 +438,27 @@ function FamilyLibrary({
                 {section.recommendedModelIds.map(modelId => (
                   <button
                     key={modelId}
-                    onClick={() => onAdd(modelId)}
-                    aria-label={`Add ${getSpeakerModel(modelId, "sub").label}`}
+                    onPointerDown={event => onDragStart?.(event, modelId)}
+                    onClick={event => {
+                      if (onDragStart && event.detail > 0) {
+                        event.preventDefault();
+                        return;
+                      }
+                      onAdd(modelId);
+                    }}
+                    aria-label={
+                      onDragStart
+                        ? `Drag ${getSpeakerModel(modelId, "sub").label} to scene`
+                        : `Add ${getSpeakerModel(modelId, "sub").label}`
+                    }
                   >
-                    <Plus size={13} aria-hidden="true" /> ADD
+                    {onDragStart ? (
+                      "DRAG"
+                    ) : (
+                      <>
+                        <Plus size={13} aria-hidden="true" /> ADD
+                      </>
+                    )}
                   </button>
                 ))}
               </div>
@@ -542,7 +594,7 @@ type SpeakerInspectorProps = {
   onDetachSpeaker: () => void;
   onClose: () => void;
   onCustomOpen: () => void;
-}
+};
 
 function SpeakerInspector({
   speaker,
@@ -694,11 +746,15 @@ function SpeakerInspector({
           max="1"
           step=".01"
           value={speaker.level}
-          onChange={event => onUpdateSpeaker({ level: Number(event.target.value) })}
+          onChange={event =>
+            onUpdateSpeaker({ level: Number(event.target.value) })
+          }
         />
       </label>
       {speaker.stackParentId ? (
-        <p className="stacked-status">Stacked · drag moves the complete column</p>
+        <p className="stacked-status">
+          Stacked · drag moves the complete column
+        </p>
       ) : (
         <label className="spatial-control height-control">
           <span>Height</span>
@@ -710,7 +766,10 @@ function SpeakerInspector({
             value={speaker.position.z}
             onChange={event =>
               onUpdateSpeaker({
-                position: { ...speaker.position, z: Number(event.target.value) },
+                position: {
+                  ...speaker.position,
+                  z: Number(event.target.value),
+                },
               })
             }
           />
@@ -755,7 +814,9 @@ function SpeakerInspector({
           <SlidersHorizontal size={14} />
           Custom
         </button>
-        {speaker.stackParentId && <button onClick={onDetachSpeaker}>Detach</button>}
+        {speaker.stackParentId && (
+          <button onClick={onDetachSpeaker}>Detach</button>
+        )}
       </div>
     </aside>
   );
@@ -773,8 +834,18 @@ type DesktopSidePanelProps = {
   currentRecipeId: string | null;
   activityStore: ActivityStore;
   cabinetColorScope: CabinetColorScope;
+  open: boolean;
+  pinned: boolean;
   onPanelChange: (panel: DesktopPanel) => void;
   onClose: () => void;
+  onOpen: () => void;
+  onPinToggle: () => void;
+  onPointerEnter: () => void;
+  onPointerLeave: () => void;
+  onDragStart: (
+    event: React.PointerEvent<HTMLButtonElement>,
+    id: SpeakerModelId
+  ) => void;
   onInspectorClose: () => void;
   onFamilyChange: (family: SpeakerFamily) => void;
   onAdd: (modelId: SpeakerModelId) => void;
@@ -806,8 +877,15 @@ function DesktopSidePanel({
   currentRecipeId,
   activityStore,
   cabinetColorScope,
+  open,
+  pinned,
   onPanelChange,
   onClose,
+  onOpen,
+  onPinToggle,
+  onPointerEnter,
+  onPointerLeave,
+  onDragStart,
   onInspectorClose,
   onFamilyChange,
   onAdd,
@@ -831,27 +909,54 @@ function DesktopSidePanel({
       ? [
           { id: "layout", label: "LAYOUT" },
           { id: "speakers", label: "SPEAKERS" },
-          { id: "mix", label: "MIX" },
         ]
       : [
           { id: "recipe", label: "RECIPE" },
           { id: "cabinets", label: "CABINETS" },
-          { id: "mix", label: "MIX" },
         ];
-  if (selectedSpeaker) panelTabs.splice(2, 0, { id: "inspector", label: "INSPECTOR" });
+  if (selectedSpeaker)
+    panelTabs.splice(2, 0, { id: "inspector", label: "INSPECTOR" });
   return (
     <aside
-      className="desktop-side-panel"
+      className={`desktop-side-panel ${open ? "is-open" : "is-closed"}`}
       aria-label={`${SYSTM_MODE_LABELS[mode].label} side panel`}
+      onPointerEnter={onPointerEnter}
+      onPointerLeave={onPointerLeave}
     >
+      <button
+        className="desktop-drawer-handle"
+        type="button"
+        onClick={onOpen}
+        aria-label="Open equipment drawer"
+      >
+        <span>GEAR</span>
+      </button>
       <header className="desktop-side-panel-head">
         <div>
           <span>SYSTM / WORKSPACE</span>
           <h2>{SYSTM_MODE_LABELS[mode].descriptor}</h2>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close side panel">
-          <X size={16} />
-        </button>
+        <div className="desktop-drawer-actions">
+          <button
+            type="button"
+            onClick={() => onPanelChange("mix")}
+            aria-label="Open mix panel"
+          >
+            MIX
+          </button>
+          <button
+            className={pinned ? "is-active" : ""}
+            type="button"
+            onClick={onPinToggle}
+            aria-pressed={pinned}
+            aria-label={pinned ? "Use automatic drawer" : "Pin drawer open"}
+          >
+            <Pin size={13} /> {pinned ? "PINNED" : "AUTO"}
+          </button>
+          <button type="button" onClick={onClose} aria-label="Close side panel">
+            <X size={16} />
+          </button>
+        </div>
       </header>
       <nav className="desktop-panel-tabs" aria-label="Workspace panels">
         {panelTabs.map(panel => (
@@ -875,6 +980,7 @@ function DesktopSidePanel({
             family={speakerFamily}
             onFamilyChange={onFamilyChange}
             onAdd={onAdd}
+            onDragStart={onDragStart}
             recipe={null}
           />
         )}
@@ -891,7 +997,12 @@ function DesktopSidePanel({
             family={speakerFamily}
             onFamilyChange={onFamilyChange}
             onAdd={onAdd}
-            recipe={SOUND_SYSTEM_RECIPES.find(recipe => recipe.id === currentRecipeId) ?? null}
+            onDragStart={onDragStart}
+            recipe={
+              SOUND_SYSTEM_RECIPES.find(
+                recipe => recipe.id === currentRecipeId
+              ) ?? null
+            }
           />
         )}
         {activePanel === "inspector" && selectedSpeaker && (
@@ -913,7 +1024,9 @@ function DesktopSidePanel({
           />
         )}
         {activePanel === "inspector" && !selectedSpeaker && (
-          <p className="desktop-panel-empty">SELECT A SPEAKER TO OPEN INSPECTOR</p>
+          <p className="desktop-panel-empty">
+            SELECT A SPEAKER TO OPEN INSPECTOR
+          </p>
         )}
         {activePanel === "mix" && (
           <div className="desktop-mixer-content">
@@ -998,11 +1111,10 @@ function ExperienceWorkspace({
     }));
   const [sources, setSources] = useState<ClubSource[]>(clubTracks);
   const [selectedSourceId, setSelectedSourceId] = useState("sweep");
-  const [surfaceTone, setSurfaceTone] = useState<SurfaceTone>(
-    () =>
-      isDemo
-        ? "paper"
-        : (localStorage.getItem("club-craft-surface") as SurfaceTone) || "paper"
+  const [surfaceTone, setSurfaceTone] = useState<SurfaceTone>(() =>
+    isDemo
+      ? "paper"
+      : (localStorage.getItem("club-craft-surface") as SurfaceTone) || "paper"
   );
   const [activeHeaderPopover, setActiveHeaderPopover] =
     useState<HeaderPopover>(null);
@@ -1012,9 +1124,13 @@ function ExperienceWorkspace({
   const [mobileInspectorOpen, setMobileInspectorOpen] = useState(false);
   const initialDesktopPanel: DesktopShelfPanel =
     mode === "club" ? "layout" : "recipe";
-  const [desktopPanel, setDesktopPanel] = useState<DesktopPanel | null>(
-    initialDesktopPanel
+  const [desktopPanel, setDesktopPanel] =
+    useState<DesktopPanel>(initialDesktopPanel);
+  const [drawerPinned, setDrawerPinned] = useState(
+    () => localStorage.getItem(drawerPinStorageKey) === "true"
   );
+  const [drawerOpen, setDrawerOpen] = useState(drawerPinned);
+  const [drawerDrag, setDrawerDrag] = useState<DrawerPointerDrag | null>(null);
   const [lastShelfPanel, setLastShelfPanel] =
     useState<DesktopShelfPanel>(initialDesktopPanel);
   const [inspectorReturnPanel, setInspectorReturnPanel] =
@@ -1025,6 +1141,10 @@ function ExperienceWorkspace({
   const layoutInputRef = useRef<HTMLInputElement>(null);
   const localUrlsRef = useRef(new Set<string>());
   const layoutStatusTimerRef = useRef<number | null>(null);
+  const drawerCloseTimerRef = useRef<number | null>(null);
+  const drawerHoverSuppressedRef = useRef(false);
+  const drawerDragRef = useRef<DrawerPointerDrag | null>(null);
+  const drawerPreviewRef = useRef<DrawerPlacementPreview | null>(null);
   const setHeaderPopover = (
     kind: Exclude<HeaderPopover, null>,
     next: HeaderPopoverChange
@@ -1056,12 +1176,39 @@ function ExperienceWorkspace({
   const openDesktopPanel = (panel: DesktopPanel) => {
     if (panel !== "inspector") setLastShelfPanel(panel);
     setDesktopPanel(panel);
+    if (window.matchMedia("(min-width: 1121px)").matches) setDrawerOpen(true);
     setMixerOpenState(false);
   };
-  const closeDesktopPanel = () => setDesktopPanel(null);
+  const cancelDrawerClose = () => {
+    if (drawerCloseTimerRef.current !== null) {
+      window.clearTimeout(drawerCloseTimerRef.current);
+      drawerCloseTimerRef.current = null;
+    }
+  };
+  const closeDesktopPanel = () => {
+    cancelDrawerClose();
+    drawerHoverSuppressedRef.current = true;
+    setDrawerPinned(false);
+    localStorage.setItem(drawerPinStorageKey, "false");
+    setDrawerOpen(false);
+  };
+  const scheduleDrawerClose = () => {
+    cancelDrawerClose();
+    if (drawerPinned || drawerDragRef.current) return;
+    drawerCloseTimerRef.current = window.setTimeout(() => {
+      if (!drawerDragRef.current) setDrawerOpen(false);
+    }, 260);
+  };
+  const toggleDrawerPin = () => {
+    const next = !drawerPinned;
+    setDrawerPinned(next);
+    localStorage.setItem(drawerPinStorageKey, String(next));
+    setDrawerOpen(true);
+    drawerHoverSuppressedRef.current = false;
+    cancelDrawerClose();
+  };
   const rememberInspectorReturnPanel = () => {
-    if (desktopPanel && desktopPanel !== "inspector")
-      setInspectorReturnPanel(desktopPanel);
+    if (desktopPanel !== "inspector") setInspectorReturnPanel(desktopPanel);
     else setInspectorReturnPanel(lastShelfPanel);
   };
   const closeInspector = () => openDesktopPanel(inspectorReturnPanel);
@@ -1188,18 +1335,104 @@ function ExperienceWorkspace({
     setSpeakers(now => rotateSpeakerWithoutDetach(now, id, yaw));
     advanceOnboarding("speaker-rotated");
   };
-  const addSpeakerModel = (modelId: SpeakerModelId) => {
+  const placeSpeakerModel = (modelId: SpeakerModelId, point: Point) => {
     if (speakers.length >= 16) return;
     const id = `${modelId}-${Date.now()}-${speakers.length}`;
-    setSpeakers(now => {
-      const point = gridSpawnPoints[now.length % gridSpawnPoints.length];
-      return [...now, makeSpeaker(id, modelId, point.x, point.y, 0.68)];
-    });
+    setSpeakers(now =>
+      now.length >= 16
+        ? now
+        : [...now, makeSpeaker(id, modelId, point.x, point.y, 0.68)]
+    );
     setSelectedSpeakerId(id);
     rememberInspectorReturnPanel();
     openDesktopPanel("inspector");
     advanceOnboarding("cabinet-added");
   };
+  const addSpeakerModel = (modelId: SpeakerModelId) => {
+    const point = gridSpawnPoints[speakers.length % gridSpawnPoints.length];
+    placeSpeakerModel(modelId, point);
+  };
+  const updateDrawerPlacementPreview = useCallback(
+    (preview: DrawerPlacementPreview | null) => {
+      drawerPreviewRef.current = preview;
+    },
+    []
+  );
+  const startDrawerDrag = (
+    event: React.PointerEvent<HTMLButtonElement>,
+    modelId: SpeakerModelId
+  ) => {
+    if (!window.matchMedia("(min-width: 1121px)").matches || event.button !== 0)
+      return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    cancelDrawerClose();
+    drawerHoverSuppressedRef.current = false;
+    setDrawerOpen(true);
+    setView("top");
+    const next: DrawerPointerDrag = {
+      modelId,
+      pointerId: event.pointerId,
+      pointerType: event.pointerType,
+      clientX: event.clientX,
+      clientY: event.clientY,
+      startedAt: { x: event.clientX, y: event.clientY },
+      didMove: false,
+    };
+    drawerDragRef.current = next;
+    drawerPreviewRef.current = null;
+    setDrawerDrag(next);
+  };
+  useEffect(() => {
+    if (!drawerDrag) return;
+    const moveDrawerDrag = (event: PointerEvent) => {
+      const active = drawerDragRef.current;
+      if (!active || event.pointerId !== active.pointerId) return;
+      const didMove =
+        active.didMove ||
+        exceedsDragThreshold(
+          active.startedAt,
+          { x: event.clientX, y: event.clientY },
+          active.pointerType
+        );
+      const next = {
+        ...active,
+        clientX: event.clientX,
+        clientY: event.clientY,
+        didMove,
+      };
+      drawerDragRef.current = next;
+      setDrawerDrag(next);
+    };
+    const finishDrawerDrag = (event: PointerEvent, cancelled = false) => {
+      const active = drawerDragRef.current;
+      if (!active || event.pointerId !== active.pointerId) return;
+      const preview = drawerPreviewRef.current;
+      drawerDragRef.current = null;
+      drawerPreviewRef.current = null;
+      setDrawerDrag(null);
+      if (
+        !cancelled &&
+        active.didMove &&
+        preview?.valid &&
+        preview.modelId === active.modelId
+      ) {
+        placeSpeakerModel(active.modelId, preview.point);
+        return;
+      }
+      scheduleDrawerClose();
+    };
+    const cancelDrawerDrag = (event: PointerEvent) =>
+      finishDrawerDrag(event, true);
+    window.addEventListener("pointermove", moveDrawerDrag, { passive: true });
+    window.addEventListener("pointerup", finishDrawerDrag);
+    window.addEventListener("pointercancel", cancelDrawerDrag);
+    return () => {
+      window.removeEventListener("pointermove", moveDrawerDrag);
+      window.removeEventListener("pointerup", finishDrawerDrag);
+      window.removeEventListener("pointercancel", cancelDrawerDrag);
+    };
+  }, [drawerDrag?.pointerId]);
   const loadSystemPreset = (preset: SystemPreset) => {
     const now = Date.now();
     const idByKey = new Map<string, string>();
@@ -1248,10 +1481,7 @@ function ExperienceWorkspace({
   const selectRecipe = (recipe: SystemRecipe) => {
     setCurrentRecipeId(recipe.id);
     setSpeakerFamily(
-      getSpeakerModel(
-        recipe.sections[0]?.recommendedModelIds[0],
-        "sub"
-      ).family
+      getSpeakerModel(recipe.sections[0]?.recommendedModelIds[0], "sub").family
     );
     openDesktopPanel("cabinets");
     setActiveHeaderPopover(null);
@@ -1300,6 +1530,8 @@ function ExperienceWorkspace({
       localUrlsRef.current.clear();
       if (layoutStatusTimerRef.current)
         window.clearTimeout(layoutStatusTimerRef.current);
+      if (drawerCloseTimerRef.current)
+        window.clearTimeout(drawerCloseTimerRef.current);
     },
     []
   );
@@ -1320,14 +1552,11 @@ function ExperienceWorkspace({
     if (!onboardingStep) return;
     const next = autoAdvanceProductOnboarding(onboardingStep);
     if (next === undefined) return;
-    const timer = window.setTimeout(
-      () => {
-        setOnboardingStep(next);
-        if (next === null && !isDemo)
-          localStorage.setItem(onboardingCompleteKey(mode), "1");
-      },
-      productOnboardingAutoDelay(onboardingStep)
-    );
+    const timer = window.setTimeout(() => {
+      setOnboardingStep(next);
+      if (next === null && !isDemo)
+        localStorage.setItem(onboardingCompleteKey(mode), "1");
+    }, productOnboardingAutoDelay(onboardingStep));
     return () => window.clearTimeout(timer);
   }, [isDemo, mode, onboardingStep]);
   useEffect(() => {
@@ -1594,7 +1823,9 @@ function ExperienceWorkspace({
             <div className="product-popover-owner layout-control">
               <button
                 className="product-header-control"
-                onClick={() => openPanelOrPopover("layout", setShowLayoutPicker)}
+                onClick={() =>
+                  openPanelOrPopover("layout", setShowLayoutPicker)
+                }
                 aria-haspopup="dialog"
                 aria-expanded={showLayoutPicker}
               >
@@ -1635,7 +1866,9 @@ function ExperienceWorkspace({
             <div className="product-popover-owner recipe-control">
               <button
                 className="product-header-control"
-                onClick={() => openPanelOrPopover("recipe", setShowRecipePicker)}
+                onClick={() =>
+                  openPanelOrPopover("recipe", setShowRecipePicker)
+                }
                 aria-haspopup="dialog"
                 aria-expanded={showRecipePicker}
               >
@@ -1809,8 +2042,9 @@ function ExperienceWorkspace({
       </header>
       <section
         className={`instrument-stage ${
-          desktopPanel ? "desktop-panel-is-open" : "desktop-panel-is-closed"
+          drawerOpen ? "desktop-panel-is-open" : "desktop-panel-is-closed"
         }`}
+        data-drawer-dragging={drawerDrag ? "true" : "false"}
       >
         <div className="desktop-scene-frame">
           <div className="view-switcher" aria-label="Scene view">
@@ -1882,6 +2116,8 @@ function ExperienceWorkspace({
             onListenerNameChange={changeListenerName}
             onLook={turnListener}
             onLookAbsolute={setListenerLook}
+            drawerPlacement={drawerDrag}
+            onDrawerPlacementPreview={updateDrawerPlacementPreview}
           />
           {view !== "pov" && (
             <div className="mobile-surface-controls">
@@ -1945,60 +2181,79 @@ function ExperienceWorkspace({
             </div>
           )}
         </div>
-        {desktopPanel && (
-          <DesktopSidePanel
-            mode={mode}
-            activePanel={desktopPanel}
-            speakers={speakers}
-            selectedSpeakerId={selectedSpeakerId}
-            selectedSpeaker={selectedSpeaker}
-            selectedStackMembers={selectedStackMembers}
-            inspectorModels={inspectorModels}
-            speakerFamily={speakerFamily}
-            currentRecipeId={currentRecipeId}
-            activityStore={activityStore}
-            cabinetColorScope={cabinetColorScope}
-            onCabinetColorChange={applyCabinetColor}
-            onPanelChange={openDesktopPanel}
-            onClose={closeDesktopPanel}
-            onInspectorClose={closeInspector}
-            onFamilyChange={setSpeakerFamily}
-            onAdd={addSpeakerModel}
-            onLoadLayout={loadClubLayout}
-            onFreeLayout={startFreeClub}
-            onChooseRecipe={selectRecipe}
-            onFreeBuild={() => {
-              setCurrentRecipeId(null);
-              openDesktopPanel("cabinets");
-              setActiveHeaderPopover(null);
-              advanceOnboarding("recipe-selected");
-            }}
-            onCabinetColorScopeChange={setCabinetColorScope}
-            onUpdateSpeaker={updateSpeaker}
-            onSelectSpeaker={selectSpeaker}
-            onRemoveSpeaker={() =>
-              selectedSpeaker && removeSpeaker(selectedSpeaker.id)
-            }
-            onRotateSpeaker={yaw =>
-              selectedSpeaker && rotateSpeaker(selectedSpeaker.id, yaw)
-            }
-            onDetachSpeaker={() =>
-              selectedSpeaker && detachSpeaker(selectedSpeaker.id)
-            }
-            onCustomOpen={() => setCustomOpen(true)}
-            onLevelsChange={updateSpeakerLevels}
-            onMutedChange={updateSpeakerMute}
-          />
-        )}
-        {!desktopPanel && (
-          <button
-            className="desktop-panel-open"
-            type="button"
-            onClick={() => openDesktopPanel(lastShelfPanel)}
-          >
-            OPEN SHELF
-          </button>
-        )}
+        <div
+          className="desktop-drawer-trigger"
+          onPointerEnter={() => {
+            if (drawerHoverSuppressedRef.current) return;
+            cancelDrawerClose();
+            setDrawerOpen(true);
+          }}
+          onPointerLeave={() => {
+            drawerHoverSuppressedRef.current = false;
+          }}
+          aria-hidden="true"
+        />
+        <DesktopSidePanel
+          mode={mode}
+          activePanel={desktopPanel}
+          speakers={speakers}
+          selectedSpeakerId={selectedSpeakerId}
+          selectedSpeaker={selectedSpeaker}
+          selectedStackMembers={selectedStackMembers}
+          inspectorModels={inspectorModels}
+          speakerFamily={speakerFamily}
+          currentRecipeId={currentRecipeId}
+          activityStore={activityStore}
+          cabinetColorScope={cabinetColorScope}
+          open={drawerOpen}
+          pinned={drawerPinned}
+          onCabinetColorChange={applyCabinetColor}
+          onPanelChange={openDesktopPanel}
+          onClose={closeDesktopPanel}
+          onOpen={() => {
+            drawerHoverSuppressedRef.current = false;
+            cancelDrawerClose();
+            setDrawerOpen(true);
+          }}
+          onPinToggle={toggleDrawerPin}
+          onPointerEnter={() => {
+            if (drawerHoverSuppressedRef.current) return;
+            cancelDrawerClose();
+            setDrawerOpen(true);
+          }}
+          onPointerLeave={() => {
+            drawerHoverSuppressedRef.current = false;
+            scheduleDrawerClose();
+          }}
+          onDragStart={startDrawerDrag}
+          onInspectorClose={closeInspector}
+          onFamilyChange={setSpeakerFamily}
+          onAdd={addSpeakerModel}
+          onLoadLayout={loadClubLayout}
+          onFreeLayout={startFreeClub}
+          onChooseRecipe={selectRecipe}
+          onFreeBuild={() => {
+            setCurrentRecipeId(null);
+            openDesktopPanel("cabinets");
+            setActiveHeaderPopover(null);
+            advanceOnboarding("recipe-selected");
+          }}
+          onCabinetColorScopeChange={setCabinetColorScope}
+          onUpdateSpeaker={updateSpeaker}
+          onSelectSpeaker={selectSpeaker}
+          onRemoveSpeaker={() =>
+            selectedSpeaker && removeSpeaker(selectedSpeaker.id)
+          }
+          onRotateSpeaker={yaw =>
+            selectedSpeaker && rotateSpeaker(selectedSpeaker.id, yaw)
+          }
+          onDetachSpeaker={() =>
+            selectedSpeaker && detachSpeaker(selectedSpeaker.id)
+          }
+          onCustomOpen={() => setCustomOpen(true)}
+          onLevelsChange={updateSpeakerLevels}
+          onMutedChange={updateSpeakerMute}
+        />
       </section>
       <button
         className={`mixer-trigger ${mixerOpen ? "is-open" : ""}`}

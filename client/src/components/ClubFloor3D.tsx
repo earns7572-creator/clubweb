@@ -44,9 +44,15 @@ import {
 import type { SpeakerBandActivityMap } from "@/lib/bandActivity";
 import {
   findSideSnapCandidate,
+  physicalFootprintsForScene,
+  physicalFootprintsForStack,
+  physicalFootprintsPenetrate,
   resolvePhysicalCollisions,
   type SideSnapCandidate,
 } from "@/lib/physicalPlacement";
+import { createDefaultEq } from "@/lib/speakerEq";
+import { DEFAULT_CABINET_COLOR } from "@/lib/speakerCabinetColor";
+import type { SpeakerModelId } from "@/lib/speakerModels";
 
 type Point = { x: number; y: number };
 type SpeakerDrag = {
@@ -69,6 +75,16 @@ type PendingDrag = {
   screen: Point;
   modifiers: ModifierState;
 } | null;
+export type DrawerPlacementDrag = {
+  modelId: SpeakerModelId;
+  clientX: number;
+  clientY: number;
+};
+export type DrawerPlacementPreview = {
+  modelId: SpeakerModelId;
+  point: Point;
+  valid: boolean;
+};
 export type SurfaceTone = "paper" | "sand" | "slate" | "night";
 type Props = {
   mode?: "club" | "sound-system";
@@ -94,6 +110,8 @@ type Props = {
   onListenerMove: (position: Point) => void;
   onListenerNameChange: (name: string) => void;
   onFloorPlace?: (point: Point) => void;
+  drawerPlacement?: DrawerPlacementDrag | null;
+  onDrawerPlacementPreview?: (preview: DrawerPlacementPreview | null) => void;
 };
 
 const roomWidth = 13;
@@ -191,10 +209,46 @@ const surfacePalette: Record<
 };
 
 const soundSystemSurfacePalette: typeof surfacePalette = {
-  paper: { background: "#30322f", floor: "#292b28", minorGrid: "#444741", majorGrid: "#686c64", stage: "#20221f", stageTop: "#484b45", sky: "#5a5e56", ground: "#181a17" },
-  sand: { background: "#292722", floor: "#211f1c", minorGrid: "#3e3a33", majorGrid: "#625b50", stage: "#181714", stageTop: "#403b34", sky: "#514b41", ground: "#12110f" },
-  slate: { background: "#232625", floor: "#1d201f", minorGrid: "#37403d", majorGrid: "#56635e", stage: "#151817", stageTop: "#35403c", sky: "#46514d", ground: "#101211" },
-  night: { background: "#121311", floor: "#171815", minorGrid: "#30332e", majorGrid: "#565b52", stage: "#0c0d0b", stageTop: "#2c2f2a", sky: "#343832", ground: "#070806" },
+  paper: {
+    background: "#30322f",
+    floor: "#292b28",
+    minorGrid: "#444741",
+    majorGrid: "#686c64",
+    stage: "#20221f",
+    stageTop: "#484b45",
+    sky: "#5a5e56",
+    ground: "#181a17",
+  },
+  sand: {
+    background: "#292722",
+    floor: "#211f1c",
+    minorGrid: "#3e3a33",
+    majorGrid: "#625b50",
+    stage: "#181714",
+    stageTop: "#403b34",
+    sky: "#514b41",
+    ground: "#12110f",
+  },
+  slate: {
+    background: "#232625",
+    floor: "#1d201f",
+    minorGrid: "#37403d",
+    majorGrid: "#56635e",
+    stage: "#151817",
+    stageTop: "#35403c",
+    sky: "#46514d",
+    ground: "#101211",
+  },
+  night: {
+    background: "#121311",
+    floor: "#171815",
+    minorGrid: "#30332e",
+    majorGrid: "#565b52",
+    stage: "#0c0d0b",
+    stageTop: "#2c2f2a",
+    sky: "#343832",
+    ground: "#070806",
+  },
 };
 
 const surfaceFor = (mode: Props["mode"], tone: SurfaceTone) =>
@@ -218,6 +272,10 @@ const toPoint = (position: THREE.Vector3): Point => ({
     ROOM_LAYOUT_BOUNDS.minY,
     Math.min(ROOM_LAYOUT_BOUNDS.maxY, position.z / roomDepth + 0.5)
   ),
+});
+const toUnclampedPoint = (position: THREE.Vector3): Point => ({
+  x: position.x / roomWidth + 0.5,
+  y: position.z / roomDepth + 0.5,
 });
 const pointerPointOnFloor = (event: ThreeEvent<PointerEvent>) =>
   event.ray.intersectPlane(floorDragPlane, dragIntersection)
@@ -325,13 +383,21 @@ function SpeakerObject({
               position={[0, height / 2 + 0.025, depth / 2 + railLength / 2]}
               scale={[0.025, 0.028, railLength]}
               geometry={guideBox}
-              material={darkTheme ? darkOrientationRailMaterial : orientationRailMaterial}
+              material={
+                darkTheme
+                  ? darkOrientationRailMaterial
+                  : orientationRailMaterial
+              }
             />
             <mesh
               position={[0, height / 2 + 0.025, depth / 2 + railLength + 0.075]}
               scale={[0.14, 0.04, 0.14]}
               geometry={guideBox}
-              material={darkTheme ? darkOrientationPixelMaterial : orientationPixelMaterial}
+              material={
+                darkTheme
+                  ? darkOrientationPixelMaterial
+                  : orientationPixelMaterial
+              }
             />
             <Html
               position={[0, height / 2 + 0.04, depth / 2 + railLength + 0.25]}
@@ -706,6 +772,39 @@ function SideSnapPreview({
     </group>
   );
 }
+
+function DrawerPlacementGhost({
+  preview,
+}: {
+  preview: DrawerPlacementPreview;
+}) {
+  const model = getSpeakerModel(preview.modelId, "sub");
+  const [x, , z] = toWorld(preview.point);
+  return (
+    <group position={[x, model.body.height / 2, z]}>
+      <mesh>
+        <boxGeometry
+          args={[model.body.width, model.body.height, model.body.depth]}
+        />
+        <meshBasicMaterial
+          color={preview.valid ? "#d8d6ce" : "#777971"}
+          transparent
+          opacity={preview.valid ? 0.28 : 0.12}
+          wireframe
+          depthWrite={false}
+        />
+      </mesh>
+      <Html position={[0, model.body.height / 2 + 0.14, 0]} center sprite>
+        <span
+          className={`drawer-placement-label ${preview.valid ? "is-valid" : "is-invalid"}`}
+        >
+          {preview.valid ? "PLACE" : "BLOCKED"} ·{" "}
+          {model.shortLabel.toUpperCase()}
+        </span>
+      </Html>
+    </group>
+  );
+}
 function ResponsiveFloorCamera({ mode }: { mode?: "club" | "sound-system" }) {
   const { camera, size, invalidate } = useThree();
   useEffect(() => {
@@ -720,7 +819,7 @@ function ResponsiveFloorCamera({ mode }: { mode?: "club" | "sound-system" }) {
 }
 
 function RoomScene(props: Props) {
-  const { camera, size, invalidate } = useThree();
+  const { camera, gl, size, invalidate } = useThree();
   const drag = useRef<DragTarget>(null);
   const pending = useRef<PendingDrag>(null);
   const frame = useRef<number | null>(null);
@@ -730,6 +829,9 @@ function RoomScene(props: Props) {
   );
   const [sideSnapCandidate, setSideSnapCandidate] =
     useState<SideSnapCandidate | null>(null);
+  const [drawerPreview, setDrawerPreview] =
+    useState<DrawerPlacementPreview | null>(null);
+  const drawerRaycaster = useRef(new THREE.Raycaster());
   const stackResolver = useMemo(
     () => createStackResolver(props.speakers),
     [props.speakers]
@@ -956,6 +1058,94 @@ function RoomScene(props: Props) {
       : undefined;
   const mobile = size.width < 760;
   const pixelWorld = worldPerPixel();
+  useEffect(() => {
+    const placement = props.drawerPlacement;
+    if (!placement) {
+      setDrawerPreview(null);
+      props.onDrawerPlacementPreview?.(null);
+      invalidate();
+      return;
+    }
+    const bounds = gl.domElement.getBoundingClientRect();
+    if (
+      placement.clientX < bounds.left ||
+      placement.clientX > bounds.right ||
+      placement.clientY < bounds.top ||
+      placement.clientY > bounds.bottom
+    ) {
+      setDrawerPreview(null);
+      props.onDrawerPlacementPreview?.(null);
+      invalidate();
+      return;
+    }
+    const pointer = new THREE.Vector2(
+      ((placement.clientX - bounds.left) / bounds.width) * 2 - 1,
+      -((placement.clientY - bounds.top) / bounds.height) * 2 + 1
+    );
+    drawerRaycaster.current.setFromCamera(pointer, camera);
+    const intersection = drawerRaycaster.current.ray.intersectPlane(
+      floorDragPlane,
+      new THREE.Vector3()
+    );
+    if (!intersection) {
+      setDrawerPreview(null);
+      props.onDrawerPlacementPreview?.(null);
+      invalidate();
+      return;
+    }
+    const rawPoint = toUnclampedPoint(intersection);
+    const insideBounds =
+      rawPoint.x >= ROOM_LAYOUT_BOUNDS.minX &&
+      rawPoint.x <= ROOM_LAYOUT_BOUNDS.maxX &&
+      rawPoint.y >= ROOM_LAYOUT_BOUNDS.minY &&
+      rawPoint.y <= ROOM_LAYOUT_BOUNDS.maxY;
+    const model = getSpeakerModel(placement.modelId, "sub");
+    const ghostId = "__drawer-placement-ghost__";
+    const ghost: ClubSpeaker = {
+      id: ghostId,
+      modelId: placement.modelId,
+      kind: model.kind,
+      label: model.label,
+      position: { x: rawPoint.x, y: rawPoint.y, z: 0 },
+      orientation: { yaw: 0 },
+      stackParentId: null,
+      cabinetColor: DEFAULT_CABINET_COLOR,
+      level: 0.68,
+      muted: false,
+      responseProfileId: placement.modelId,
+      activity: 0,
+      eq: createDefaultEq(),
+    };
+    const sceneWithGhost = [...props.speakers, ghost];
+    const safePoint = clampStackRootPoint(sceneWithGhost, ghostId, rawPoint);
+    ghost.position = { ...ghost.position, x: safePoint.x, y: safePoint.y };
+    const ghostFootprints = physicalFootprintsForStack(
+      sceneWithGhost,
+      ghostId,
+      safePoint
+    );
+    const existingFootprints = physicalFootprintsForScene(props.speakers);
+    const overlaps = ghostFootprints.some(candidate =>
+      existingFootprints.some(existing =>
+        physicalFootprintsPenetrate(candidate, existing)
+      )
+    );
+    const next = {
+      modelId: placement.modelId,
+      point: safePoint,
+      valid: insideBounds && !overlaps,
+    } satisfies DrawerPlacementPreview;
+    setDrawerPreview(next);
+    props.onDrawerPlacementPreview?.(next);
+    invalidate();
+  }, [
+    camera,
+    gl,
+    invalidate,
+    props.drawerPlacement,
+    props.onDrawerPlacementPreview,
+    props.speakers,
+  ]);
   return (
     <>
       <ambientLight intensity={1.08} />
@@ -998,6 +1188,7 @@ function RoomScene(props: Props) {
         resolver={stackResolver}
       />
       <SideSnapPreview candidate={sideSnapCandidate} resolver={stackResolver} />
+      {drawerPreview && <DrawerPlacementGhost preview={drawerPreview} />}
       {props.speakers.map((speaker, index) => (
         <SpeakerObject
           key={speaker.id}

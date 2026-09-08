@@ -829,39 +829,39 @@
 }
 
 .desktop-side-panel,
-.desktop-panel-open {
+.desktop-panel-open,
+.desktop-drawer-trigger {
   display: none;
 }
 
 @media (min-width: 1121px) {
   .product-experience .instrument-stage {
-    display: grid;
+    --desktop-drawer-width: clamp(320px, 24vw, 380px);
+    display: block;
     height: calc(100dvh - 64px);
-    gap: 18px;
-    padding: 14px;
+    padding: 0;
     background: var(--scene-bg);
   }
 
-  .product-experience .instrument-stage.desktop-panel-is-open {
-    grid-template-columns: minmax(0, 1fr) clamp(300px, 24vw, 420px);
-  }
-
-  .product-experience .instrument-stage.desktop-panel-is-closed {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
   .desktop-scene-frame {
-    position: relative;
-    inset: auto;
+    position: absolute;
+    inset: 14px 30px 14px 14px;
     display: grid;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
     min-width: 0;
     min-height: 0;
     place-items: stretch;
     overflow: hidden;
     border: 1px solid var(--border);
     background: var(--surface-secondary);
+    transition: right 220ms ease;
+  }
+
+  .product-experience
+    .instrument-stage.desktop-panel-is-open
+    .desktop-scene-frame {
+    right: calc(var(--desktop-drawer-width) + 18px);
   }
 
   .desktop-scene-frame > .scene-surface {
@@ -896,9 +896,15 @@
   }
 
   .desktop-side-panel {
+    position: absolute;
+    z-index: 24;
+    top: 14px;
+    right: 0;
+    bottom: 14px;
     min-width: 0;
-    width: clamp(300px, 24vw, 420px);
+    width: var(--desktop-drawer-width);
     max-width: none;
+    height: auto;
     min-height: 0;
     display: flex;
     flex-direction: column;
@@ -906,6 +912,52 @@
     border: 1px solid var(--border);
     background: var(--surface);
     color: var(--text);
+    transform: translateX(calc(100% - 16px));
+    transition: transform 220ms ease;
+    will-change: transform;
+  }
+
+  .desktop-side-panel.is-open {
+    transform: translateX(0);
+  }
+
+  .desktop-drawer-trigger {
+    display: block;
+    position: absolute;
+    z-index: 23;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+  }
+
+  .desktop-drawer-handle {
+    position: absolute;
+    z-index: 3;
+    top: -1px;
+    bottom: -1px;
+    left: -1px;
+    width: 17px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-right: 1px solid var(--border);
+    background: var(--surface-secondary);
+    color: var(--text-muted);
+  }
+
+  .desktop-drawer-handle span {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font: 650 7px/1 monospace;
+    letter-spacing: 0.18em;
+  }
+
+  .desktop-side-panel-head,
+  .desktop-panel-tabs,
+  .desktop-panel-body {
+    margin-left: 16px;
   }
 
   .desktop-side-panel-head {
@@ -927,19 +979,33 @@
 
   .desktop-side-panel-head h2 {
     margin: 0;
-    font: 600 16px/1.1 "Space Grotesk", sans-serif;
+    font:
+      600 16px/1.1 "Space Grotesk",
+      sans-serif;
     letter-spacing: -0.02em;
   }
 
-  .desktop-side-panel-head > button {
+  .desktop-drawer-actions {
+    display: flex;
+    gap: 5px;
+  }
+
+  .desktop-drawer-actions > button {
     display: grid;
-    width: 32px;
+    min-width: 32px;
     height: 32px;
-    flex: 0 0 auto;
     place-items: center;
+    grid-auto-flow: column;
+    gap: 5px;
+    padding: 0 7px;
     border: 1px solid var(--border);
     background: transparent;
     color: inherit;
+    font: 650 7px/1 monospace;
+  }
+
+  .desktop-drawer-actions > button.is-active {
+    background: var(--control-active);
   }
 
   .desktop-panel-tabs {
@@ -1110,6 +1176,19 @@
     width: 100%;
     min-width: 0;
     min-height: 60px;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .desktop-panel-body .systm-equipment-item:active {
+    cursor: grabbing;
+  }
+
+  .equipment-drag-mark {
+    color: var(--text-muted);
+    font: 650 7px/1 monospace !important;
+    letter-spacing: 0.08em;
   }
 
   .desktop-panel-body > .recipe-popover {
@@ -1229,20 +1308,19 @@
     display: none;
   }
 
-  .desktop-panel-open {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    z-index: 22;
-    min-height: 38px;
+  .drawer-placement-label {
     display: inline-flex;
-    align-items: center;
-    padding: 0 12px;
+    padding: 4px 6px;
     border: 1px solid var(--border);
-    background: var(--surface);
+    background: var(--surface-glass);
     color: var(--text);
-    font: 650 9px/1 monospace;
+    font: 650 8px/1 monospace;
     letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .drawer-placement-label.is-invalid {
+    opacity: 0.62;
   }
 }
 
@@ -1384,6 +1462,11 @@
   .product-experience .view-switcher button {
     min-width: 48px;
     min-height: 48px;
+    color: var(--text);
+  }
+  .product-experience[data-systm-mode="sound-system"]
+    .view-switcher
+    button.active {
     color: var(--text);
   }
   .product-experience .club-layout-library,

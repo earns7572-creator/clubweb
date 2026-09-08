@@ -14,42 +14,102 @@ assert.match(
 );
 assert.match(home, /function DesktopSidePanel\(/);
 assert.match(home, /className="desktop-scene-frame"/);
-assert.match(home, /className="desktop-side-panel"/);
+assert.match(home, /className=\{`desktop-side-panel/);
 assert.match(home, /className="desktop-panel-tabs"/);
 assert.match(home, /className="mobile-surface-controls"/);
-assert.match(home, /SCENE_VIEWS: readonly SceneView\[\] = \["top", "side", "pov"\]/);
+assert.match(
+  home,
+  /SCENE_VIEWS: readonly SceneView\[\] = \["top", "side", "pov"\]/
+);
 assert.match(home, /view === "top"/);
-assert.match(home, /type DesktopShelfPanel = Exclude<DesktopPanel, "inspector">/);
+assert.match(
+  home,
+  /type DesktopShelfPanel = Exclude<DesktopPanel, "inspector">/
+);
 assert.match(home, /lastShelfPanel/);
 assert.match(home, /inspectorReturnPanel/);
 assert.match(home, /onInspectorClose/);
-assert.match(home, /OPEN SHELF/);
+assert.match(home, /desktop-drawer-trigger/);
+assert.match(home, /desktop-drawer-handle/);
 assert.match(home, /if \(!id\) \{[\s\S]*closeInspector\(\)/);
 
-for (const label of ["LAYOUT", "SPEAKERS", "RECIPE", "CABINETS", "INSPECTOR", "MIX"]) {
+for (const label of ["LAYOUT", "SPEAKERS", "RECIPE", "CABINETS", "INSPECTOR"]) {
   assert.ok(home.includes(`label: "${label}"`), `${label} remains a panel tab`);
 }
+assert.match(home, /aria-label="Open mix panel"/);
 
 const desktop = css.slice(css.indexOf("@media (min-width: 1121px)"));
-assert.match(desktop, /\.instrument-stage\.desktop-panel-is-open[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\) clamp\(300px, 24vw, 420px\)/);
-assert.match(desktop, /\.instrument-stage\.desktop-panel-is-closed[\s\S]*grid-template-columns:\s*minmax\(0, 1fr\)/);
-assert.match(desktop, /\.desktop-scene-frame > \.scene-surface[\s\S]*width: 100%/);
-assert.match(desktop, /\.desktop-scene-frame > \.scene-surface[\s\S]*height: 100%/);
-assert.match(desktop, /\.desktop-scene-frame > \.scene-surface[\s\S]*aspect-ratio: auto/);
-assert.match(desktop, /\.desktop-scene-frame > \.view-switcher::before[\s\S]*display: none/);
+assert.match(desktop, /--desktop-drawer-width:\s*clamp\(320px, 24vw, 380px\)/);
+assert.match(
+  desktop,
+  /\.instrument-stage\.desktop-panel-is-open[\s\S]*?\.desktop-scene-frame[\s\S]*?right:\s*calc\(var\(--desktop-drawer-width\) \+ 18px\)/
+);
+assert.match(
+  desktop,
+  /\.desktop-side-panel[\s\S]*transform:\s*translateX\(calc\(100% - 16px\)\)/
+);
+assert.match(
+  desktop,
+  /\.desktop-side-panel\.is-open[\s\S]*transform:\s*translateX\(0\)/
+);
+assert.match(
+  desktop,
+  /\.desktop-scene-frame > \.scene-surface[\s\S]*width: 100%/
+);
+assert.match(
+  desktop,
+  /\.desktop-scene-frame > \.scene-surface[\s\S]*height: 100%/
+);
+assert.match(
+  desktop,
+  /\.desktop-scene-frame > \.scene-surface[\s\S]*aspect-ratio: auto/
+);
+assert.match(
+  desktop,
+  /\.desktop-scene-frame > \.view-switcher::before[\s\S]*display: none/
+);
 assert.match(desktop, /\.desktop-panel-body[\s\S]*overflow: auto/);
-assert.match(desktop, /\.desktop-panel-body \.club-layout-options[\s\S]*grid-template-columns: repeat\(2/);
-assert.match(desktop, /\.desktop-panel-body > \.systm-library[\s\S]*overflow: hidden/);
-assert.match(desktop, /\.desktop-panel-body \.model-choices[\s\S]*overflow-y: auto/);
-assert.match(desktop, /\.desktop-panel-body > \.spatial-inspector \.mobile-inspector-close[\s\S]*position: absolute[\s\S]*display: grid/);
-assert.match(desktop, /\.product-experience > \.mixer-trigger[\s\S]*display: none/);
+assert.match(
+  desktop,
+  /\.desktop-panel-body \.club-layout-options[\s\S]*grid-template-columns: repeat\(2/
+);
+assert.match(
+  desktop,
+  /\.desktop-panel-body > \.systm-library[\s\S]*overflow: hidden/
+);
+assert.match(
+  desktop,
+  /\.desktop-panel-body \.model-choices[\s\S]*overflow-y: auto/
+);
+assert.match(
+  desktop,
+  /\.desktop-panel-body > \.spatial-inspector \.mobile-inspector-close[\s\S]*position: absolute[\s\S]*display: grid/
+);
+assert.match(
+  desktop,
+  /\.product-experience > \.mixer-trigger[\s\S]*display: none/
+);
 
-const mobile = css.slice(css.indexOf("@media (max-width: 760px)", css.indexOf("@media (min-width: 1121px)")));
+const mobile = css.slice(
+  css.indexOf(
+    "@media (max-width: 760px)",
+    css.indexOf("@media (min-width: 1121px)")
+  )
+);
 assert.match(mobile, /\.desktop-scene-frame[\s\S]*display: contents/);
 assert.match(mobile, /\.mobile-surface-controls[\s\S]*display: contents/);
-assert.match(mobile, /\.product-experience \.club-layout-library[\s\S]*bottom: 0/);
-assert.match(mobile, /\.product-experience \.speaker-composer\.speaker-library\.systm-library[\s\S]*bottom: 0/);
-assert.match(mobile, /\.product-experience:not\(\.scene-view-pov\) \.instrument-stage[\s\S]*height: auto/);
+assert.match(
+  mobile,
+  /\.product-experience \.club-layout-library[\s\S]*bottom: 0/
+);
+assert.match(
+  mobile,
+  /\.product-experience \.speaker-composer\.speaker-library\.systm-library[\s\S]*bottom: 0/
+);
+assert.match(
+  mobile,
+  /\.product-experience:not\(\.scene-view-pov\) \.instrument-stage[\s\S]*height: auto/
+);
 
 assert.match(floor, /onPointerMove/);
 assert.match(floor, /ROOM_LAYOUT_BOUNDS/);
