@@ -5,20 +5,30 @@
   gap: 7px;
   min-width: max-content;
   color: rgba(48, 49, 46, 0.86);
-  font-family: var(--font-tech, ui-monospace, monospace);
+  font-family: var(--font-ui, system-ui, sans-serif);
   line-height: 1;
   pointer-events: none;
   text-align: left;
   white-space: nowrap;
 }
 .contextual-diagram-rule {
+  position: relative;
   display: block;
   width: 24px;
   height: 1px;
   margin-top: 5px;
   flex: 0 0 auto;
   background: currentColor;
-  opacity: 0.55;
+  opacity: 0.52;
+}
+.contextual-diagram-rule::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 1px;
+  height: 5px;
+  background: currentColor;
+  content: "";
 }
 .contextual-diagram-copy {
   display: grid;
@@ -26,15 +36,15 @@
 }
 .contextual-diagram-copy b {
   color: currentColor;
-  font: 600 10px/1 var(--font-tech, ui-monospace, monospace);
-  letter-spacing: 0.07em;
+  font: 600 10px/1 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: 0.055em;
   text-transform: uppercase;
 }
 .contextual-diagram-copy small {
   color: currentColor;
   opacity: 0.62;
-  font: 500 8px/1 var(--font-tech, ui-monospace, monospace);
-  letter-spacing: 0.08em;
+  font: 500 8px/1 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: 0.065em;
   text-transform: uppercase;
 }
 .contextual-diagram-yaw {
@@ -49,11 +59,10 @@
 }
 .contextual-diagram-relationship {
   display: inline-block;
-  padding: 3px 5px;
   color: rgba(48, 49, 46, 0.64);
-  background: rgba(246, 245, 241, 0.68);
-  font: 500 8px/1 var(--font-tech, ui-monospace, monospace);
-  letter-spacing: 0.08em;
+  background: transparent;
+  font: 500 8px/1 var(--font-ui, system-ui, sans-serif);
+  letter-spacing: 0.065em;
   text-transform: uppercase;
   white-space: nowrap;
 }
@@ -82,7 +91,6 @@
 }
 .scene-surface.surface-night .contextual-diagram-relationship {
   color: rgba(242, 238, 226, 0.76);
-  background: rgba(8, 10, 9, 0.62);
 }
 
 @media (max-width: 760px) {

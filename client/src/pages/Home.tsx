@@ -55,18 +55,18 @@ const SceneProjection = memo(function SceneProjection({ view, surfaceTone, speak
 function FamilyLibrary({ family, onFamilyChange, onAdd, onAddBlock, recipeProgress, recipeName, mobileOpen, onMobileOpenChange }: { family: SpeakerFamily; onFamilyChange: (family: SpeakerFamily) => void; onAdd: (id: SpeakerModelId) => void; onAddBlock: () => void; recipeProgress: RecipeProgress | null; recipeName: string | null; mobileOpen: boolean; onMobileOpenChange: (open: boolean) => void }) {
   const models = modelIdsForFamily(family);
   const requiredIds = new Set(recipeProgress?.ingredients.map((item) => item.modelId) ?? []);
-  const renderModel = (modelId: SpeakerModelId, index: number, ingredient?: RecipeProgress["ingredients"][number]) => { const model = getSpeakerModel(modelId, "sub"); const progress = ingredient ? `${ingredient.placed} / ${ingredient.required}` : ""; return <button key={`${modelId}-${ingredient ? "recipe" : "other"}`} data-slot={String(index + 1).padStart(2, "0")} data-model-id={modelId} className={`speaker-type-icon systm-equipment-item ${model.family} ${model.kind}`} onClick={() => onAdd(modelId)} aria-label={`Add ${model.label}${progress ? ` ${progress}` : ""}`} title={`Add ${model.label}`}><i /><span><b>{model.shortLabel.toUpperCase()}</b><small className="model-name">{model.label}</small>{progress && <small className="model-progress">{progress}</small>}</span></button>; };
+  const renderModel = (modelId: SpeakerModelId, index: number, ingredient?: RecipeProgress["ingredients"][number]) => { const model = getSpeakerModel(modelId, "sub"); const progress = ingredient ? `${ingredient.placed} / ${ingredient.required}` : ""; return <button key={`${modelId}-${ingredient ? "recipe" : "other"}`} data-model-id={modelId} className={`speaker-type-icon systm-equipment-item ${model.family} ${model.kind}`} onClick={() => onAdd(modelId)} aria-label={`Add ${model.label}${progress ? ` ${progress}` : ""}`} title={`Add ${model.label}`}><i /><span><b>{model.shortLabel.toUpperCase()}</b><small className="model-name">{model.label}</small>{progress && <small className="model-progress">{progress}</small>}</span></button>; };
   const otherModels = models.filter((modelId) => !requiredIds.has(modelId));
   return <section className={`speaker-composer speaker-library systm-library ${mobileOpen ? "is-mobile-open" : ""}`} aria-label="Speaker tray">
     <button className="mobile-tray-handle" onClick={() => onMobileOpenChange(!mobileOpen)} aria-expanded={mobileOpen} aria-controls="speaker-tray-content"><span /> <b>{mobileOpen ? "CLOSE" : "SPEAKERS"}</b></button>
-    <div id="speaker-tray-content" className="systm-library-content"><div className="systm-library-title"><span aria-hidden="true">SPEAKERS</span><small>ADD</small></div>
+    <div id="speaker-tray-content" className="systm-library-content"><div className="systm-library-title"><span aria-hidden="true">COMPONENTS</span></div>
     <div className="family-switch scene-family-switch" role="tablist" aria-label="Speaker family">
       {orderedSpeakerFamilies().map((definition) => <button key={definition.id} role="tab" aria-selected={family === definition.id} className={family === definition.id ? "active" : ""} onClick={() => onFamilyChange(definition.id)} title={definition.description}>{definition.shortLabel}</button>)}
     </div>
     <div className={`model-choices ${recipeProgress ? "recipe-aware-model-choices" : ""}`}>
       {recipeProgress && <><div className="library-group-label">RECIPE · {recipeName?.toUpperCase()}</div>{recipeProgress.ingredients.map((ingredient, index) => renderModel(ingredient.modelId, index, ingredient))}<div className="library-group-label">OTHER CABINETS</div></>}
       {(recipeProgress ? otherModels : models).map((modelId, index) => renderModel(modelId, index))}
-      <button data-slot="B" className="speaker-type-icon systm-equipment-item block-type" onClick={onAddBlock} aria-label="Add BLOCK support object" title="Add BLOCK support object"><i /><span><b>BLOCK</b><small className="model-name">Non-audio support</small></span></button>
+      <span className="support-object-divider" aria-hidden="true">SUPPORT</span><button className="speaker-type-icon systm-equipment-item block-type" onClick={onAddBlock} aria-label="Add BLOCK support object" title="Add BLOCK support object"><i /><span><b>BLOCK</b><small className="model-name">Riser support</small></span></button>
     </div></div>
   </section>;
 }
@@ -169,7 +169,7 @@ export default function Home() {
       {view !== "pov" && <>
         <FamilyLibrary family={speakerFamily} onFamilyChange={setSpeakerFamily} onAdd={addSpeakerModel} onAddBlock={addBlock} recipeProgress={recipeProgress} recipeName={currentRecipe?.name ?? null} mobileOpen={speakerTrayOpen} onMobileOpenChange={toggleSpeakerTray} />
         {selectedSpeaker && selectedModel && <>
-          <button className="mobile-speaker-edit" onClick={() => setMobileInspectorOpen(true)} aria-label={`Edit ${selectedModel.label}`}>Edit</button>
+          <button className="mobile-speaker-edit" onClick={() => { setSpeakerTrayOpen(false); setMobileInspectorOpen(true); }} aria-label={`Edit ${selectedModel.label}`}>Edit</button>
           <aside className={`spatial-inspector ${mobileInspectorOpen ? "mobile-open" : ""}`} aria-label="Selected speaker">
             <button className="mobile-inspector-close" onClick={() => setMobileInspectorOpen(false)} aria-label="Close speaker controls">×</button><button className="mobile-inspector-delete" disabled={speakers.length <= 1} onClick={() => removeSpeaker(selectedSpeaker.id)} aria-label={`Delete ${selectedSpeaker.label}`}><Trash2 size={16} /></button>
             <h2>{selectedModel.label}</h2>

@@ -59,3 +59,16 @@
   .systm-library-content { padding-inline: 9px; }
   .speaker-composer.speaker-library.systm-library .systm-equipment-item { min-width: 118px; }
 }
+
+/* Mobile keeps the view selector as a light rule, never as a second dashboard panel. */
+@media (max-width: 760px) {
+  .systm-library .mobile-tray-handle { display: flex; }
+  .view-switcher { width: auto; min-height: 44px; gap: 3px; padding: 0 4px; border: 0; background: rgba(251,250,245,.78); box-shadow: none; backdrop-filter: blur(8px); }
+  .view-switcher button { min-width: 48px; min-height: 44px; font-size: 10px; }
+  .scene-view-pov .view-switcher { background: rgba(18,20,18,.32); }
+  .speaker-composer.speaker-library.systm-library .systm-equipment-item { grid-template-columns: 32px minmax(47px, 1fr) 18px; flex-basis: 116px; min-width: 116px; }
+  .support-object-divider { min-width: 54px; padding: 0 8px; font-size: 8px; }
+  .systm-library .block-type { flex-basis: 110px; min-width: 110px; }
+  .mobile-speaker-edit { box-shadow: none; }
+  .spatial-inspector, .dark-club .spatial-inspector { box-shadow: 0 -4px 16px rgba(25,26,23,.12); }
+}
