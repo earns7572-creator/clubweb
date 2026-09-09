@@ -16,7 +16,7 @@ import SoundFieldLayer from "@/components/SoundFieldLayer";
 import { clampStackRootPoint, exceedsDragThreshold, interactionTargetMeters, ROOM_LAYOUT_BOUNDS, resolveStackRootId } from "@/lib/speakerInteraction";
 import type { SpeakerBandActivityMap } from "@/lib/bandActivity";
 import { findSideSnapCandidate, resolvePhysicalCollisions, type SideSnapCandidate } from "@/lib/physicalPlacement";
-import { BLOCK_DEPTH_METERS, BLOCK_HEIGHT_METERS, BLOCK_WIDTH_METERS, clampBlockPoint, createBlockResolver, findBlockStackCandidate, findSpeakerBlockCandidate, resolveBlockPhysicalCollisions, resolveBlockRootId, type BlockStackCandidate, type SpeakerBlockCandidate, type SupportBlock } from "@/lib/blockSupport";
+import { BLOCK_DEPTH_METERS, BLOCK_HEIGHT_METERS, BLOCK_WIDTH_METERS, blockDimensions, clampBlockPoint, createBlockResolver, findBlockStackCandidate, findSpeakerBlockCandidate, resolveBlockPhysicalCollisions, resolveBlockRootId, type BlockStackCandidate, type SpeakerBlockCandidate, type SupportBlock } from "@/lib/blockSupport";
 
 type Point = { x: number; y: number };
 type SpeakerDrag = { type: "speaker"; id: string; rootId: string; offset: Point; snap: SmartSnapState; candidateParentId: string | null; candidate: StackCandidate | null; supportCandidate: SpeakerBlockCandidate | null; sideCandidate: SideSnapCandidate | null; lastPoint: Point | null; startedAt: Point; pointerType: string; didMove: boolean };
@@ -61,11 +61,11 @@ function SpeakerObject({ speaker, activity, bandActivity, selected, dragging = f
 }
 
 function BlockObject({ block, selected, dragging, centerY, xy, onSelect, onDragStart, onDragMove, onDragEnd }: { block: SupportBlock; selected: boolean; dragging: boolean; centerY: number; xy: Point; onSelect: () => void; onDragStart: (event: ThreeEvent<PointerEvent>) => void; onDragMove: (event: ThreeEvent<PointerEvent>) => void; onDragEnd: (event: ThreeEvent<PointerEvent>) => void }) {
-  const [x, , z] = toWorld(xy);
-  return <group position={[x, centerY, z]} onPointerDown={(event) => { event.stopPropagation(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(event); }}>
-    <mesh onClick={(event) => { event.stopPropagation(); onSelect(); }}><boxGeometry args={[BLOCK_WIDTH_METERS, BLOCK_HEIGHT_METERS, BLOCK_DEPTH_METERS]} /><meshStandardMaterial color={block.color ?? "#9b8d78"} roughness={.82} metalness={.04} /></mesh>
-    <lineSegments scale={[1.002, 1.002, 1.002]}><edgesGeometry args={[new THREE.BoxGeometry(BLOCK_WIDTH_METERS, BLOCK_HEIGHT_METERS, BLOCK_DEPTH_METERS)]} /><lineBasicMaterial color={selected ? "#343632" : "#6e6254"} transparent opacity={selected ? .9 : .45} /></lineSegments>
-    {selected && <Html position={[0, BLOCK_HEIGHT_METERS / 2 + .16, 0]} center sprite><span className="smart-guide-label">BLOCK</span></Html>}
+  const dimensions = blockDimensions(block); const [x, , z] = toWorld(xy);
+  return <group position={[x, centerY, z]} rotation={[0, block.orientation?.yaw ?? 0, 0]} onPointerDown={(event) => { event.stopPropagation(); onDragStart(event); }} onPointerMove={(event) => { event.stopPropagation(); onDragMove(event); }} onPointerUp={(event) => { event.stopPropagation(); onDragEnd(event); }}>
+    <mesh onClick={(event) => { event.stopPropagation(); onSelect(); }}><boxGeometry args={[dimensions.width, dimensions.height, dimensions.depth]} /><meshStandardMaterial color={block.color ?? "#9b8d78"} roughness={.82} metalness={.04} /></mesh>
+    <lineSegments scale={[1.002, 1.002, 1.002]}><edgesGeometry args={[new THREE.BoxGeometry(dimensions.width, dimensions.height, dimensions.depth)]} /><lineBasicMaterial color={selected ? "#343632" : "#6e6254"} transparent opacity={selected ? .9 : .45} /></lineSegments>
+    {selected && <Html position={[0, dimensions.height / 2 + .16, 0]} center sprite><span className="smart-guide-label">BLOCK</span></Html>}
   </group>;
 }
 
@@ -97,8 +97,8 @@ function StackPreview({ candidate, dragged, resolver }: { candidate: StackCandid
 function BlockStackPreview({ candidate, dragged, resolver }: { candidate: BlockStackCandidate | null; dragged: SupportBlock | undefined; resolver: ReturnType<typeof createBlockResolver> }) {
   if (!candidate || !dragged) return null;
   const parent = resolver.byId.get(candidate.parentId); if (!parent) return null;
-  const [x, , z] = toWorld(resolver.getXY(parent)); const centerY = resolver.getTopMeters(parent) + BLOCK_HEIGHT_METERS / 2;
-  return <group position={[x, centerY, z]}><mesh><boxGeometry args={[BLOCK_WIDTH_METERS, BLOCK_HEIGHT_METERS, BLOCK_DEPTH_METERS]} /><meshBasicMaterial color="#9b8d78" transparent opacity={.16} wireframe /></mesh><Html position={[0, BLOCK_HEIGHT_METERS / 2 + .14, 0]} center sprite><span className="smart-guide-label">BLOCK · STACK</span></Html></group>;
+  const dimensions = blockDimensions(dragged); const [x, , z] = toWorld(resolver.getXY(parent)); const centerY = resolver.getTopMeters(parent) + dimensions.height / 2;
+  return <group position={[x, centerY, z]} rotation={[0, dragged.orientation?.yaw ?? 0, 0]}><mesh><boxGeometry args={[dimensions.width, dimensions.height, dimensions.depth]} /><meshBasicMaterial color="#9b8d78" transparent opacity={.16} wireframe /></mesh><Html position={[0, dimensions.height / 2 + .14, 0]} center sprite><span className="smart-guide-label">BLOCK · STACK</span></Html></group>;
 }
 function SpeakerBlockPreview({ candidate, dragged, resolver }: { candidate: SpeakerBlockCandidate | null; dragged: ClubSpeaker | undefined; resolver: ReturnType<typeof createBlockResolver> }) {
   if (!candidate || !dragged) return null;
@@ -126,7 +126,7 @@ function RoomScene(props: Props) {
     if (active.type === "block") {
       const dragged = blockResolver.byId.get(active.rootId); if (!dragged) return;
       if (!active.didMove) { if (!exceedsDragThreshold(active.startedAt, movement.screen, active.pointerType)) return; active.didMove = true; props.onBlockSelect(active.id); }
-      const safeRaw = clampBlockPoint(raw); const previousPoint = active.lastPoint ?? blockResolver.getXY(dragged); const movingExistingStack = active.id !== active.rootId || blockResolver.getSubtreeIds(active.rootId).size > 1;
+      const safeRaw = clampBlockPoint(raw, blockDimensions(dragged)); const previousPoint = active.lastPoint ?? blockResolver.getXY(dragged); const movingExistingStack = active.id !== active.rootId || blockResolver.getSubtreeIds(active.rootId).size > 1;
       const candidate = movingExistingStack ? null : findBlockStackCandidate({ dragged, point: safeRaw, blocks: props.blocks, previousParentId: active.candidateParentId, minimumTargetMeters: mobileStackTargetMeters(worldPerPixel(), size.width < 760) });
       active.candidateParentId = candidate?.parentId ?? null; active.candidate = candidate; setBlockStackCandidate(candidate); setStackCandidate(null); setSpeakerBlockCandidate(null); setSideSnapCandidate(null);
       if (candidate) { setGuides(null); invalidate(); return; }
