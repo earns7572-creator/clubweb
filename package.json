@@ -28,6 +28,8 @@
     "generate:glb-assets": "node tools/generate-speaker-glb-assets.mjs",
     "test:motion": "tsx tests/deviceOrientation.test.ts",
     "test:mobile": "tsx tests/mobilePov.test.ts",
+    "test:product-ux": "node tests/productUx.test.cjs",
+    "test:visual-polish": "node tests/visualPolish.test.cjs",
     "format": "prettier --write ."
   },
   "dependencies": {

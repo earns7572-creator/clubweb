@@ -16,7 +16,7 @@ import { SWEEP_END_HZ, SWEEP_LEG_DURATION_SECONDS, SWEEP_SCHEDULE_LEGS, SWEEP_ST
 export type SpeakerKind = "sub" | "woofer" | "full" | "mid" | "high";
 export type Position3D = { x: number; y: number; z: number };
 export type ClubListener = { name: string; position: Position3D; orientation: { yaw: number; pitch: number } };
-export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; orientation?: { yaw: number }; stackParentId?: string | null; stackAlign?: StackAlignment; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
+export type ClubSpeaker = { id: string; kind: SpeakerKind; modelId?: SpeakerModelId; label: string; position: Position3D; orientation?: { yaw: number }; stackParentId?: string | null; stackAlign?: StackAlignment; cabinetColor?: string; level: number; muted: boolean; responseProfileId: string; activity: number; eq: SpeakerEq };
 export type ClubSource = { id: string; name: string; category: "official" | "local"; color: string; localUrl?: string };
 
 type Voice = { output: GainNode; stop?: () => void; media?: HTMLAudioElement; dispose?: () => void };
