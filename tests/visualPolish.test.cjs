@@ -6,8 +6,10 @@ const floor = read("client/src/components/ClubFloor3D.tsx");
 const mobile = read("client/src/mobile.css");
 const systm = read("client/src/systm.css");
 
-assert.match(floor, /orthographic\.zoom \*= size\.width < 760 \? \.80 : \.78/);
-assert.match(floor, /roomWidth \* 1\.16, roomDepth \* 1\.16/);
+assert.match(floor, /orthographic\.zoom \*= size\.width < 760 \? \.80 : \.66/);
+assert.match(floor, /ContactShadows/);
+assert.match(floor, /roomWidth \* 1\.08, \.16, roomDepth \* 1\.1/);
+assert.doesNotMatch(floor, /<Grid/);
 assert.match(floor, /dragging \? 1\.03 : 1/);
 assert.match(mobile, /transform: translateY\(calc\(100% - 42px\)\)/);
 assert.match(mobile, /\.is-mobile-open \{[^}]*transform: translateY\(0\); \}/);

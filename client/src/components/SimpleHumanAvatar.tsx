@@ -9,6 +9,7 @@ type SimpleHumanAvatarProps = {
 const headGeometry = new THREE.SphereGeometry(.12, 16, 12);
 const torsoGeometry = new THREE.CylinderGeometry(.15, .2, .52, 12);
 const limbGeometry = new THREE.CylinderGeometry(.045, .05, .48, 10);
+const footGeometry = new THREE.BoxGeometry(.12, .055, .2);
 const avatarBodyMaterial = new THREE.MeshStandardMaterial({ color: "#32332f", roughness: .82, metalness: .02 });
 const avatarHeadMaterial = new THREE.MeshStandardMaterial({ color: "#b7afa0", roughness: .76, metalness: 0 });
 
@@ -19,13 +20,13 @@ function AvatarArm({ side }: { side: "left" | "right" }) {
 
 function AvatarLeg({ side }: { side: "left" | "right" }) {
   const direction = side === "left" ? -1 : 1;
-  return <mesh geometry={limbGeometry} material={avatarBodyMaterial} position={[direction * .09, .29, .01]} rotation={[0, 0, direction * -.035]} />;
+  return <><mesh castShadow receiveShadow geometry={limbGeometry} material={avatarBodyMaterial} position={[direction * .09, .29, .01]} rotation={[0, 0, direction * -.035]} /><mesh castShadow receiveShadow geometry={footGeometry} material={avatarBodyMaterial} position={[direction * .09, .045, .05]} /></>;
 }
 
 function StandingPose() {
   return <group dispose={null}>
-    <mesh geometry={torsoGeometry} material={avatarBodyMaterial} position={[0, .86, 0]} />
-    <mesh geometry={headGeometry} material={avatarHeadMaterial} position={[0, 1.23, .015]} />
+    <mesh castShadow receiveShadow geometry={torsoGeometry} material={avatarBodyMaterial} position={[0, .86, 0]} />
+    <mesh castShadow receiveShadow geometry={headGeometry} material={avatarHeadMaterial} position={[0, 1.23, .015]} />
     <AvatarArm side="left" /><AvatarArm side="right" />
     <AvatarLeg side="left" /><AvatarLeg side="right" />
   </group>;
