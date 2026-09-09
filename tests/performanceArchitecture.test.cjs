@@ -220,7 +220,7 @@ assert.match(pov, /RECENTER/);
 assert.match(home, /mobileInspectorOpen, setMobileInspectorOpen\] = useState\(false\)/);
 assert.match(home, /const selectSpeaker = \(id: string\) => \{ setSelectedSpeakerId\(id\); setMobileInspectorOpen\(false\); \}/);
 assert.match(home, /className=\{`spatial-inspector \$\{mobileInspectorOpen \? "mobile-open" : ""\}`\}/);
-assert.match(home, /className="mobile-speaker-edit" onClick=\{\(\) => setMobileInspectorOpen\(true\)\}/);
+assert.match(home, /className="mobile-speaker-edit" onClick=\{\(\) => \{ setSpeakerTrayOpen\(false\); setMobileInspectorOpen\(true\); \}\}/);
 assert.match(mobileCss, /\.spatial-inspector \{ display: none;/);
 assert.match(mobileCss, /\.spatial-inspector\.mobile-open \{ display: block;/);
 
