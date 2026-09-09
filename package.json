@@ -20,6 +20,7 @@
     "test:bass": "tsx tests/bassPressure.test.ts",
     "test:band": "node tests/run-bandActivity.mjs",
     "test:stack": "node tests/run-stacking.mjs",
+    "test:block-support": "node tests/run-blockSupport.mjs",
     "test:interaction": "node tests/run-speakerInteraction.mjs",
     "test:models": "tsx tests/speakerModels.test.ts",
     "test:orientation": "tsx tests/speakerOrientation.test.ts",

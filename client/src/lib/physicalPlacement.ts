@@ -95,7 +95,7 @@ export function physicalFootprintsPenetrate(a: PhysicalFootprint, b: PhysicalFoo
   });
 }
 
-function minimumTranslation(moving: PhysicalFootprint, fixed: PhysicalFootprint, preferredDirection: WorldXZ): WorldXZ | null {
+export function minimumTranslation(moving: PhysicalFootprint, fixed: PhysicalFootprint, preferredDirection: WorldXZ): WorldXZ | null {
   if (!verticalOverlap(moving, fixed)) return null;
   let best: WorldXZ | null = null;
   for (const axis of [...axesFor(moving), ...axesFor(fixed)]) {
