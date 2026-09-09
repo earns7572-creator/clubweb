@@ -17,7 +17,7 @@ const outputDirectory = path.join(rootDirectory, "client/public/models/speakers"
 const representativeOnly = process.argv.includes("--representative");
 const requestedId = process.argv.find((argument) => argument.startsWith("--id="))?.slice(5);
 if (process.argv.includes("--force-protected")) throw new Error("Protected-family generation is intentionally unavailable in this repair pipeline.");
-if (SPEAKER_GLB_SPECS.some((spec) => PROTECTED_FAMILIES.has(spec.family) && spec.id !== "modern-full")) throw new Error("Protected Reggae/Modern family found in generation specs.");
+if (SPEAKER_GLB_SPECS.some((spec) => PROTECTED_FAMILIES.has(spec.family))) throw new Error("Protected Reggae/Modern family found in generation specs.");
 
 const makeMaterial = (name, color, roughness, metalness = 0) => {
   const value = new THREE.MeshStandardMaterial({ color, roughness, metalness, emissive: "#000000", emissiveIntensity: 0 });
@@ -137,66 +137,6 @@ function normalizeAndBake(scene, [targetWidth, targetHeight, targetDepth]) {
 function makeScene(label, body, builder) { const scene = new THREE.Scene(); scene.name = `${label}Asset`; const root = new THREE.Group(); root.name = "Source"; scene.add(root); builder(root, body); return normalizeAndBake(scene, body); }
 
 const builders = {
-  modernFullRange(root, body) {
-    const [w, h, d] = body;
-    const wall = Math.min(.038, w * .052);
-    const front = d / 2 - .012;
-    const cabinetRadius = Math.min(.018, wall * .45);
-    const panelDepth = Math.max(.024, d * .055);
-    const cabinetPanel = (size, name, position) => roundedBox(root, size, shared.cabinet, name, position, [0, 0, 0], 2, cabinetRadius);
-    cabinetPanel([w, wall, d], "Cabinet", [0, wall / 2, 0]);
-    cabinetPanel([w, wall, d], "CabinetTop", [0, h - wall / 2, 0]);
-    cabinetPanel([wall, h - 2 * wall, d], "CabinetLeft", [-w / 2 + wall / 2, h / 2, 0]);
-    cabinetPanel([wall, h - 2 * wall, d], "CabinetRight", [w / 2 - wall / 2, h / 2, 0]);
-    cabinetPanel([w - 2 * wall, h - 2 * wall, wall], "CabinetBack", [0, h / 2, -d / 2 + wall / 2]);
-
-    // The baffle sits behind a continuous front lip so the drivers read as recessed,
-    // while the rounded bars keep the silhouette from collapsing into a box.
-    const baffleWidth = w * .88, baffleHeight = h * .91, baffleY = h * .50;
-    roundedBox(root, [baffleWidth, baffleHeight, panelDepth], shared.baffle, "Baffle", [0, baffleY, front - .038], [0, 0, 0], 2, .012);
-    const lip = .028;
-    roundedBox(root, [baffleWidth + lip, lip, .042], shared.trim, "FrontLipTop", [0, baffleY + baffleHeight / 2, front], [0, 0, 0], 1, .008);
-    roundedBox(root, [baffleWidth + lip, lip, .042], shared.trim, "FrontLipBottom", [0, baffleY - baffleHeight / 2, front], [0, 0, 0], 1, .008);
-    roundedBox(root, [lip, baffleHeight, .042], shared.trim, "FrontLipLeft", [-baffleWidth / 2, baffleY, front], [0, 0, 0], 1, .008);
-    roundedBox(root, [lip, baffleHeight, .042], shared.trim, "FrontLipRight", [baffleWidth / 2, baffleY, front], [0, 0, 0], 1, .008);
-
-    const hornWidth = w * .75, hornHeight = h * .17, hornY = h * .84, hornDepth = d * .54;
-    const hornSections = [
-      { w: hornWidth * .50, h: hornHeight * .50, z: 0 },
-      { w: hornWidth * .42, h: hornHeight * .42, z: -hornDepth * .22 },
-      { w: hornWidth * .32, h: hornHeight * .32, z: -hornDepth * .46 },
-      { w: hornWidth * .21, h: hornHeight * .21, z: -hornDepth * .72 },
-      { w: hornWidth * .105, h: hornHeight * .11, z: -hornDepth },
-    ];
-    add(root, facetedHornGeometry(hornSections), shared.horn, "HornFlare", [0, hornY, front - .018]);
-    roundedBox(root, [hornWidth * .22, hornHeight * .23, .045], shared.cavity, "HornThroat", [0, hornY, front - hornDepth - .012], [0, 0, 0], 1, .009);
-    roundedBox(root, [hornWidth * .105, hornHeight * .11, .024], shared.cavity, "EmitterHigh", [0, hornY, front - hornDepth - .035], [0, 0, 0], 1, .005);
-    frame(root, hornWidth * 1.05, hornHeight * 1.10, front + .002, hornY, shared.metal, .022);
-
-    const woofer = (name, y) => {
-      const radius = Math.min(w * .30, h * .14);
-      const surroundRadius = radius * 1.08;
-      const driverLabel = name === "EmitterLow" ? "Upper" : "Lower";
-      add(root, new THREE.CylinderGeometry(surroundRadius, surroundRadius, .024, 32), shared.trim, `Woofer${driverLabel}Mount`, [0, y, front - .060], [Math.PI / 2, 0, 0]);
-      add(root, new THREE.TorusGeometry(radius * .92, radius * .075, 8, 32), shared.trim, `Woofer${driverLabel}Surround`, [0, y, front - .018]);
-      const cone = add(root, new THREE.SphereGeometry(radius * .88, 24, 14), shared.woofer, name, [0, y, front - .011]);
-      cone.scale.set(1, 1, .16);
-      add(root, new THREE.SphereGeometry(radius * .22, 16, 10), shared.cavity, `Woofer${driverLabel}DustCap`, [0, y, front + .005]).scale.set(1, 1, .20);
-    };
-    woofer("EmitterLow", h * .56);
-    woofer("EmitterLowLower", h * .27);
-    roundedBox(root, [w * .74, .022, .034], shared.metal, "WooferDivider", [0, h * .415, front + .006], [0, 0, 0], 1, .006);
-
-    // Compact carry handles and feet are kept within the physical envelope.
-    for (const side of [-1, 1]) {
-      const x = side * (w / 2 - wall * .42);
-      roundedBox(root, [.022, h * .17, d * .27], shared.cavity, side < 0 ? "SideHandleLeft" : "SideHandleRight", [x, h * .54, -d * .06], [0, 0, 0], 1, .006);
-      roundedBox(root, [.028, h * .07, d * .16], shared.metal, side < 0 ? "SideGripLeft" : "SideGripRight", [x - side * .012, h * .54, -d * .06], [0, 0, 0], 1, .006);
-    }
-    for (const x of [-w * .39, w * .39]) {
-      roundedBox(root, [.06, .035, .075], shared.trim, "CabinetFoot", [x, .016, d * .30], [0, 0, 0], 1, .01);
-    }
-  },
   wBin(root, body) {
     const [w,h,d] = body, wall = .045, front = d / 2 - .014, floor = 0;
     roundedBox(root,[w,wall,d],wBin.cabinet,"Cabinet",[0,floor + wall / 2,0],[0,0,0],2,.014);
@@ -359,5 +299,5 @@ const builders = {
 const specs = requestedId ? SPEAKER_GLB_SPECS.filter((spec) => spec.id === requestedId) : representativeOnly ? SPEAKER_GLB_SPECS.filter((spec) => REPRESENTATIVE_IDS.has(spec.id)) : SPEAKER_GLB_SPECS;
 if (requestedId && specs.length !== 1) throw new Error(`Unknown speaker model id: ${requestedId}`);
 await fs.mkdir(outputDirectory,{recursive:true});
-for(const spec of specs){ if(PROTECTED_FAMILIES.has(spec.family) && spec.id !== "modern-full") throw new Error(`Refusing protected family: ${spec.family}`); const scene=makeScene(spec.id,spec.body,builders[spec.build]); const destination=path.join(outputDirectory,spec.path); await fs.mkdir(path.dirname(destination),{recursive:true}); const glb=await new GLTFExporter().parseAsync(scene,{binary:true,onlyVisible:true,trs:true}); await fs.writeFile(destination,Buffer.from(glb)); console.log(`generated ${spec.path}`); }
-console.log(`Generated ${specs.length} scoped GLB speaker assets${representativeOnly?" (representatives)":""}.`);
+for(const spec of specs){ if(PROTECTED_FAMILIES.has(spec.family)) throw new Error(`Refusing protected family: ${spec.family}`); const scene=makeScene(spec.id,spec.body,builders[spec.build]); const destination=path.join(outputDirectory,spec.path); await fs.mkdir(path.dirname(destination),{recursive:true}); const glb=await new GLTFExporter().parseAsync(scene,{binary:true,onlyVisible:true,trs:true}); await fs.writeFile(destination,Buffer.from(glb)); console.log(`generated ${spec.path}`); }
+console.log(`Generated ${specs.length} protected-safe GLB speaker assets${representativeOnly?" (representatives)":""}.`);
