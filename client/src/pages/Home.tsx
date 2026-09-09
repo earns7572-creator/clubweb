@@ -13,7 +13,7 @@ import { useSpeakerActivity, useSpeakerBandActivity, type ActivityStore, type Ba
 import { createDefaultEq, type SpeakerEq } from "@/lib/speakerEq";
 import { createStackResolver, removeSpeakerFromStack, type StackAlignment } from "@/lib/speakerStacking";
 import { createBlockResolver, normalizeSpeakerSupportHeights, syncSpeakerSupportPositions, type SupportBlock } from "@/lib/blockSupport";
-import { detachSpeakerExplicitly, moveStackRoot, resolveStackRootId, rotateSpeakerWithoutDetach } from "@/lib/speakerInteraction";
+import { detachSpeakerExplicitly, resolveStackRootId, rotateSpeakerWithoutDetach } from "@/lib/speakerInteraction";
 import { yawToDegrees } from "@/lib/speakerOrientation";
 import { defaultModelForKind, getSpeakerModel, modelIdsForFamily, orderedSpeakerFamilies, resolveModelId, type SpeakerFamily, type SpeakerModelId } from "@/lib/speakerModels";
 import { SYSTEM_RECIPES, getRecipeProgress, type RecipeProgress, type SystemRecipe } from "@/lib/systemRecipes";
@@ -130,7 +130,7 @@ export default function Home() {
   const selectedSource = sources.find((source) => source.id === selectedSourceId) ?? sources[0]; const currentRecipe = SYSTEM_RECIPES.find((recipe) => recipe.id === currentRecipeId) ?? null; const recipeDetail = SYSTEM_RECIPES.find((recipe) => recipe.id === recipeDetailId) ?? null; const recipeProgress = currentRecipe ? getRecipeProgress(currentRecipe, speakers) : null; const selectedSpeaker = speakers.find((speaker) => speaker.id === selectedSpeakerId); const selectedModel = selectedSpeaker ? getSpeakerModel(selectedSpeaker.modelId, selectedSpeaker.kind) : null;
   const selectedStackMembers = (() => { if (!selectedSpeaker) return []; const resolver = createStackResolver(speakers); const rootId = resolveStackRootId(speakers, selectedSpeaker.id); return Array.from(resolver.getSubtreeIds(rootId)).map((id) => resolver.byId.get(id)).filter((speaker): speaker is ClubSpeaker => Boolean(speaker)); })();
   const selectedCabinetColor = selectedSpeaker?.cabinetColor ?? "#70767b";
-  const moveSpeakerTop = (id: string, position: Point) => setSpeakers((now) => moveStackRoot(now, id, position));
+  const moveSpeakerTop = (id: string, position: Point) => setSpeakers((now) => { const rootId = resolveStackRootId(now, id); return now.map((speaker) => speaker.id === rootId ? { ...speaker, position: { ...speaker.position, x: position.x, y: position.y } } : speaker); });
   const moveSpeakerSide = (id: string, position: { y: number }) => setSpeakers((now) => now.map((speaker) => speaker.id === id && !speaker.stackParentId ? { ...speaker, position: { ...speaker.position, y: clamp(position.y) } } : speaker));
   const moveBlock = (id: string, position: Point) => setBlocks((now) => { const next = now.map((block) => block.id === id ? { ...block, position: { x: clamp(position.x), y: clamp(position.y) } } : block); setSpeakers((current) => syncSpeakerSupportPositions(current, next)); return next; });
   const stackSpeaker = (id: string, parentId: string, alignment: StackAlignment) => setSpeakers((now) => { const resolver = createStackResolver(now); const speaker = resolver.byId.get(id); const parent = resolver.byId.get(parentId); if (!speaker || !parent || id === parentId || resolver.isDescendant(parentId, id)) return now; return now.map((item) => item.id === id ? { ...item, stackParentId: parentId, stackAlign: alignment, supportBlockId: null, position: { ...item.position, z: 0 } } : item); });

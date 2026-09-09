@@ -3,6 +3,7 @@ import type { ClubSpeaker } from "@/hooks/useClubAudio";
 import { metersToNormalizedZ, speakerBodyForSpeaker, SPEAKER_BODY } from "@/lib/speakerDimensions";
 import { STACK_ROOM_METERS, type StackPoint } from "@/lib/speakerStacking";
 import { minimumTranslation, physicalFootprintsForScene, type PhysicalFootprint } from "@/lib/physicalPlacement";
+import type { RoomMetrics } from "@/lib/roomGeometry";
 
 export const BLOCK_WIDTH_METERS = 1.2;
 export const BLOCK_DEPTH_METERS = 1.2;
@@ -23,8 +24,8 @@ export type SupportBlock = {
 export type BlockStackCandidate = { parentId: string; score: number };
 export type SpeakerBlockCandidate = { blockId: string; score: number };
 
-const roomPoint = (point: StackPoint) => ({ x: (point.x - .5) * STACK_ROOM_METERS.width, z: (point.y - .5) * STACK_ROOM_METERS.depth });
-const pointDistance = (a: StackPoint, b: StackPoint) => Math.hypot((a.x - b.x) * STACK_ROOM_METERS.width, (a.y - b.y) * STACK_ROOM_METERS.depth);
+const roomPoint = (point: StackPoint, room: RoomMetrics) => ({ x: (point.x - .5) * room.width, z: (point.y - .5) * room.depth });
+const pointDistance = (a: StackPoint, b: StackPoint, room: RoomMetrics) => Math.hypot((a.x - b.x) * room.width, (a.y - b.y) * room.depth);
 export const blockDimensions = (block?: Pick<SupportBlock, "dimensions">) => block?.dimensions ?? { width: BLOCK_WIDTH_METERS, height: BLOCK_HEIGHT_METERS, depth: BLOCK_DEPTH_METERS };
 
 export function createBlockResolver(blocks: SupportBlock[]) {
@@ -65,17 +66,17 @@ export function createBlockResolver(blocks: SupportBlock[]) {
   return { byId, childByParent, getBottomMeters, getTopMeters, getCenterMeters, getXY, getStackTop, isDescendant, getSubtreeIds };
 }
 
-export function blockFootprintSize(block: SupportBlock) {
-  const dimensions = blockDimensions(block); return { ...dimensions, yaw: block.orientation?.yaw ?? 0, center: roomPoint(block.position) };
+export function blockFootprintSize(block: SupportBlock, room: RoomMetrics = STACK_ROOM_METERS) {
+  const dimensions = blockDimensions(block); return { ...dimensions, yaw: block.orientation?.yaw ?? 0, center: roomPoint(block.position, room) };
 }
 
-export function findBlockStackCandidate({ dragged, point, blocks, previousParentId, minimumTargetMeters = 0 }: { dragged: SupportBlock; point: StackPoint; blocks: SupportBlock[]; previousParentId?: string | null; minimumTargetMeters?: number }) {
+export function findBlockStackCandidate({ dragged, point, blocks, previousParentId, minimumTargetMeters = 0, room = STACK_ROOM_METERS }: { dragged: SupportBlock; point: StackPoint; blocks: SupportBlock[]; previousParentId?: string | null; minimumTargetMeters?: number; room?: RoomMetrics }) {
   const resolver = createBlockResolver(blocks); let best: BlockStackCandidate | null = null;
   for (const target of blocks) {
     const topId = resolver.getStackTop(target.id);
     if (target.id !== topId || topId === dragged.id || resolver.isDescendant(topId, dragged.id)) continue;
     const targetPoint = resolver.getXY(topId); const targetBlock = resolver.byId.get(topId); const threshold = Math.max(blockDimensions(dragged).width * (previousParentId === topId ? BLOCK_STACK_RELEASE_FACTOR : BLOCK_STACK_ENTER_FACTOR), blockDimensions(targetBlock).width * .2, minimumTargetMeters);
-    const distance = pointDistance(point, targetPoint);
+    const distance = pointDistance(point, targetPoint, room);
     if (distance > threshold) continue;
     const score = distance / threshold;
     if (!best || score < best.score) best = { parentId: topId, score };
@@ -83,11 +84,11 @@ export function findBlockStackCandidate({ dragged, point, blocks, previousParent
   return best;
 }
 
-export function findSpeakerBlockCandidate({ speaker, point, blocks, minimumTargetMeters = 0 }: { speaker: ClubSpeaker; point: StackPoint; blocks: SupportBlock[]; minimumTargetMeters?: number }) {
+export function findSpeakerBlockCandidate({ speaker, point, blocks, minimumTargetMeters = 0, room = STACK_ROOM_METERS }: { speaker: ClubSpeaker; point: StackPoint; blocks: SupportBlock[]; minimumTargetMeters?: number; room?: RoomMetrics }) {
   const resolver = createBlockResolver(blocks); const body = speakerBodyForSpeaker(speaker); let best: SpeakerBlockCandidate | null = null;
   for (const block of blocks) {
     if (resolver.getStackTop(block.id) !== block.id) continue;
-    const target = resolver.getXY(block); const dimensions = blockDimensions(block); const thresholdX = Math.max(Math.max(body.width, dimensions.width) * .42, minimumTargetMeters) / STACK_ROOM_METERS.width; const thresholdY = Math.max(Math.max(body.depth, dimensions.depth) * .42, minimumTargetMeters) / STACK_ROOM_METERS.depth;
+    const target = resolver.getXY(block); const dimensions = blockDimensions(block); const thresholdX = Math.max(Math.max(body.width, dimensions.width) * .42, minimumTargetMeters) / room.width; const thresholdY = Math.max(Math.max(body.depth, dimensions.depth) * .42, minimumTargetMeters) / room.depth;
     const dx = Math.abs(point.x - target.x); const dy = Math.abs(point.y - target.y);
     if (dx > thresholdX || dy > thresholdY) continue;
     const score = Math.hypot(dx / thresholdX, dy / thresholdY);
@@ -119,13 +120,13 @@ export function syncSpeakerSupportPositions(speakers: ClubSpeaker[], blocks: Sup
   });
 }
 
-export function clampBlockPoint(point: StackPoint, dimensions = blockDimensions()) {
-  const halfX = dimensions.width / STACK_ROOM_METERS.width / 2; const halfY = dimensions.depth / STACK_ROOM_METERS.depth / 2;
+export function clampBlockPoint(point: StackPoint, dimensions = blockDimensions(), room: RoomMetrics = STACK_ROOM_METERS) {
+  const halfX = dimensions.width / room.width / 2; const halfY = dimensions.depth / room.depth / 2;
   return { x: Math.max(.02 + halfX, Math.min(.98 - halfX, point.x)), y: Math.max(.02 + halfY, Math.min(.98 - halfY, point.y)) };
 }
 
-const worldPoint = (point: StackPoint) => ({ x: (point.x - .5) * STACK_ROOM_METERS.width, z: (point.y - .5) * STACK_ROOM_METERS.depth });
-const pointFromWorld = (point: { x: number; z: number }): StackPoint => ({ x: point.x / STACK_ROOM_METERS.width + .5, y: point.z / STACK_ROOM_METERS.depth + .5 });
+const worldPoint = (point: StackPoint, room: RoomMetrics) => ({ x: (point.x - .5) * room.width, z: (point.y - .5) * room.depth });
+const pointFromWorld = (point: { x: number; z: number }, room: RoomMetrics): StackPoint => ({ x: point.x / room.width + .5, y: point.z / room.depth + .5 });
 const addWorld = (a: { x: number; z: number }, b: { x: number; z: number }) => ({ x: a.x + b.x, z: a.z + b.z });
 const subtractWorld = (a: { x: number; z: number }, b: { x: number; z: number }) => ({ x: a.x - b.x, z: a.z - b.z });
 const blockRootId = (blocks: SupportBlock[], requestedId: string) => {
@@ -135,29 +136,29 @@ const blockRootId = (blocks: SupportBlock[], requestedId: string) => {
 };
 export const resolveBlockRootId = blockRootId;
 
-export function physicalFootprintsForBlockStack(blocks: SupportBlock[], requestedRootId: string, rootPoint?: StackPoint): PhysicalFootprint[] {
+export function physicalFootprintsForBlockStack(blocks: SupportBlock[], requestedRootId: string, rootPoint?: StackPoint, room: RoomMetrics = STACK_ROOM_METERS): PhysicalFootprint[] {
   const resolver = createBlockResolver(blocks); const rootId = blockRootId(blocks, requestedRootId); const root = resolver.byId.get(rootId); if (!root) return [];
-  const original = worldPoint(resolver.getXY(root)); const target = worldPoint(rootPoint ?? resolver.getXY(root)); const shift = subtractWorld(target, original);
+  const original = worldPoint(resolver.getXY(root), room); const target = worldPoint(rootPoint ?? resolver.getXY(root), room); const shift = subtractWorld(target, original);
   return Array.from(resolver.getSubtreeIds(rootId)).flatMap((id) => {
     const block = resolver.byId.get(id); if (!block) return [];
-    const size = blockFootprintSize(block); const center = addWorld(worldPoint(resolver.getXY(block)), shift); const bottom = resolver.getBottomMeters(block);
+    const size = blockFootprintSize(block, room); const center = addWorld(worldPoint(resolver.getXY(block), room), shift); const bottom = resolver.getBottomMeters(block);
     return [{ id: block.id, center, halfWidth: size.width / 2, halfDepth: size.depth / 2, yaw: 0, bottom, top: bottom + size.height }];
   });
 }
 
-export function physicalFootprintsForBlocks(blocks: SupportBlock[]) {
+export function physicalFootprintsForBlocks(blocks: SupportBlock[], room: RoomMetrics = STACK_ROOM_METERS) {
   const resolver = createBlockResolver(blocks); const roots = new Set(blocks.map((block) => blockRootId(blocks, block.id)));
-  return Array.from(roots).flatMap((rootId) => physicalFootprintsForBlockStack(blocks, rootId));
+  return Array.from(roots).flatMap((rootId) => physicalFootprintsForBlockStack(blocks, rootId, undefined, room));
 }
 
-export function resolveBlockPhysicalCollisions({ blocks, speakers, movingRootId, requestedRootPoint, previousRootPoint }: { blocks: SupportBlock[]; speakers: ClubSpeaker[]; movingRootId: string; requestedRootPoint: StackPoint; previousRootPoint?: StackPoint }) {
-  const movingId = blockRootId(blocks, movingRootId); const movingRoot = createBlockResolver(blocks).byId.get(movingId); let point = clampBlockPoint(requestedRootPoint, blockDimensions(movingRoot)); const previous = worldPoint(previousRootPoint ?? requestedRootPoint); const movingNow = physicalFootprintsForBlockStack(blocks, movingId); const movingIds = new Set(movingNow.map((footprint) => footprint.id));
-  const staticFootprints = [...physicalFootprintsForBlocks(blocks).filter((footprint) => !movingIds.has(footprint.id)), ...physicalFootprintsForScene(speakers)]; const collidedIds = new Set<string>();
+export function resolveBlockPhysicalCollisions({ blocks, speakers, movingRootId, requestedRootPoint, previousRootPoint, room = STACK_ROOM_METERS }: { blocks: SupportBlock[]; speakers: ClubSpeaker[]; movingRootId: string; requestedRootPoint: StackPoint; previousRootPoint?: StackPoint; room?: RoomMetrics }) {
+  const movingId = blockRootId(blocks, movingRootId); const movingRoot = createBlockResolver(blocks).byId.get(movingId); let point = clampBlockPoint(requestedRootPoint, blockDimensions(movingRoot), room); const previous = worldPoint(previousRootPoint ?? requestedRootPoint, room); const movingNow = physicalFootprintsForBlockStack(blocks, movingId, undefined, room); const movingIds = new Set(movingNow.map((footprint) => footprint.id));
+  const staticFootprints = [...physicalFootprintsForBlocks(blocks, room).filter((footprint) => !movingIds.has(footprint.id)), ...physicalFootprintsForScene(speakers, room)]; const collidedIds = new Set<string>();
   for (let iteration = 0; iteration < 12; iteration += 1) {
-    const moving = physicalFootprintsForBlockStack(blocks, movingId, point); let moved = false;
+    const moving = physicalFootprintsForBlockStack(blocks, movingId, point, room); let moved = false;
     for (const current of moving) for (const fixed of staticFootprints) {
       const separation = minimumTranslation(current, fixed, subtractWorld(current.center, previous)); if (!separation) continue;
-      collidedIds.add(fixed.id); point = clampBlockPoint(pointFromWorld(addWorld(worldPoint(point), separation)), blockDimensions(movingRoot)); moved = true; break;
+      collidedIds.add(fixed.id); point = clampBlockPoint(pointFromWorld(addWorld(worldPoint(point, room), separation), room), blockDimensions(movingRoot), room); moved = true; break;
     }
     if (!moved) break;
   }

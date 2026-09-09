@@ -151,7 +151,7 @@ function activityForBand(activity: SpeakerBandActivity | undefined, overall: num
 
 export default function SoundFieldLayer({ speakers, activityBySpeaker, bandActivityBySpeaker, roomWidth, roomDepth, hazeColor = "#777870", darkSurface = false }: Props) {
   const { invalidate } = useThree();
-  const resolver = useMemo(() => createStackResolver(speakers), [speakers]);
+  const resolver = useMemo(() => createStackResolver(speakers, { width: roomWidth, depth: roomDepth }), [roomDepth, roomWidth, speakers]);
   const fieldWidth = roomWidth * SOUND_FIELD_STYLE.fieldExtentScale;
   const fieldDepth = roomDepth * SOUND_FIELD_STYLE.fieldExtentScale;
   const material = useMemo(() => new THREE.ShaderMaterial({

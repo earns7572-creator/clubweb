@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
 import { recenterLookAnchor, swipeLookDelta } from "../client/src/lib/povLook";
+import { DESKTOP_ROOM_METERS, MOBILE_PORTRAIT_ROOM_METERS, roomMetricsForViewport } from "../client/src/lib/roomGeometry";
+
+const portraitRoom = roomMetricsForViewport(390, 844);
+assert.ok(portraitRoom.depth > portraitRoom.width * 1.5, "portrait room must provide meaningful front-to-back depth");
+assert.deepEqual(roomMetricsForViewport(1280, 800), DESKTOP_ROOM_METERS, "desktop keeps the existing room proportions");
+assert.deepEqual(portraitRoom, MOBILE_PORTRAIT_ROOM_METERS, "portrait view selects the shared mobile room projection");
 
 const right = swipeLookDelta(390, 0, 390, 844);
 const left = swipeLookDelta(-390, 0, 390, 844);

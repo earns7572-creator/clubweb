@@ -3,6 +3,7 @@ import type { ClubSpeaker } from "@/hooks/useClubAudio";
 import { speakerBodyForSpeaker } from "@/lib/speakerDimensions";
 import { snapYaw } from "@/lib/speakerOrientation";
 import { createStackResolver, STACK_ROOM_METERS } from "@/lib/speakerStacking";
+import type { RoomMetrics } from "@/lib/roomGeometry";
 
 export type LayoutPoint = { x: number; y: number };
 export type LayoutBounds = { minX: number; maxX: number; minY: number; maxY: number };
@@ -36,11 +37,11 @@ export function resolveStackRootId(speakers: ClubSpeaker[], id: string) {
   return current?.id ?? id;
 }
 
-function safeBoundsForOffset(speaker: ClubSpeaker, offset: LayoutPoint, bounds: LayoutBounds) {
+function safeBoundsForOffset(speaker: ClubSpeaker, offset: LayoutPoint, bounds: LayoutBounds, room: RoomMetrics) {
   const body = speakerBodyForSpeaker(speaker);
   const yaw = speaker.orientation?.yaw ?? 0;
-  const halfWidth = (Math.abs(Math.cos(yaw)) * body.width + Math.abs(Math.sin(yaw)) * body.depth) / 2 / STACK_ROOM_METERS.width;
-  const halfDepth = (Math.abs(Math.sin(yaw)) * body.width + Math.abs(Math.cos(yaw)) * body.depth) / 2 / STACK_ROOM_METERS.depth;
+  const halfWidth = (Math.abs(Math.cos(yaw)) * body.width + Math.abs(Math.sin(yaw)) * body.depth) / 2 / room.width;
+  const halfDepth = (Math.abs(Math.sin(yaw)) * body.width + Math.abs(Math.cos(yaw)) * body.depth) / 2 / room.depth;
   return {
     minX: bounds.minX + halfWidth - offset.x,
     maxX: bounds.maxX - halfWidth - offset.x,
@@ -49,21 +50,21 @@ function safeBoundsForOffset(speaker: ClubSpeaker, offset: LayoutPoint, bounds: 
   };
 }
 
-export function clampStackRootPoint(speakers: ClubSpeaker[], requestedRootId: string, point: LayoutPoint, bounds: LayoutBounds = ROOM_LAYOUT_BOUNDS): LayoutPoint {
-  const rootId = resolveStackRootId(speakers, requestedRootId); const resolver = createStackResolver(speakers); const root = resolver.byId.get(rootId);
+export function clampStackRootPoint(speakers: ClubSpeaker[], requestedRootId: string, point: LayoutPoint, bounds: LayoutBounds = ROOM_LAYOUT_BOUNDS, room: RoomMetrics = STACK_ROOM_METERS): LayoutPoint {
+  const rootId = resolveStackRootId(speakers, requestedRootId); const resolver = createStackResolver(speakers, room); const root = resolver.byId.get(rootId);
   if (!root) return { x: clamp(point.x, bounds.minX, bounds.maxX), y: clamp(point.y, bounds.minY, bounds.maxY) };
   const rootPoint = resolver.getXY(root); const subtree = resolver.getSubtreeIds(rootId);
   let minX = bounds.minX; let maxX = bounds.maxX; let minY = bounds.minY; let maxY = bounds.maxY;
   subtree.forEach((id) => {
     const member = resolver.byId.get(id); if (!member) return;
-    const memberPoint = resolver.getXY(member); const memberBounds = safeBoundsForOffset(member, { x: memberPoint.x - rootPoint.x, y: memberPoint.y - rootPoint.y }, bounds);
+    const memberPoint = resolver.getXY(member); const memberBounds = safeBoundsForOffset(member, { x: memberPoint.x - rootPoint.x, y: memberPoint.y - rootPoint.y }, bounds, room);
     minX = Math.max(minX, memberBounds.minX); maxX = Math.min(maxX, memberBounds.maxX); minY = Math.max(minY, memberBounds.minY); maxY = Math.min(maxY, memberBounds.maxY);
   });
   return { x: clamp(point.x, minX, maxX), y: clamp(point.y, minY, maxY) };
 }
 
-export function moveStackRoot(speakers: ClubSpeaker[], requestedId: string, point: LayoutPoint, bounds: LayoutBounds = ROOM_LAYOUT_BOUNDS) {
-  const rootId = resolveStackRootId(speakers, requestedId); const safePoint = clampStackRootPoint(speakers, rootId, point, bounds);
+export function moveStackRoot(speakers: ClubSpeaker[], requestedId: string, point: LayoutPoint, bounds: LayoutBounds = ROOM_LAYOUT_BOUNDS, room: RoomMetrics = STACK_ROOM_METERS) {
+  const rootId = resolveStackRootId(speakers, requestedId); const safePoint = clampStackRootPoint(speakers, rootId, point, bounds, room);
   return speakers.map((speaker) => speaker.id === rootId ? { ...speaker, position: { ...speaker.position, x: safePoint.x, y: safePoint.y } } : speaker);
 }
 

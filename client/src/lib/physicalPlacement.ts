@@ -3,6 +3,7 @@ import type { ClubSpeaker } from "@/hooks/useClubAudio";
 import { speakerBodyForSpeaker } from "@/lib/speakerDimensions";
 import { normalizeYaw, snapYaw } from "@/lib/speakerOrientation";
 import { createStackResolver, STACK_ROOM_METERS } from "@/lib/speakerStacking";
+import type { RoomMetrics } from "@/lib/roomGeometry";
 
 export type PlacementPoint = { x: number; y: number };
 export type WorldXZ = { x: number; z: number };
@@ -40,8 +41,8 @@ type Axis = WorldXZ;
 type Projection = { min: number; max: number };
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-const pointToWorld = (point: PlacementPoint): WorldXZ => ({ x: (point.x - .5) * STACK_ROOM_METERS.width, z: (point.y - .5) * STACK_ROOM_METERS.depth });
-const worldToPoint = (world: WorldXZ): PlacementPoint => ({ x: world.x / STACK_ROOM_METERS.width + .5, y: world.z / STACK_ROOM_METERS.depth + .5 });
+const pointToWorld = (point: PlacementPoint, room: RoomMetrics): WorldXZ => ({ x: (point.x - .5) * room.width, z: (point.y - .5) * room.depth });
+const worldToPoint = (world: WorldXZ, room: RoomMetrics): PlacementPoint => ({ x: world.x / room.width + .5, y: world.z / room.depth + .5 });
 const add = (a: WorldXZ, b: WorldXZ): WorldXZ => ({ x: a.x + b.x, z: a.z + b.z });
 const subtract = (a: WorldXZ, b: WorldXZ): WorldXZ => ({ x: a.x - b.x, z: a.z - b.z });
 const scale = (point: WorldXZ, amount: number): WorldXZ => ({ x: point.x * amount, z: point.z * amount });
@@ -64,19 +65,19 @@ function rootIdsFor(speakers: ClubSpeaker[]) {
   return Array.from(ids);
 }
 
-export function physicalFootprintsForStack(speakers: ClubSpeaker[], requestedRootId: string, rootPoint?: PlacementPoint): PhysicalFootprint[] {
-  const resolver = createStackResolver(speakers); const rootId = rootIdFor(speakers, requestedRootId); const root = resolver.byId.get(rootId);
+export function physicalFootprintsForStack(speakers: ClubSpeaker[], requestedRootId: string, rootPoint?: PlacementPoint, room: RoomMetrics = STACK_ROOM_METERS): PhysicalFootprint[] {
+  const resolver = createStackResolver(speakers, room); const rootId = rootIdFor(speakers, requestedRootId); const root = resolver.byId.get(rootId);
   if (!root) return [];
-  const originalRoot = pointToWorld(resolver.getXY(root)); const targetRoot = pointToWorld(rootPoint ?? resolver.getXY(root)); const shift = subtract(targetRoot, originalRoot);
+  const originalRoot = pointToWorld(resolver.getXY(root), room); const targetRoot = pointToWorld(rootPoint ?? resolver.getXY(root), room); const shift = subtract(targetRoot, originalRoot);
   return Array.from(resolver.getSubtreeIds(rootId)).flatMap((id) => {
     const speaker = resolver.byId.get(id); if (!speaker) return [];
-    const body = speakerBodyForSpeaker(speaker); const center = add(pointToWorld(resolver.getXY(speaker)), shift); const bottom = resolver.getBottomMeters(speaker);
+    const body = speakerBodyForSpeaker(speaker); const center = add(pointToWorld(resolver.getXY(speaker), room), shift); const bottom = resolver.getBottomMeters(speaker);
     return [{ id: speaker.id, center, halfWidth: body.width / 2, halfDepth: body.depth / 2, yaw: speaker.orientation?.yaw ?? 0, bottom, top: bottom + body.height }];
   });
 }
 
-export function physicalFootprintsForScene(speakers: ClubSpeaker[]) {
-  return rootIdsFor(speakers).flatMap((rootId) => physicalFootprintsForStack(speakers, rootId));
+export function physicalFootprintsForScene(speakers: ClubSpeaker[], room: RoomMetrics = STACK_ROOM_METERS) {
+  return rootIdsFor(speakers).flatMap((rootId) => physicalFootprintsForStack(speakers, rootId, undefined, room));
 }
 
 function axesFor(footprint: PhysicalFootprint): Axis[] { return [localX(footprint.yaw), localZ(footprint.yaw)]; }
@@ -118,15 +119,15 @@ export type CollisionResolutionRequest = {
 
 export type CollisionResolution = { point: PlacementPoint; collidedIds: string[] };
 
-export function resolvePhysicalCollisions(request: CollisionResolutionRequest): CollisionResolution {
-  let point = request.requestedRootPoint; const previous = pointToWorld(request.previousRootPoint ?? request.requestedRootPoint); const collidedIds = new Set<string>();
-  const movingRootId = rootIdFor(request.speakers, request.movingRootId); const staticFootprints = physicalFootprintsForScene(request.speakers).filter((footprint) => !physicalFootprintsForStack(request.speakers, movingRootId).some((moving) => moving.id === footprint.id));
+export function resolvePhysicalCollisions(request: CollisionResolutionRequest & { room?: RoomMetrics }): CollisionResolution {
+  const room = request.room ?? STACK_ROOM_METERS; let point = request.requestedRootPoint; const previous = pointToWorld(request.previousRootPoint ?? request.requestedRootPoint, room); const collidedIds = new Set<string>();
+  const movingRootId = rootIdFor(request.speakers, request.movingRootId); const staticFootprints = physicalFootprintsForScene(request.speakers, room).filter((footprint) => !physicalFootprintsForStack(request.speakers, movingRootId, undefined, room).some((moving) => moving.id === footprint.id));
   for (let iteration = 0; iteration < 12; iteration += 1) {
-    const movingFootprints = physicalFootprintsForStack(request.speakers, movingRootId, point); let moved = false;
+    const movingFootprints = physicalFootprintsForStack(request.speakers, movingRootId, point, room); let moved = false;
     for (const moving of movingFootprints) for (const fixed of staticFootprints) {
       const separation = minimumTranslation(moving, fixed, subtract(moving.center, previous));
       if (!separation) continue;
-      collidedIds.add(fixed.id); const nextWorld = add(pointToWorld(point), separation); point = worldToPoint(nextWorld); moved = true;
+      collidedIds.add(fixed.id); const nextWorld = add(pointToWorld(point, room), separation); point = worldToPoint(nextWorld, room); moved = true;
       break;
     }
     if (!moved) break;
@@ -155,6 +156,7 @@ export type SideSnapRequest = {
   movingRootId: string;
   rawRootPoint: PlacementPoint;
   previous?: SideSnapCandidate | null;
+  room?: RoomMetrics;
 };
 
 export function sideSnapThresholdMeters(moving: PhysicalFootprint[], target: PhysicalFootprint[]) {
@@ -162,15 +164,15 @@ export function sideSnapThresholdMeters(moving: PhysicalFootprint[], target: Phy
 }
 
 export function findSideSnapCandidates(request: SideSnapRequest): SideSnapCandidate[] {
-  const movingRootId = rootIdFor(request.speakers, request.movingRootId); const movingRoot = createStackResolver(request.speakers).byId.get(movingRootId); if (!movingRoot) return [];
-  const currentMoving = physicalFootprintsForStack(request.speakers, movingRootId); const currentAnchor = pointToWorld(createStackResolver(request.speakers).getXY(movingRoot)); const targets = rootIdsFor(request.speakers).filter((rootId) => rootId !== movingRootId);
+  const room = request.room ?? STACK_ROOM_METERS; const movingRootId = rootIdFor(request.speakers, request.movingRootId); const movingRoot = createStackResolver(request.speakers, room).byId.get(movingRootId); if (!movingRoot) return [];
+  const currentMoving = physicalFootprintsForStack(request.speakers, movingRootId, undefined, room); const currentAnchor = pointToWorld(createStackResolver(request.speakers, room).getXY(movingRoot), room); const targets = rootIdsFor(request.speakers).filter((rootId) => rootId !== movingRootId);
   const candidates: SideSnapCandidate[] = [];
   for (const targetRootId of targets) {
-    const targetRoot = createStackResolver(request.speakers).byId.get(targetRootId); if (!targetRoot) continue;
-    const target = physicalFootprintsForStack(request.speakers, targetRootId); const targetAnchor = pointToWorld(createStackResolver(request.speakers).getXY(targetRoot)); const targetYaw = targetRoot.orientation?.yaw ?? 0; const movingYaw = movingRoot.orientation?.yaw ?? 0; const yawAligned = angleDistance(movingYaw, targetYaw) <= YAW_ALIGNMENT_THRESHOLD_RADIANS + .0001;
+    const targetRoot = createStackResolver(request.speakers, room).byId.get(targetRootId); if (!targetRoot) continue;
+    const target = physicalFootprintsForStack(request.speakers, targetRootId, undefined, room); const targetAnchor = pointToWorld(createStackResolver(request.speakers, room).getXY(targetRoot), room); const targetYaw = targetRoot.orientation?.yaw ?? 0; const movingYaw = movingRoot.orientation?.yaw ?? 0; const yawAligned = angleDistance(movingYaw, targetYaw) <= YAW_ALIGNMENT_THRESHOLD_RADIANS + .0001;
     const yawDelta = yawAligned ? normalizeYaw(targetYaw - movingYaw) : 0; const moving = yawDelta ? rotateGroupAroundAnchor(currentMoving, currentAnchor, yawDelta) : currentMoving; const sideAxis = localX(targetYaw); const frontAxis = localZ(targetYaw); const targetSideSupport = supportForGroup(target, targetAnchor, sideAxis); const targetFrontSupport = supportForGroup(target, targetAnchor, frontAxis); const movingSideSupport = supportForGroup(moving, currentAnchor, sideAxis); const movingFrontSupport = supportForGroup(moving, currentAnchor, frontAxis); const threshold = sideSnapThresholdMeters(moving, target);
     for (const side of ["left", "right"] as const) {
-      const targetBoundary = side === "right" ? targetSideSupport.max : targetSideSupport.min; const movingBoundary = side === "right" ? movingSideSupport.min : movingSideSupport.max; const sideCoordinate = dot(targetAnchor, sideAxis) + targetBoundary - movingBoundary; const frontCoordinate = dot(targetAnchor, frontAxis) + targetFrontSupport.max - movingFrontSupport.max; const candidateWorld = add(scale(sideAxis, sideCoordinate), scale(frontAxis, frontCoordinate)); const candidatePoint = worldToPoint(candidateWorld); const distanceMeters = length(subtract(pointToWorld(request.rawRootPoint), candidateWorld));
+      const targetBoundary = side === "right" ? targetSideSupport.max : targetSideSupport.min; const movingBoundary = side === "right" ? movingSideSupport.min : movingSideSupport.max; const sideCoordinate = dot(targetAnchor, sideAxis) + targetBoundary - movingBoundary; const frontCoordinate = dot(targetAnchor, frontAxis) + targetFrontSupport.max - movingFrontSupport.max; const candidateWorld = add(scale(sideAxis, sideCoordinate), scale(frontAxis, frontCoordinate)); const candidatePoint = worldToPoint(candidateWorld, room); const distanceMeters = length(subtract(pointToWorld(request.rawRootPoint, room), candidateWorld));
       const releaseThresholdMeters = threshold * SIDE_SNAP_RELEASE_FACTOR; const previousMatch = request.previous && request.previous.targetRootId === targetRootId && request.previous.side === side; const allowed = previousMatch ? distanceMeters <= releaseThresholdMeters : distanceMeters <= threshold;
       if (!allowed) continue;
       candidates.push({ targetRootId, side, point: candidatePoint, yaw: snapYaw(targetYaw), yawAligned, frontFlush: yawAligned, distanceMeters, enterThresholdMeters: threshold, releaseThresholdMeters, score: distanceMeters / threshold + (yawAligned ? 0 : .18) });
