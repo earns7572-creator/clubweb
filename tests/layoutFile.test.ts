@@ -51,4 +51,11 @@ const oldLayout = parseLayoutFile(serializeLayout({ speakers: [speaker("one", "f
 assert.equal(oldLayout.blocks, undefined, "old layout without BLOCK data remains valid");
 assert.deepEqual(layoutToSupportBlocks(oldLayout, 104), [], "old layout restores with no BLOCKs");
 assert.equal(layoutToClubSpeakers(oldLayout, 104)[0].position.z, .13, "old layout speaker elevation remains intact");
+
+const hiddenReleaseModelIds = ["reggae-scoop", "reggae-kick", "reggae-mid-horn", "reggae-top", "freeparty-wbin", "freeparty-kick-horn", "freeparty-mid-horn", "freeparty-top", "festival-sub", "festival-line-array", "festival-front-fill", "hifi-woofer", "hifi-mid-horn", "hifi-tweeter", "steppers-reflex-sub", "steppers-kick", "steppers-mid", "steppers-top"] as const;
+hiddenReleaseModelIds.forEach((modelId, index) => {
+  const hiddenLayout = parseLayoutFile(serializeLayout({ speakers: [speaker(`hidden-${index}`, modelId)], listener }));
+  const restoredHiddenSpeaker = layoutToClubSpeakers(hiddenLayout, 200 + index)[0];
+  assert.equal(restoredHiddenSpeaker.modelId, modelId, `${modelId} remains loadable from a legacy layout`);
+});
 console.log("layout file tests passed");
