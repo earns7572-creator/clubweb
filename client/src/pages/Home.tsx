@@ -43,7 +43,7 @@ const initialListener: ClubListener = { name: loadListenerName(), position: { x:
 const clubTracks: ClubSource[] = [{ id: "sweep", name: "Sine Sweep · 20 Hz ⇄ 20 kHz", category: "official", color: "#e7d64b" }];
 const gridSpawnPoints = [{ x: .5, y: .5 }, { x: .4167, y: .5 }, { x: .5833, y: .5 }, { x: .5, y: .5833 }, { x: .5, y: .4167 }];
 const surfaceChoices: Array<{ id: SurfaceTone; label: string; color: string }> = [{ id: "paper", label: "Paper", color: "#f6f4ee" }, { id: "sand", label: "Sand", color: "#e9e1d4" }, { id: "slate", label: "Slate", color: "#dde0dd" }, { id: "night", label: "Night", color: "#050606" }];
-const cabinetColors = [{ id: "graphite", label: "GRAPHITE", value: "#34383d" }, { id: "ash", label: "ASH", value: "#70767b" }, { id: "off-white", label: "OFF WHITE", value: "#e8e5dc" }, { id: "raw-gray", label: "RAW GRAY", value: "#9a9da0" }] as const;
+const cabinetColors = [{ id: "dusty-red", label: "DUSTY RED", value: "#d75a52" }, { id: "soft-blue", label: "SOFT BLUE", value: "#3f93c5" }, { id: "lime", label: "LIME", value: "#83c95c" }, { id: "violet", label: "VIOLET", value: "#7468cc" }, { id: "graphite", label: "GRAPHITE", value: "#34383d" }] as const;
 const clamp = (value: number) => Math.max(.07, Math.min(.93, value));
 const clampPitch = (value: number) => Math.max(-1.12, Math.min(1.12, value));
 const initialViewFromUrl = (): SceneView => { const requested = new URLSearchParams(window.location.search).get("view"); return requested === "side" || requested === "pov" ? requested : "top"; };

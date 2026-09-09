@@ -112,7 +112,7 @@ export const SPEAKER_FAMILIES: Record<SpeakerFamily, SpeakerFamilyDefinition> = 
 export const SPEAKER_MODELS: Record<SpeakerModelId, SpeakerModelDefinition> = {
   "modern-sub": model("modern-sub", "modern", "sub", "Sub", "Sub", [2.36, .9, 1.4], [lp(110, .8)], "modern/sub.glb"),
   "modern-woofer": model("modern-woofer", "modern", "woofer", "Woofer", "Woofer", [1.15, 1.5, 1.08], [lp(460, .62)], "modern/point-source.glb"),
-  "modern-full": model("modern-full", "modern", "full", "Full Range", "Full", [1.1, 2, 1.08], [{ type: "allpass", frequency: 1000, q: .3 }], "modern/point-source.glb"),
+  "modern-full": model("modern-full", "modern", "full", "Full Range", "Full", [.74, 1.08, .65], [{ type: "allpass", frequency: 1000, q: .3 }], "modern/point-source.glb"),
   "modern-mid": model("modern-mid", "modern", "mid", "Mid", "Mid", [.84, .88, .58], [{ type: "bandpass", frequency: 1600, q: .6 }], "modern/point-source.glb"),
   "modern-high": model("modern-high", "modern", "high", "High", "High", [1.08, .62, .72], [hp(3600)], "modern/point-source.glb"),
   "reggae-scoop": model("reggae-scoop", "reggae", "sub", "Reggae Scoop", "Scoop", [1.2, 1.65, 1.15], [hp(28), peak(55, 2.5, .8), lp(100, .85)], "reggae/scoop.glb"),
