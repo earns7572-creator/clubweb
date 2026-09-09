@@ -1,0 +1,122 @@
+/* Contextual diagram layer: meaning is attached to the selected physical object and stays out of the idle scene. */
+.contextual-diagram-label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 7px;
+  min-width: max-content;
+  color: rgba(48, 49, 46, 0.86);
+  font-family: var(--font-tech, ui-monospace, monospace);
+  line-height: 1;
+  pointer-events: none;
+  text-align: left;
+  white-space: nowrap;
+}
+.contextual-diagram-rule {
+  display: block;
+  width: 24px;
+  height: 1px;
+  margin-top: 5px;
+  flex: 0 0 auto;
+  background: currentColor;
+  opacity: 0.55;
+}
+.contextual-diagram-copy {
+  display: grid;
+  gap: 4px;
+}
+.contextual-diagram-copy b {
+  color: currentColor;
+  font: 600 10px/1 var(--font-tech, ui-monospace, monospace);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.contextual-diagram-copy small {
+  color: currentColor;
+  opacity: 0.62;
+  font: 500 8px/1 var(--font-tech, ui-monospace, monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.contextual-diagram-yaw {
+  align-self: center;
+  margin-left: 2px;
+  color: currentColor;
+  font: 600 10px/1 var(--font-tech, ui-monospace, monospace);
+  letter-spacing: 0.02em;
+}
+.contextual-diagram-top {
+  transform: translateX(42%);
+}
+.contextual-diagram-relationship {
+  display: inline-block;
+  padding: 3px 5px;
+  color: rgba(48, 49, 46, 0.64);
+  background: rgba(246, 245, 241, 0.68);
+  font: 500 8px/1 var(--font-tech, ui-monospace, monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.contextual-diagram-block {
+  transform: translateY(2px);
+}
+.contextual-diagram-block .contextual-diagram-rule {
+  width: 16px;
+}
+.side-contextual-label {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 8px);
+  left: calc(100% + 10px);
+}
+.side-contextual-label.is-left {
+  right: calc(100% + 10px);
+  left: auto;
+}
+.side-contextual-label.is-left .contextual-diagram-label {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.scene-surface.surface-night .contextual-diagram-label {
+  color: rgba(242, 238, 226, 0.88);
+}
+.scene-surface.surface-night .contextual-diagram-relationship {
+  color: rgba(242, 238, 226, 0.76);
+  background: rgba(8, 10, 9, 0.62);
+}
+
+@media (max-width: 760px) {
+  .contextual-diagram-top {
+    transform: translateX(28%) scale(0.92);
+    transform-origin: left center;
+  }
+  .contextual-diagram-copy small {
+    display: none;
+  }
+  .contextual-diagram-rule {
+    width: 16px;
+  }
+  .contextual-diagram-copy b {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+  .contextual-diagram-yaw {
+    font-size: 9px;
+  }
+  .contextual-diagram-relationship {
+    display: none;
+  }
+  .side-contextual-label {
+    left: calc(100% + 6px);
+  }
+  .side-contextual-label.is-left {
+    right: calc(100% + 6px);
+  }
+  .side-contextual-label .contextual-diagram-label {
+    transform: scale(0.9);
+    transform-origin: left center;
+  }
+  .side-contextual-label.is-left .contextual-diagram-label {
+    transform-origin: right center;
+  }
+}
