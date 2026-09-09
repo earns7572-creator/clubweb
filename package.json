@@ -16,6 +16,7 @@
     "test:recipe-ux": "node tests/recipeUx.test.cjs",
     "test:performance": "node tests/performanceArchitecture.test.cjs",
     "test:mixer": "node tests/run-mixerMath.mjs",
+    "test:gain-staging": "node tests/run-gainStaging.mjs",
     "test:response": "tsx tests/responseCurve.test.ts",
     "test:bass": "tsx tests/bassPressure.test.ts",
     "test:band": "node tests/run-bandActivity.mjs",
