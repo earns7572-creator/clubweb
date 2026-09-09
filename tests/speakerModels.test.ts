@@ -31,10 +31,10 @@ for (const family of orderedSpeakerFamilies()) {
     assert.ok(model.directivity.outerGain >= 0 && model.directivity.outerGain <= 1, `${id} has a valid outside gain`);
     assert.ok(model.directivity.visualRangeMeters > 0, `${id} has a positive visual range`);
     assert.ok(model.visual.plannedGlbPath.endsWith(".glb"), `${id} declares its future GLB contract path`);
-    if (family.id === "modern" || family.id === "reggae") {
-      assert.equal(model.visual.renderer, "procedural", `${id} preserves its approved procedural visual`);
+    if (id === "modern-full" || (family.id !== "modern" && family.id !== "reggae")) {
+      assert.equal(model.visual.renderer, "glb", `${id} uses its approved dedicated GLB visual`);
     } else {
-      assert.equal(model.visual.renderer, "glb", `${id} uses the repaired local GLB library`);
+      assert.equal(model.visual.renderer, "procedural", `${id} preserves its approved procedural visual`);
     }
     if (model.visual.renderer === "glb") {
       assert.ok(model.visual.src.startsWith("/models/speakers/"), `${id} uses a repository-owned GLB URL`);
@@ -49,7 +49,7 @@ assert.ok(SPEAKER_MODELS["modern-sub"].directivity.innerAngle > SPEAKER_MODELS["
 assert.ok(SPEAKER_MODELS["reggae-scoop"].directivity.innerAngle > SPEAKER_MODELS["reggae-mid-horn"].directivity.innerAngle, "Reggae Scoop is wider than Reggae Mid Horn");
 assert.ok(SPEAKER_MODELS["freeparty-wbin"].directivity.innerAngle > SPEAKER_MODELS["freeparty-top"].directivity.innerAngle, "Free Party W-Bin is wider than Free Party Top");
 assert.deepEqual(SPEAKER_MODELS["modern-full"].fieldComponents.map((component) => component.band), ["low", "mid", "high"], "Modern Full Range has nested low, mid and high field components");
-assert.deepEqual(SPEAKER_MODELS["modern-full"].body, { width: .78, height: 1.52, depth: .7 }, "Modern Full Range uses the dual-woofer physical point-source envelope");
+assert.deepEqual(SPEAKER_MODELS["modern-full"].body, { width: .78, height: 1.38, depth: .58 }, "Modern Full Range uses the tall dual-woofer physical envelope");
 assert.deepEqual(SPEAKER_MODELS["festival-line-array"].fieldComponents.map((component) => component.band), ["mid", "high"], "Festival Line Array has mid and high field components");
 assert.deepEqual(SPEAKER_MODELS["festival-front-fill"].fieldComponents.map((component) => component.band), ["mid", "high"], "Festival Front Fill has mid and high field components");
 assert.ok(SPEAKER_MODELS["reggae-scoop"].body.height > SPEAKER_MODELS["reggae-kick"].body.height, "scoop physical body is taller than kick");

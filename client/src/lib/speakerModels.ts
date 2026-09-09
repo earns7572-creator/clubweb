@@ -80,14 +80,16 @@ const fieldComponentsFor = (id: SpeakerModelId): SpeakerFieldComponent[] => {
 };
 
 const GLB_ASSET_URLS: Record<string, string> = {
-  // Modern and Reggae intentionally have no entry: their approved procedural visuals are protected from bulk GLB replacement.
+  // Modern and Reggae stay procedural except for the dedicated modern-full cabinet.
+  "modern/full-range.glb": "/models/speakers/modern/full-range.glb",
   "freeparty/w-bin.glb": "/models/speakers/freeparty/w-bin.glb", "freeparty/kick-horn.glb": "/models/speakers/freeparty/kick-horn.glb", "freeparty/mid-horn.glb": "/models/speakers/freeparty/mid-horn.glb", "freeparty/hf-horn.glb": "/models/speakers/freeparty/hf-horn.glb",
   "festival/sub.glb": "/models/speakers/festival/sub.glb", "festival/line-array-hang.glb": "/models/speakers/festival/line-array-hang.glb", "festival/front-fill.glb": "/models/speakers/festival/front-fill.glb",
   "hifi/large-woofer.glb": "/models/speakers/hifi/large-woofer.glb", "hifi/mid-horn.glb": "/models/speakers/hifi/mid-horn.glb", "hifi/tweeter.glb": "/models/speakers/hifi/tweeter.glb",
   "steppers/reflex-sub.glb": "/models/speakers/steppers/reflex-sub.glb", "steppers/kick.glb": "/models/speakers/steppers/kick.glb", "steppers/mid-top.glb": "/models/speakers/steppers/mid-top.glb", "steppers/top.glb": "/models/speakers/steppers/top.glb",
 };
 const emittersFor = (id: SpeakerModelId): SpeakerGlbVisual["emitterMeshes"] => {
-  if (id === "modern-full" || id === "festival-front-fill") return { low: ["EmitterLow"], high: ["EmitterHigh"] };
+  if (id === "modern-full") return { low: ["EmitterLow", "EmitterLowLower"], high: ["EmitterHigh"] };
+  if (id === "festival-front-fill") return { low: ["EmitterLow"], high: ["EmitterHigh"] };
   if (id === "modern-mid") return { mid: ["EmitterHigh"] };
   if (id === "steppers-mid") return { low: ["EmitterLow"], mid: ["EmitterMid"] };
   if (id === "festival-line-array" || id.endsWith("-top") || id === "modern-high" || id === "hifi-tweeter" || id === "freeparty-top") return { high: ["EmitterHigh"] };
@@ -112,7 +114,7 @@ export const SPEAKER_FAMILIES: Record<SpeakerFamily, SpeakerFamilyDefinition> = 
 export const SPEAKER_MODELS: Record<SpeakerModelId, SpeakerModelDefinition> = {
   "modern-sub": model("modern-sub", "modern", "sub", "Sub", "Sub", [2.36, .9, 1.4], [lp(110, .8)], "modern/sub.glb"),
   "modern-woofer": model("modern-woofer", "modern", "woofer", "Woofer", "Woofer", [1.15, 1.5, 1.08], [lp(460, .62)], "modern/point-source.glb"),
-  "modern-full": model("modern-full", "modern", "full", "Full Range", "Full", [.78, 1.52, .7], [{ type: "allpass", frequency: 1000, q: .3 }], "modern/point-source.glb"),
+  "modern-full": model("modern-full", "modern", "full", "Full Range", "Full", [.78, 1.38, .58], [{ type: "allpass", frequency: 1000, q: .3 }], "modern/full-range.glb"),
   "modern-mid": model("modern-mid", "modern", "mid", "Mid", "Mid", [.84, .88, .58], [{ type: "bandpass", frequency: 1600, q: .6 }], "modern/point-source.glb"),
   "modern-high": model("modern-high", "modern", "high", "High", "High", [1.08, .62, .72], [hp(3600)], "modern/point-source.glb"),
   "reggae-scoop": model("reggae-scoop", "reggae", "sub", "Reggae Scoop", "Scoop", [1.2, 1.65, 1.15], [hp(28), peak(55, 2.5, .8), lp(100, .85)], "reggae/scoop.glb"),

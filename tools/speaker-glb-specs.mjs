@@ -2,6 +2,9 @@ export const PROTECTED_FAMILIES = new Set(["modern", "reggae"]);
 
 // These targets mirror SpeakerModelDefinition.body, the runtime source of truth.
 export const SPEAKER_GLB_SPECS = [
+  // The release catalog keeps the Modern family procedural except for the dedicated
+  // full-range cabinet. This one-off asset is intentionally scoped to modern-full.
+  { id: "modern-full", family: "modern", path: "modern/full-range.glb", body: [.78, 1.38, .58], emitter: "EmitterLow", additionalEmitters: ["EmitterHigh"], build: "modernFullRange" },
   { id: "freeparty-wbin", family: "freeparty", path: "freeparty/w-bin.glb", body: [1.2, .9, 1.05], emitter: "EmitterLow", build: "wBin" },
   { id: "freeparty-kick-horn", family: "freeparty", path: "freeparty/kick-horn.glb", body: [1.1, .72, .9], emitter: "EmitterLow", build: "kickHorn" },
   { id: "freeparty-mid-horn", family: "freeparty", path: "freeparty/mid-horn.glb", body: [.9, .68, .65], emitter: "EmitterMid", build: "midHorn" },
