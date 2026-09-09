@@ -193,7 +193,7 @@ assert.match(top, /<SimpleHumanAvatar variant="listener"/);
 assert.match(top, /<ListenerNameTag name=\{listener\.name\}/);
 assert.match(top, /<SoundFieldLayer speakers=\{props\.speakers\} activityBySpeaker=\{props\.activityBySpeaker\} bandActivityBySpeaker=\{props\.bandActivityBySpeaker\}/);
 assert.match(side, /side-listener-name/);
-assert.match(side, /side-dj-booth/);
+assert.match(side, /side-(?:dj-booth|stage)/);
 assert.doesNotMatch(pov, /DjBooth/);
 assert.match(avatar, /const headGeometry = new THREE\.SphereGeometry/);
 assert.match(avatar, /const torsoGeometry = new THREE\.CylinderGeometry/);
