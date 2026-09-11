@@ -1,74 +1,68 @@
-/* Mobile layout authority: header / scene / bottom equipment shelf. Desktop rules stay in systm.css. */
-.motion-controls, .mobile-speaker-edit, .mobile-inspector-close { display: none; }
-
+/* Portrait presentation is an overlay composition. The scene never changes size. */
 @media (max-width: 760px) {
-  :root { --mobile-header-height: 54px; --mobile-library-height: 112px; --mobile-gutter: 12px; }
-  html, body, #root { width: 100%; max-width: 100%; overflow: hidden; }
-  .instrument-app.spatial-installation { box-sizing: border-box; width: 100%; max-width: none; min-height: 100dvh; height: 100dvh; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); overflow: hidden; }
-  .spatial-installation .instrument-header { box-sizing: border-box; height: var(--mobile-header-height); min-height: var(--mobile-header-height); grid-template-columns: minmax(78px, 1fr) auto minmax(48px, 1fr); gap: 4px; padding: 3px var(--mobile-gutter); }
-  .spatial-brand { min-width: 0; gap: 6px; }.spatial-brand img { width: 27px; height: 27px; }.spatial-word { min-width: 0; font-size: 13px; }.spatial-brand small { display: none; }
-  .header-controls { min-width: 0; justify-content: center; gap: 0; overflow: visible; }.source-trigger-wrap { position: relative; z-index: 60; min-width: 0; }
-  .spatial-installation .source-trigger { min-width: 48px; width: 52px; min-height: 48px; justify-content: center; gap: 5px; padding: 0; }.spatial-installation .source-trigger::before { font-size: 10px; }.spatial-installation .source-trigger span, .spatial-installation .source-trigger svg { display: none; }.spatial-installation .source-trigger i { width: 7px; height: 7px; }
-  .spatial-installation .preset-trigger-wrap .surface-trigger { width: 54px; min-width: 54px; min-height: 48px; padding: 0; }.spatial-installation .preset-trigger-wrap .surface-trigger::before { content: "SYSTEM"; font-size: 10px; }.surface-trigger-wrap, .layout-trigger-wrap { display: none; }
-  .spatial-installation .instrument-actions { justify-self: end; gap: 0; }.spatial-installation .headphone-note { display: none; }.spatial-installation .instrument-play { min-width: 52px; width: 52px; height: 48px; padding: 0; font-size: 0; }.spatial-installation .instrument-play svg { width: 17px; height: 17px; }.spatial-installation .instrument-play::after { display: none; }
-  .spatial-installation .source-popover { top: calc(100% + 6px); left: 50%; width: min(310px, calc(100vw - 24px)); max-height: min(65dvh, 500px); overflow-y: auto; transform: translateX(-50%); }.spatial-installation .preset-popover { top: calc(100% + 6px); right: calc(-1 * var(--mobile-gutter)); width: min(270px, calc(100vw - 24px)); max-height: min(65dvh, 500px); overflow-y: auto; }
-  .spatial-installation .recipe-popover { right: calc(-1 * var(--mobile-gutter)); width: min(300px, calc(100vw - 24px)); max-height: min(68dvh, 560px); overflow-y: auto; }.recipe-progress-strip { top: 12px; width: min(330px, calc(100vw - 24px)); max-width: calc(100vw - 24px); display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 6px 8px; }.recipe-progress-strip span { grid-column: 1 / -1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.recipe-progress-strip small { grid-column: 2; grid-row: 1; }
-
-  .spatial-installation .instrument-stage { height: calc(100dvh - var(--mobile-header-height)); min-height: 0; }.scene-surface { min-height: 0; overflow: hidden; }.club-floor-3d, .side-scene, .pov-preview { touch-action: none; overscroll-behavior: none; }
-  .view-switcher { top: auto; right: auto; bottom: calc(var(--mobile-library-height) + 12px); left: 50%; z-index: 40; width: min(250px, calc(100vw - 32px)); min-height: 50px; justify-content: stretch; gap: 0; padding: 0; transform: translateX(-50%); border-radius: 0; background: rgba(251,250,245,.92); box-shadow: 0 7px 20px rgba(29,30,26,.12); backdrop-filter: blur(15px); }.view-switcher::before { display: none; }.view-switcher button { flex: 1; min-width: 44px; min-height: 50px; padding: 0 7px; font-size: 12px; letter-spacing: .06em; }.scene-view-pov .view-switcher { bottom: calc(12px + env(safe-area-inset-bottom)); background: rgba(18,20,18,.48); color: #f5f2e9; }.scene-view-pov .view-switcher button.active { color: #fffdf5; }
-
-  .speaker-composer.speaker-library.systm-library { right: 0; bottom: 0; left: 0; box-sizing: border-box; display: grid; grid-template-columns: 1fr; height: calc(var(--mobile-library-height) + env(safe-area-inset-bottom)); min-height: 0; gap: 7px; padding: 8px var(--mobile-gutter) calc(8px + env(safe-area-inset-bottom)); overflow: hidden; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0; background: rgba(251,250,245,.97); }
-  .systm-library-title { display: none; }.speaker-composer.speaker-library.systm-library .family-switch { width: max-content; min-width: 0; gap: 12px; overflow-x: auto; }.systm-library .family-switch button { min-height: 28px; padding: 4px 0; font-size: 11px; }.speaker-composer.speaker-library.systm-library .model-choices { min-width: 0; gap: 0; overflow-x: auto; overflow-y: hidden; }.speaker-composer.speaker-library.systm-library .systm-equipment-item { grid-template-columns: 32px minmax(47px, 1fr) 18px; flex-basis: 116px; min-width: 116px; min-height: 58px; gap: 5px; padding: 5px 7px; }.systm-library .systm-equipment-item::before { display: none; }.systm-library .systm-equipment-item b { font-size: 12px; }.systm-library .systm-equipment-item small { font-size: 10px; }
-
-  .mobile-speaker-edit { position: fixed; z-index: 45; right: var(--mobile-gutter); bottom: calc(var(--mobile-library-height) + 78px + env(safe-area-inset-bottom)); display: grid; min-width: 52px; min-height: 48px; border: 1px solid var(--systm-line-strong); border-radius: 0; color: var(--systm-ink); background: var(--systm-panel); box-shadow: 0 5px 17px rgba(22,23,20,.16); font: 600 12px/1 var(--font-ui); letter-spacing: .06em; place-items: center; }
-  .spatial-inspector, .dark-club .spatial-inspector { display: none; position: fixed; z-index: 50; right: 0; bottom: 0; left: 0; box-sizing: border-box; width: auto; max-height: min(62dvh, 550px); padding: 18px 16px calc(16px + env(safe-area-inset-bottom)); overflow-y: auto; border-right: 0; border-bottom: 0; border-left: 0; border-radius: 0; background: rgba(251,250,245,.98); box-shadow: 0 -10px 28px rgba(25,26,23,.17); overscroll-behavior: contain; touch-action: pan-y; }.spatial-inspector.mobile-open { display: block; }.mobile-inspector-close { position: absolute; top: 10px; right: 12px; display: grid; width: 48px; height: 48px; border: 0; border-radius: 0; color: var(--systm-ink); background: rgba(77,78,71,.09); font: 500 24px/1 sans-serif; place-items: center; }
-  .mobile-inspector-delete { top: 10px; right: 68px; width: 48px; height: 48px; }.spatial-inspector h2 { padding-right: 104px; margin-bottom: 15px; font-size: 20px; }.spatial-control { grid-template-columns: 64px 1fr; min-height: 44px; margin: 12px 0; }.spatial-control select, .spatial-control input { min-height: 42px; }.spatial-inspector .inspector-actions { gap: 8px; margin-top: 16px; }.spatial-inspector .inspector-actions button { flex: 1 1 42%; min-height: 44px; padding: 0 10px; font-size: 12px; }
-  .stack-selector-block { margin-top: 14px; }.stack-selector-block .spatial-control select { min-height: 48px; }.mobile-turn-actions { display: grid; grid-template-columns: 1fr 48px 46px 48px; align-items: center; gap: 8px; min-height: 48px; margin: 14px 0; padding-top: 10px; border-top: 1px solid var(--systm-line); }.mobile-turn-actions span { color: var(--systm-muted); font: 500 11px/1 var(--font-ui); letter-spacing: .05em; text-transform: uppercase; }.mobile-turn-actions output { color: var(--systm-ink); font: 600 12px/1 var(--font-tech); text-align: center; }.mobile-turn-actions button { display: grid; width: 48px; height: 48px; min-height: 48px; padding: 0; place-items: center; font-size: 22px; }
-  .speaker-turn-handle { display: none; }.speaker-delete-button { width: 48px; height: 48px; }.spatial-installation .side-speaker-drag { width: 66px; height: 66px; }.spatial-installation .side-speaker.stacked .side-speaker-drag { width: 100%; height: 100%; }.side-cabinet-delete { width: 48px; height: 48px; }
-  .mixer-trigger { right: var(--mobile-gutter); bottom: calc(var(--mobile-library-height) + 14px + env(safe-area-inset-bottom)); z-index: 44; min-width: 52px; min-height: 48px; }.scene-view-pov .mixer-trigger { right: auto; bottom: calc(12px + env(safe-area-inset-bottom)); left: var(--mobile-gutter); }
-  .spatial-stage-anchor { top: 10%; }.spatial-scale-anchor { bottom: calc(var(--mobile-library-height) + 86px + env(safe-area-inset-bottom)); }.side-listener { transform: translate(-50%, 50%) scale(1.16); }.side-listener-name { font-size: 11px; }.listener-name-tag, .listener-name-input { min-height: 36px; padding: 8px 10px; font-size: 12px; }
-  .scene-view-pov .speaker-composer, .scene-view-pov .spatial-inspector, .scene-view-pov .mobile-speaker-edit { display: none; }.pov-preview > p { bottom: calc(72px + env(safe-area-inset-bottom)); max-width: calc(100vw - 28px); padding: 7px 10px; border-radius: 0; background: rgba(20,21,19,.30); font-size: 11px; }.motion-controls { position: absolute; z-index: 44; right: var(--mobile-gutter); bottom: calc(72px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 7px; }.motion-toggle, .motion-recenter { min-height: 48px; border: 0; border-radius: 0; padding: 8px 10px; color: rgba(247,246,239,.94); background: rgba(22,23,20,.56); box-shadow: 0 4px 14px rgba(0,0,0,.12); backdrop-filter: blur(12px); font: 600 10px/1 var(--font-ui); letter-spacing: .06em; }.motion-toggle { display: grid; gap: 3px; text-align: left; }.motion-toggle b { color: #f5f3eb; font-size: 12px; }.motion-toggle.active b { color: var(--systm-signal-red); }.motion-recenter { font-size: 10px; }.motion-controls small { position: absolute; right: 0; bottom: calc(100% + 6px); width: max-content; padding: 5px 7px; color: #f3ede5; background: rgba(36,29,26,.75); font: 400 10px/1 var(--font-ui); }
+  .instrument-app { min-height: 0; }
+  .instrument-header { top: max(14px, env(safe-area-inset-top)); right: 16px; left: 16px; }
+  .systm-wordmark { font-size: 28px; }
+  .transport { gap: 18px; }
+  .source-trigger,.instrument-play { font-size: 12px; }
+  .source-trigger { gap: 4px; }
+  .instrument-play { min-width: 68px; gap: 7px; }
+  .source-popover { position: fixed; top: calc(74px + env(safe-area-inset-top)); right: 12px; left: 12px; width: auto; max-height: calc(100dvh - 148px); }
+  .speaker-library { position: absolute; z-index: 35; bottom: 0; left: 0; width: 100%; pointer-events: none; }
+  .mobile-tray-handle { position: absolute; z-index: 2; bottom: env(safe-area-inset-bottom); left: 16px; display: flex; align-items: center; gap: 18px; width: 112px; height: 52px; padding: 0; border: 0; background: transparent; pointer-events: auto; font-size: 12px; letter-spacing: .04em; }
+  .mobile-tray-handle b { font-weight: 600; }
+  .mobile-tray-handle > span { margin-left: auto; font-size: 20px; font-weight: 400; }
+  .component-index { display: none; padding: 18px 16px calc(68px + env(safe-area-inset-bottom)); border-top: 2px solid var(--systm-ink); background: var(--systm-panel); pointer-events: auto; }
+  .is-mobile-open .component-index { display: block; animation: open-drawer 180ms ease-out; }
+  .component-index h2 { border-bottom: 1px solid var(--systm-line); padding-bottom: 12px; }
+  .model-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+  .component-index button { min-height: 48px; font-size: 19px; }
+  .support-index { display: flex; align-items: center; gap: 24px; margin-top: 6px; padding-top: 6px; }
+  .support-index h3 { width: calc(50% - 12px); }
+  .support-index button { flex: 1; margin: 0; }
+  .view-switcher { bottom: calc(67px + env(safe-area-inset-bottom)); gap: 26px; }
+  .view-switcher button { min-height: 44px; font-size: 13px; }
+  .tray-open .view-switcher { visibility: hidden; }
+  .workbench-footer { right: 16px; bottom: env(safe-area-inset-bottom); left: 154px; justify-content: flex-end; gap: 16px; min-height: 52px; }
+  .workbench-footer::before { position: fixed; right: 16px; bottom: calc(52px + env(safe-area-inset-bottom)); left: 16px; height: 1px; background: var(--systm-line); content: ""; pointer-events: none; }
+  .workbench-footer > button,.workbench-footer > div > button { font-size: 11px; letter-spacing: .02em; }
+  .layout-popover,.surface-popover,.preset-popover { position: fixed; right: 12px; bottom: calc(66px + env(safe-area-inset-bottom)); left: 12px; width: auto; max-height: calc(100dvh - 160px); }
+  .spatial-inspector { display: none; position: fixed; z-index: 36; top: auto !important; right: 0; bottom: calc(52px + env(safe-area-inset-bottom)); left: 0 !important; width: auto; max-height: calc(100dvh - 134px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); padding: 14px 18px 4px; }
+  .spatial-inspector.mobile-open { display: block; }
+  .spatial-inspector[hidden] { display: none; }
+  .object-heading { margin-bottom: 12px; }
+  .object-heading h2 { font-size: 28px; }
+  .inspector-close { width: 44px; height: 44px; }
+  .cabinet-color-swatches { gap: 5px; }
+  .cabinet-color-swatches > button { height: 44px; }
+  .cabinet-color-swatches i { width: 30px; height: 27px; }
+  .cabinet-color-custom { width: 54px; font-size: 12px; }
+  .cabinet-color-heading output { font-size: 12px; }
+  .cabinet-color-scope { gap: 32px; margin-bottom: 6px; }
+  .cabinet-color-scope button { min-height: 40px; font-size: 13px; }
+  .mobile-turn-actions { grid-template-columns: 1fr 48px 44px 48px; }
+  .mobile-turn-actions button { min-height: 44px; }
+  .object-adjustments summary,.inspector-actions button { min-height: 44px; }
+  .mobile-speaker-edit { position: absolute; z-index: 25; right: 16px; bottom: calc(126px + env(safe-area-inset-bottom)); display: flex; gap: 12px; align-items: center; min-height: 44px; padding: 0 10px; border: 0; border-top: 1px solid var(--systm-ink); background: var(--systm-panel); font-size: 12px; }
+  .mobile-speaker-edit span { color: var(--systm-muted); }
+  .release-workbench:has(.spatial-inspector.mobile-open:not([hidden])) .view-switcher,.release-workbench:has(.spatial-inspector.mobile-open:not([hidden])) .mobile-speaker-edit { visibility: hidden; }
+  .speaker-turn-handle { display: none; }
+  .speaker-delete-button,.side-cabinet-delete { width: 48px; height: 48px; }
+  .side-speaker-drag { width: 66px; height: 66px; }
+  .side-speaker.stacked .side-speaker-drag { width: 100%; height: 100%; }
+  .side-cabinet-delete { top: -25px; right: -29px; }
+  .motion-controls { position: absolute; z-index: 20; right: 16px; bottom: calc(126px + env(safe-area-inset-bottom)); display: flex; gap: 8px; }
+  .motion-toggle,.motion-recenter { min-height: 44px; padding: 8px; border: 0; background: var(--systm-panel); color: var(--systm-ink); font-size: 12px; }
+  .motion-toggle { display: grid; gap: 3px; text-align: left; }
+  .motion-controls small { position: absolute; right: 0; bottom: 100%; width: max-content; max-width: 280px; padding: 6px; background: var(--systm-panel); font-size: 12px; }
+  .pov-preview > p { bottom: 184px; max-width: calc(100% - 32px); color: var(--systm-ink); }
+  .recipe-progress-strip { display: none; }
+  .scene-view-pov .workbench-footer { left: 16px; }
+  .layout-status,.local-audio-error { top: 82px; width: max-content; }
 }
-
-@media (max-width: 760px) and (max-height: 720px) and (orientation: portrait) { :root { --mobile-header-height: 50px; --mobile-library-height: 100px; }.speaker-composer.speaker-library.systm-library .systm-equipment-item { min-height: 52px; }.view-switcher, .view-switcher button { min-height: 48px; } }
-
-@media (max-width: 900px) and (orientation: landscape) {
-  :root { --mobile-header-height: 48px; --mobile-library-height: 86px; }.instrument-app.spatial-installation { padding-right: env(safe-area-inset-right); padding-left: env(safe-area-inset-left); }.speaker-composer.speaker-library.systm-library { grid-template-columns: auto minmax(0, 1fr); height: calc(var(--mobile-library-height) + env(safe-area-inset-bottom)); gap: 10px; padding-top: 5px; padding-bottom: calc(5px + env(safe-area-inset-bottom)); }.speaker-composer.speaker-library.systm-library .family-switch { max-width: 176px; }.speaker-composer.speaker-library.systm-library .systm-equipment-item { min-height: 50px; }.scene-view-pov .instrument-header { position: absolute; z-index: 45; top: env(safe-area-inset-top); right: env(safe-area-inset-right); left: env(safe-area-inset-left); opacity: .82; }.scene-view-pov .header-controls, .scene-view-pov .spatial-brand { display: none; }.scene-view-pov .instrument-stage { height: 100dvh; }.scene-view-pov .view-switcher { bottom: calc(10px + env(safe-area-inset-bottom)); }.motion-controls { right: max(12px, env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom)); }.scene-view-pov .pov-preview > p { bottom: calc(10px + env(safe-area-inset-bottom)); }
-}
-
-/* Release mobile: the tray overlays the scene and opens from one bottom handle. */
-@media (max-width: 760px) {
-  .spatial-installation .instrument-stage { height: calc(100dvh - var(--mobile-header-height)); min-height: 0; }
-  .speaker-composer.speaker-library.systm-library { display: block; right: 0; bottom: 0; left: 0; height: calc(var(--mobile-library-height) + env(safe-area-inset-bottom)); min-height: 0; padding: 0; overflow: visible; border: 0; transform: translateY(calc(100% - 42px)); transition: transform 180ms cubic-bezier(.23,1,.32,1); }
-  .speaker-composer.speaker-library.systm-library.is-mobile-open { height: min(220px, calc(100dvh - var(--mobile-header-height) - 32px)); transform: translateY(0); }
-  .mobile-tray-handle { position: absolute; z-index: 2; top: 0; right: 0; left: 0; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 42px; padding: 0; border: 0; border-bottom: 1px solid var(--systm-line); color: var(--systm-muted); background: rgba(251,250,245,.98); font: 600 10px/1 var(--font-ui); letter-spacing: .08em; }
-  .mobile-tray-handle span { width: 32px; height: 2px; background: var(--systm-ink); }
-  .systm-library-content { display: grid; grid-template-columns: 1fr; align-content: start; gap: 7px; height: 100%; padding: 50px 12px calc(8px + env(safe-area-inset-bottom)); overflow: hidden; }
-  .systm-library-title { display: none; }
-  .speaker-composer.speaker-library.systm-library .family-switch { width: max-content; min-width: 0; gap: 10px; overflow-x: auto; }
-  .speaker-composer.speaker-library.systm-library .model-choices { min-width: 0; overflow-x: auto; overflow-y: hidden; }
-  .speaker-composer.speaker-library.systm-library .systm-equipment-item { min-width: 132px; min-height: 54px; }
-  .mobile-speaker-edit { bottom: calc(var(--mobile-library-height) + 56px + env(safe-area-inset-bottom)); }
-  .mixer-trigger { bottom: calc(var(--mobile-library-height) + 10px + env(safe-area-inset-bottom)); }
-  .spatial-inspector.mobile-open ~ .mixer-trigger { display: none; }
-  .tray-closed .view-switcher { bottom: calc(54px + env(safe-area-inset-bottom)); }
-  .tray-open .view-switcher, .tray-open .mixer-trigger { display: none; }
-}
-
-@media (max-width: 380px) {
-  .systm-library-content { padding-inline: 9px; }
-  .speaker-composer.speaker-library.systm-library .systm-equipment-item { min-width: 118px; }
-}
-
-/* Mobile keeps the view selector as a light rule, never as a second dashboard panel. */
-@media (max-width: 760px) {
-  .systm-library .mobile-tray-handle { display: flex; }
-  .view-switcher { width: auto; min-height: 44px; gap: 3px; padding: 0 4px; border: 0; background: rgba(251,250,245,.78); box-shadow: none; backdrop-filter: blur(8px); }
-  .view-switcher button { min-width: 48px; min-height: 44px; font-size: 10px; }
-  .scene-view-pov .view-switcher { background: rgba(18,20,18,.32); }
-  .speaker-composer.speaker-library.systm-library .systm-equipment-item { grid-template-columns: 32px minmax(47px, 1fr) 18px; flex-basis: 116px; min-width: 116px; }
-  .support-object-divider { min-width: 54px; padding: 0 8px; font-size: 8px; }
-  .systm-library .block-type { flex-basis: 110px; min-width: 110px; }
-  .mobile-speaker-edit { box-shadow: none; }
-  .spatial-inspector, .dark-club .spatial-inspector { box-shadow: 0 -4px 16px rgba(25,26,23,.12); }
+@keyframes open-drawer { from { transform: translateY(20px); opacity: .5; } to { transform: translateY(0); opacity: 1; } }
+@media (max-width: 360px) {
+  .workbench-footer { gap: 10px; left: 146px; }
+  .mobile-tray-handle { width: 108px; }
+  .transport { gap: 14px; }
 }
